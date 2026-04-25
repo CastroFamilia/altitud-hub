@@ -1,36 +1,22 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# ALTITUD HUB - Operations & Intelligence Platform
 
-## Getting Started
+## Overview
+ALTITUD HUB is a premium operations dashboard and business intelligence tool for RE/MAX Altitud and Altitud Cero. It provides agents with a unified interface for managing pre-listings, performing Comparative Market Analysis (ACM), and accessing AI-driven business mentorship.
 
-First, run the development server:
+## Features
+- **Operations Center**: Real-time management of listings and property cycles.
+- **Pre-Listing Hub**: Intelligent data capture and psychological profile tools for property owners.
+- **ACM-REMAX**: Professional property valuation tool integrated with the regional MLS.
+- **ALTITUD AI Mentor**: Intelligent business feedback and motivated coaching for real estate agents.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Design Philosophy
+The platform follows the "Excellent" design language:
+- **Slate-50 Palette**: High-contrast, clean, and professional light mode.
+- **Bold Typography**: Signature italic headers for a premium, high-impact feel.
+- **Glassmorphism**: Subtle translucency and refined shadows.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Tech Stack
+- Next.js (App Router)
+- Tailwind CSS
+- Supabase (Backend & Auth)
+- custom JavaScript (Legacy Modules Integration)

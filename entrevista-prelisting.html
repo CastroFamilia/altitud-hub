@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS | Entrevista Pre-Listing</title>
+    <title>ALTITUD HUB | Entrevista Pre-Listing</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -11,8 +11,14 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'], },
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        nexus: ['Inter', 'sans-serif'],
+                    },
                     colors: {
+                        'nexus-blue': '#003DA5',
+                        'nexus-red': '#DC1431',
+                        'nexus-amber': '#F5A623',
                         brand: { 50: '#f5f7fc', 100: '#eef2f9', 200: '#d5e0f1', 300: '#adc3e4', 400: '#7e9fd2', 500: '#5a82bf', 600: '#4668a3', 700: '#395383', 800: '#32456c', 900: '#2d3b5a' },
                         dark: { bg: '#0F1115', panel: '#1a1d24', border: '#2a2d35', input: '#22252e' }
                     }
@@ -23,77 +29,95 @@
     <style>
         body { background-color: #f8fafc; }
         .dark body { background-color: #0F1115; }
+        
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(0, 0, 0, 0.05); }
+        .dark .glass-panel { background: rgba(26, 29, 36, 0.8); border: 1px solid rgba(255, 255, 255, 0.05); }
+
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .dark ::-webkit-scrollbar-thumb { background: #2A2D35; }
         
-        .step-inactive { opacity: 0; transform: translateX(20px); pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; transition: all 0.4s ease; }
-        .step-active { opacity: 1; transform: translateX(0); position: relative; transition: all 0.4s ease; }
-        .step-past { opacity: 0; transform: translateX(-20px); pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; transition: all 0.4s ease; }
+        .step-inactive { opacity: 0; transform: translateX(20px); pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .step-active { opacity: 1; transform: translateX(0); position: relative; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .step-past { opacity: 0; transform: translateX(-20px); pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        .radio-card:checked + label { border-color: #5a82bf; background-color: rgba(90,130,191,0.05); }
-        .dark .radio-card:checked + label { border-color: #5a82bf; background-color: rgba(90,130,191,0.15); }
+        .radio-card:checked + label { border-color: #003DA5; background-color: rgba(0,61,165,0.05); }
+        .dark .radio-card:checked + label { border-color: #003DA5; background-color: rgba(0,61,165,0.15); }
         
-        .form-input { @apply w-full bg-white dark:bg-dark-input border border-gray-300 dark:border-dark-border text-gray-900 dark:text-gray-200 rounded-lg py-2.5 px-4 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all outline-none shadow-sm; }
-        .form-label { @apply block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5; }
+        .form-input { @apply w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl py-3 px-4 focus:ring-2 focus:ring-nexus-blue/20 focus:border-nexus-blue transition-all outline-none shadow-sm; }
+        .form-label { @apply block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 px-1; }
         
-        /* Ocultar elementos condicionales */
-        .conditional-field { display: none; margin-top: 1rem; padding-left: 1rem; border-left: 2px solid #eef2f9; }
-                .dark .conditional-field { border-left-color: #2a2d35; }
-        
-        .badge-draft { background: rgba(100, 116, 139, 0.1); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.2); }
+        /* Badges High-Contrast matched to operaciones */
+        .badge-draft { background: rgba(100, 116, 139, 0.15); color: #475569; border: 1px solid rgba(100, 116, 139, 0.2); }
         .dark .badge-draft { background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
-        .badge-presented { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); }
+        
+        .badge-presented { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
         .dark .badge-presented { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-        .badge-accepted { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+        
+        .badge-accepted { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .dark .badge-accepted { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .badge-rejected { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+        
+        .badge-rejected { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
         .dark .badge-rejected { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-        .badge-followup { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
+        
+        .badge-followup { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
         .dark .badge-followup { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .nexus-header {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="font-sans antialiased text-sm overflow-x-hidden transition-colors duration-300 h-screen flex flex-col">
+<body class="font-sans antialiased text-sm overflow-x-hidden transition-colors duration-300 h-screen flex flex-col bg-slate-50 dark:bg-slate-900">
 
     <!-- Top Navigation (Focus Mode) -->
-    <header class="h-20 bg-white dark:bg-[#1a1d24] border-b border-gray-200 dark:border-dark-border flex items-center justify-between px-8 z-10 sticky top-0 shadow-sm backdrop-blur-md bg-opacity-90 dark:bg-opacity-90">
+    <!-- Top Navigation (Focus Mode) -->
+    <header class="h-20 glass-panel flex items-center justify-between px-8 z-10 sticky top-0 transition-colors">
         <div class="flex items-center">
-            <a href="operaciones.html" class="mr-6 text-gray-400 hover:text-brand-500 dark:hover:text-brand-400 transition-colors p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            <a href="operaciones.html" class="mr-6 text-slate-400 hover:text-nexus-blue dark:hover:text-white transition-all p-3 -ml-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5">
+                <i class="fa-solid fa-arrow-left text-lg"></i>
             </a>
-            <div class="dark:bg-white/90 dark:p-1 dark:rounded-lg transition-colors hidden sm:flex items-center bg-white px-2 py-0.5 rounded border border-gray-100 dark:border-none mr-4">
-                <img src="assets/logo-altitud.png" alt="RE/MAX Altitud" class="h-5 object-contain" id="brand-logo">
+            <div class="dark:bg-white dark:p-1.5 dark:rounded-xl transition-all hidden sm:flex items-center bg-white px-3 py-1 rounded-xl border border-slate-100 dark:border-none mr-6 shadow-sm">
+                <img src="assets/logo-altitud.png" alt="RE/MAX Altitud" class="h-6 object-contain" id="brand-logo">
             </div>
-            <div class="border-l border-gray-200 dark:border-dark-border pl-4">
-                <h1 class="text-xs font-black text-brand-600 dark:text-brand-400 uppercase tracking-widest leading-none mb-0.5" data-i18n="title_hub">ALTITUD HUB</h1>
-                <h2 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider" data-i18n="title_main">Entrevista Pre-Listing</h2>
-                <p class="text-[10px] text-gray-500 dark:text-gray-400 font-medium" data-i18n="title_sub">Recopilación Psicológica y Técnica</p>
+            <div class="border-l-2 border-slate-100 dark:border-white/5 pl-6">
+                <div class="flex items-center gap-2">
+                   <h1 class="text-xs font-black text-nexus-blue dark:text-white nexus-header leading-none" data-i18n="title_hub">ALTITUD HUB</h1>
+                   <span class="text-[9px] bg-nexus-blue/10 text-nexus-blue px-2 py-0.5 rounded-full font-black uppercase tracking-widest">v2.0</span>
+                </div>
+                <h2 class="text-xl font-black text-slate-900 dark:text-white nexus-header leading-none mt-1" data-i18n="title_main">Entrevista Pre-Listing</h2>
             </div>
         </div>
 
-        <div class="flex space-x-2">
+        <div class="flex items-center space-x-4">
             <!-- Language Toggle -->
-            <button id="lang-toggle" onclick="toggleLanguage()" class="w-10 h-10 rounded-full border border-gray-300 dark:border-dark-border flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-border transition-colors font-bold text-xs" title="Cambiar idioma / Change language">
-                <span id="lang-toggle-text">ES</span>
+            <button id="lang-toggle" onclick="toggleLanguage()" class="w-14 h-9 rounded-full bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-400 hover:text-brand-500 dark:hover:text-white transition-colors shadow-sm">
+                <span id="lang-toggle-text">EN</span>
             </button>
-            <button id="theme-toggle" class="w-10 h-10 rounded-full border border-gray-300 dark:border-dark-border flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-border transition-colors">
-                <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            <button id="theme-toggle" class="w-9 h-9 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-nexus-blue dark:hover:text-white transition-colors shadow-sm">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:inline"></i>
             </button>
-            <button class="bg-gray-200 dark:bg-dark-border text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors" data-i18n="btn_save_draft">Guardar Borrador</button>
+            <button class="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-slate-900/10" data-i18n="btn_save_draft">Guardar Borrador</button>
         </div>
     </header>
 
     <!-- Progress Indicator -->
-    <div class="w-full bg-white dark:bg-[#1a1d24] border-b border-gray-100 dark:border-dark-border/50">
-        <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider">
-            <div id="prog-1" class="flex items-center text-brand-600 dark:text-brand-400"><span class="w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-500/20 flex justify-center items-center mr-2">1</span> <span data-i18n="prog_owners">Propietarios</span></div>
-            <div class="flex-1 h-px bg-gray-200 dark:bg-dark-border mx-4"></div>
-            <div id="prog-2" class="flex items-center text-gray-400 dark:text-gray-500"><span class="w-5 h-5 rounded-full bg-gray-100 dark:bg-dark-input flex justify-center items-center mr-2">2</span> <span data-i18n="prog_property">Propiedad</span></div>
-            <div class="flex-1 h-px bg-gray-200 dark:bg-dark-border mx-4"></div>
-            <div id="prog-3" class="flex items-center text-gray-400 dark:text-gray-500"><span class="w-5 h-5 rounded-full bg-gray-100 dark:bg-dark-input flex justify-center items-center mr-2">3</span> <span data-i18n="prog_tech">Ficha Técnica</span></div>
+    <div class="w-full bg-white/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-white/5 backdrop-blur-sm">
+        <div class="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+            <div id="prog-1" class="flex items-center text-nexus-blue dark:text-white"><span class="w-6 h-6 rounded-xl bg-nexus-blue/10 dark:bg-white/10 flex justify-center items-center mr-2 shadow-sm italic">01</span> <span data-i18n="prog_owners">Propietarios</span></div>
+            <div class="flex-1 h-[2px] bg-slate-100 dark:bg-white/5 mx-6 rounded-full overflow-hidden">
+                <div class="h-full bg-nexus-blue dark:bg-white w-1/3 transition-all duration-500"></div>
+            </div>
+            <div id="prog-2" class="flex items-center text-slate-300 dark:text-slate-600"><span class="w-6 h-6 rounded-xl bg-slate-50 dark:bg-white/5 flex justify-center items-center mr-2 italic text-[9px]">02</span> <span data-i18n="prog_property">Propiedad</span></div>
+            <div class="flex-1 h-[2px] bg-slate-100 dark:bg-white/5 mx-6 rounded-full"></div>
+            <div id="prog-3" class="flex items-center text-slate-300 dark:text-slate-600"><span class="w-6 h-6 rounded-xl bg-slate-50 dark:bg-white/5 flex justify-center items-center mr-2 italic text-[9px]">03</span> <span data-i18n="prog_tech">Ficha Técnica</span></div>
         </div>
     </div>
 
@@ -103,12 +127,12 @@
 
             <!-- ================= STEP 1: PROPIETARIOS ================= -->
             <div id="step-1" class="step-active">
-                <div class="mb-8">
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white" data-i18n="s1_title">Perfil Psicológico del Propietario</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-2" data-i18n="s1_sub">Recolecta información vital de los tomadores de decisión antes de fijar un precio.</p>
+                <div class="mb-10 text-center">
+                    <h1 class="text-4xl font-black text-slate-900 dark:text-white nexus-header" data-i18n="s1_title">Perfil del Propietario</h1>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium" data-i18n="s1_sub">Análisis psicológico y recopilación técnica de los tomadores de decisión.</p>
                 </div>
 
-                <div class="bg-white dark:bg-dark-panel p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-dark-border space-y-8">
+                <div class="bg-white dark:bg-slate-800 p-10 rounded-[32px] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 space-y-10">
                     
                     <!-- Contactos -->
                     <div>
@@ -183,9 +207,10 @@
                         </div>
                     </div>
 
-                    <div class="flex justify-end pt-4 border-t border-gray-100 dark:border-dark-border">
-                        <button onclick="nextStep(2)" class="bg-brand-600 hover:bg-brand-500 text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg shadow-brand-500/25 transition-all transform hover:scale-105 flex items-center">
-                            <span data-i18n="btn_continue_prop">Continuar a Propiedad</span> <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    <div class="flex justify-end pt-8 border-t border-slate-100 dark:border-white/5">
+                        <button onclick="nextStep(2)" class="bg-nexus-blue hover:bg-blue-700 text-white px-10 py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-500/30 transition-all transform hover:scale-105 active:scale-95 flex items-center">
+                            <span data-i18n="btn_continue_prop">Continuar a Propiedad</span> 
+                            <i class="fa-solid fa-arrow-right ml-3 text-xs"></i>
                         </button>
                     </div>
                 </div>
@@ -193,15 +218,17 @@
 
             <!-- ================= STEP 2: LA PROPIEDAD ================= -->
             <div id="step-2" class="step-inactive">
-                <div class="mb-8 flex items-center">
-                    <button onclick="prevStep(1)" class="mr-4 w-10 h-10 rounded-full border border-gray-300 dark:border-dark-border flex justify-center items-center text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg></button>
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white" data-i18n="s2_title">Tipología y Bases de la Propiedad</h1>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2" data-i18n="s2_sub">Define la ubicación legal y el tipo de inmueble exacto.</p>
+                <div class="mb-10 text-center flex flex-col items-center">
+                    <div class="flex items-center gap-4 mb-4">
+                        <button onclick="prevStep(1)" class="w-12 h-12 rounded-2xl border border-slate-200 dark:border-white/10 flex justify-center items-center text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-sm">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <h1 class="text-4xl font-black text-slate-900 dark:text-white nexus-header" data-i18n="s2_title">Tipología</h1>
                     </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 font-medium" data-i18n="s2_sub">Define la ubicación legal y el tipo de inmueble exacto.</p>
                 </div>
 
-                <div class="bg-white dark:bg-dark-panel p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-dark-border space-y-8">
+                <div class="bg-white dark:bg-slate-800 p-10 rounded-[32px] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 space-y-10">
                     
                     <div>
                         <h3 class="text-brand-600 dark:text-brand-400 font-bold uppercase text-xs tracking-wider mb-4 border-b border-gray-100 dark:border-dark-border pb-2" data-i18n="s2_id">Identificación</h3>
@@ -259,10 +286,11 @@
                         <p class="text-[11px] text-gray-400 italic mt-3" data-i18n="s2_note">Nota: El siguiente paso (Ficha Técnica) cambiará según lo que elijas aquí para pedir solo datos relevantes.</p>
                     </div>
 
-                    <div class="flex justify-between pt-4 border-t border-gray-100 dark:border-dark-border">
-                        <button onclick="prevStep(1)" class="bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-dark-input text-gray-700 dark:text-gray-300 px-6 py-2.5 rounded-lg text-sm font-bold transition-all" data-i18n="btn_back">Atrás</button>
-                        <button onclick="nextStep(3)" class="bg-brand-600 hover:bg-brand-500 text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg shadow-brand-500/25 transition-all transform hover:scale-105 flex items-center">
-                            <span data-i18n="btn_continue_tech">Siguiente: Ficha Técnica</span> <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    <div class="flex justify-between items-center pt-8 border-t border-slate-100 dark:border-white/5">
+                        <button onclick="prevStep(1)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-black uppercase tracking-widest text-[10px] transition-all" data-i18n="btn_back">Atrás</button>
+                        <button onclick="nextStep(3)" class="bg-nexus-blue hover:bg-blue-700 text-white px-10 py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-500/30 transition-all transform hover:scale-105 active:scale-95 flex items-center">
+                            <span data-i18n="btn_continue_tech">Siguiente: Ficha Técnica</span> 
+                            <i class="fa-solid fa-arrow-right ml-3 text-xs"></i>
                         </button>
                     </div>
                 </div>
@@ -270,15 +298,17 @@
 
             <!-- ================= STEP 3: FICHA TECNICA ================= -->
             <div id="step-3" class="step-inactive">
-                <div class="mb-8 flex items-center">
-                    <button onclick="prevStep(2)" class="mr-4 w-10 h-10 rounded-full border border-gray-300 dark:border-dark-border flex justify-center items-center text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg></button>
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white" data-i18n="s3_title">Ficha Técnica Adaptativa</h1>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2" data-i18n="s3_sub">Estos datos se exportarán automáticamente a la herramienta de Análisis de Mercado (ACM).</p>
+                <div class="mb-10 text-center flex flex-col items-center">
+                    <div class="flex items-center gap-4 mb-4">
+                        <button onclick="prevStep(2)" class="w-12 h-12 rounded-2xl border border-slate-200 dark:border-white/10 flex justify-center items-center text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-sm">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <h1 class="text-4xl font-black text-slate-900 dark:text-white nexus-header" data-i18n="s3_title">Ficha Técnica</h1>
                     </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 font-medium" data-i18n="s3_sub">Estos datos se exportarán automáticamente al Registro de ACM.</p>
                 </div>
 
-                <div class="bg-white dark:bg-dark-panel p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-dark-border space-y-8">
+                <div class="bg-white dark:bg-slate-800 p-10 rounded-[32px] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 space-y-10">
                     
                                         <!-- DYNAMIC: AREA CASA -->
                     <div id="ficha-house">
@@ -390,37 +420,38 @@
                     <div class="flex flex-col pt-4 border-t border-gray-100 dark:border-dark-border mt-8">
                         
                         <!-- PORTFOLIO PIPELINE STATUS -->
-                        <div class="mb-8">
-                            <h3 class="text-brand-600 dark:text-brand-400 font-bold uppercase text-xs tracking-wider mb-4" data-i18n="s3_status_title">Estado Inicial en Pipeline (Indicador)</h3>
-                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                                <label class="relative cursor-pointer">
+                        <div class="mb-10">
+                            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6" data-i18n="s3_status_title">Estado Inicial en Pipeline</h3>
+                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                                <label class="relative cursor-pointer group">
                                     <input type="radio" name="acm_status" value="draft" class="peer sr-only" checked>
-                                    <div class="text-center py-2.5 px-2 rounded-lg border border-gray-200 dark:border-dark-border badge-draft peer-checked:ring-2 peer-checked:ring-slate-400 font-bold text-[10px] uppercase transition-all shadow-sm" data-i18n="s3_st_draft">Borrador</div>
+                                    <div class="text-center py-4 px-2 rounded-2xl border border-slate-100 dark:border-white/5 badge-draft peer-checked:ring-4 peer-checked:ring-slate-400/20 font-black text-[10px] uppercase transition-all shadow-sm group-hover:scale-105 active:scale-95" data-i18n="s3_st_draft">Borrador</div>
                                 </label>
-                                <label class="relative cursor-pointer">
+                                <label class="relative cursor-pointer group">
                                     <input type="radio" name="acm_status" value="presented" class="peer sr-only">
-                                    <div class="text-center py-2.5 px-2 rounded-lg border border-gray-200 dark:border-dark-border badge-presented peer-checked:ring-2 peer-checked:ring-blue-400 font-bold text-[10px] uppercase transition-all shadow-sm" data-i18n="s3_st_pres">Presentado</div>
+                                    <div class="text-center py-4 px-2 rounded-2xl border border-slate-100 dark:border-white/5 badge-presented peer-checked:ring-4 peer-checked:ring-blue-400/20 font-black text-[10px] uppercase transition-all shadow-sm group-hover:scale-105 active:scale-95" data-i18n="s3_st_pres">Presentado</div>
                                 </label>
-                                <label class="relative cursor-pointer">
+                                <label class="relative cursor-pointer group">
                                     <input type="radio" name="acm_status" value="followup" class="peer sr-only">
-                                    <div class="text-center py-2.5 px-2 rounded-lg border border-gray-200 dark:border-dark-border badge-followup peer-checked:ring-2 peer-checked:ring-amber-400 font-bold text-[10px] uppercase transition-all shadow-sm" data-i18n="s3_st_fu">Follow Up</div>
+                                    <div class="text-center py-4 px-2 rounded-2xl border border-slate-100 dark:border-white/5 badge-followup peer-checked:ring-4 peer-checked:ring-amber-400/20 font-black text-[10px] uppercase transition-all shadow-sm group-hover:scale-105 active:scale-95" data-i18n="s3_st_fu">Follow Up</div>
                                 </label>
-                                <label class="relative cursor-pointer">
+                                <label class="relative cursor-pointer group">
                                     <input type="radio" name="acm_status" value="accepted" class="peer sr-only">
-                                    <div class="text-center py-2.5 px-2 rounded-lg border border-gray-200 dark:border-dark-border badge-accepted peer-checked:ring-2 peer-checked:ring-green-400 font-bold text-[10px] uppercase transition-all shadow-sm" data-i18n="s3_st_acc">Aceptado</div>
+                                    <div class="text-center py-4 px-2 rounded-2xl border border-slate-100 dark:border-white/5 badge-accepted peer-checked:ring-4 peer-checked:ring-green-400/20 font-black text-[10px] uppercase transition-all shadow-sm group-hover:scale-105 active:scale-95" data-i18n="s3_st_acc">Aceptado</div>
                                 </label>
-                                <label class="relative cursor-pointer">
+                                <label class="relative cursor-pointer group">
                                     <input type="radio" name="acm_status" value="rejected" class="peer sr-only">
-                                    <div class="text-center py-2.5 px-2 rounded-lg border border-gray-200 dark:border-dark-border badge-rejected peer-checked:ring-2 peer-checked:ring-red-400 font-bold text-[10px] uppercase transition-all shadow-sm" data-i18n="s3_st_rej">Rechazado</div>
+                                    <div class="text-center py-4 px-2 rounded-2xl border border-slate-100 dark:border-white/5 badge-rejected peer-checked:ring-4 peer-checked:ring-red-400/20 font-black text-[10px] uppercase transition-all shadow-sm group-hover:scale-105 active:scale-95" data-i18n="s3_st_rej">Rechazado</div>
                                 </label>
                             </div>
                         </div>
 
-                        <div class="flex justify-between items-center bg-gray-50 dark:bg-dark-input p-4 rounded-xl border border-gray-200 dark:border-dark-border">
-                            <button onclick="prevStep(2)" class="bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 px-6 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm" data-i18n="btn_back">Atrás</button>
-                            <div class="flex space-x-3">
-                                <button onclick="completarPrelisting(event)" class="bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg shadow-brand-500/25 transition-all transform hover:scale-105 flex items-center">
-                                    <span data-i18n="btn_save_hub">Guardar en ALTITUD HUB</span> <i class="fa-solid fa-arrow-right ml-2"></i>
+                        <div class="flex justify-between items-center bg-slate-50 dark:bg-white/5 p-6 rounded-[24px] border border-slate-100 dark:border-white/5">
+                            <button onclick="prevStep(2)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-black uppercase tracking-widest text-[10px] transition-all" data-i18n="btn_back">Atrás</button>
+                            <div class="flex space-x-4">
+                                <button onclick="completarPrelisting(event)" class="bg-nexus-blue hover:bg-blue-700 text-white px-10 py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-500/30 transition-all transform hover:scale-105 active:scale-95 flex items-center">
+                                    <span data-i18n="btn_save_hub">Finalizar y Guardar</span> 
+                                    <i class="fa-solid fa-check ml-3 text-xs"></i>
                                 </button>
                             </div>
                         </div>
@@ -791,7 +822,7 @@
             }
         };
 
-        let currentLang = localStorage.getItem('nexus_lang') || 'es';
+        let currentLang = localStorage.getItem('app-lang') || 'es';
 
         function applyTranslations() {
             document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -816,7 +847,7 @@
 
         function toggleLanguage() {
             currentLang = currentLang === 'es' ? 'en' : 'es';
-            localStorage.setItem('nexus_lang', currentLang);
+            localStorage.setItem('app-lang', currentLang);
             applyTranslations();
             updateProgress(currentStepGlobal); // refrescar labels en progreso si es necesario (el texto innerHTMl puede ser sobreescrito por la logica de progreso)
         }

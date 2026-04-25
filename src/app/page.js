@@ -1,96 +1,114 @@
-import TopNav from '@/components/layout/TopNav';
+"use client";
 
-export default function OperationsDashboard() {
+import TopNav from '@/components/layout/TopNav';
+import { useApp } from '@/lib/context';
+
+export default function Dashboard() {
+  const { t } = useApp();
+
+  const tabs = [
+    { key: 'dash_tab_all', count: '0' },
+    { key: 'dash_tab_pending' },
+    { key: 'dash_tab_done' },
+    { key: 'dash_tab_followup' },
+    { key: 'dash_tab_rejected' },
+    { key: 'dash_tab_make_acm' },
+  ];
+
+  const headers = ['dash_th_client', 'dash_th_zone', 'dash_th_contact', 'dash_th_status', 'dash_th_action'];
+
   return (
     <>
-      <TopNav title="Registro de Análisis de Mercado (ACM)" subtitle="Historial y creación algorítmica de valoración de propiedades." />
+      <TopNav titleKey="header_title" subtitleKey="header_subtitle" />
       
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-8 relative z-0">
-        <div className="fade-in max-w-6xl mx-auto">
-          {/* Header & Filter */}
-          <div className="flex justify-between items-end mb-4 px-1">
-             <h3 className="font-bold text-gray-900 dark:text-gray-300 text-sm tracking-wide uppercase">Estadísticas de Captación</h3>
-             <div className="flex space-x-1 bg-gray-200 dark:bg-dark-panel/80 p-1 rounded-lg border border-transparent dark:border-dark-border cursor-pointer">
-                 <div className="bg-white dark:bg-[#2A2D35] text-brand-600 dark:text-white text-xs px-4 py-1.5 rounded-md font-bold shadow-sm flex items-center">
-                     Este Mes
-                 </div>
-             </div>
-          </div>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-8 relative z-0 bg-slate-50 dark:bg-dark-bg">
+        <div className="max-w-6xl mx-auto space-y-12">
+          
+          {/* ── PRE-LISTING HUB ── */}
+          <div className="fade-in space-y-6">
+            <div className="flex justify-between items-end px-1">
+              <div>
+                <h2 className="text-4xl nexus-header text-nexus-blue dark:text-white leading-none">{t('dash_prelisting_title')}</h2>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 font-black uppercase tracking-widest">{t('dash_prelisting_subtitle')}</p>
+              </div>
+              <button className="bg-nexus-blue hover:bg-blue-700 text-white px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 transition-all transform hover:scale-105 active:scale-95">
+                {t('dash_btn_new_interview')}
+              </button>
+            </div>
 
-          <div className="grid grid-cols-4 gap-4 mb-8">
-            <div className="glass-panel text-left rounded-xl p-4 flex flex-col justify-center shadow-sm relative overflow-hidden">
-                <div className="flex justify-between items-start z-10 relative">
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Total ACM Creados</p>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-4 gap-4">
+              {[
+                { key: 'dash_stat_interviews', val: '0', color: 'text-slate-900 dark:text-white' },
+                { key: 'dash_stat_followup',   val: '0',  color: 'text-amber-500' },
+                { key: 'dash_stat_ready_acm',  val: '0',  color: 'text-nexus-blue' }
+              ].map((s, idx) => (
+                <div key={idx} className="bg-white dark:bg-slate-800 rounded-[32px] p-6 shadow-sm border border-slate-200 dark:border-slate-700 group hover:shadow-lg transition-all">
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-black tracking-widest leading-none">{t(s.key)}</p>
+                  <h3 className={`text-3xl font-black italic mt-2 ${s.color}`}>{s.val}</h3>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1 z-10 relative">28</h3>
-            </div>
-            
-            <div className="glass-panel text-left rounded-xl p-4 flex flex-col justify-center shadow-sm">
-                <div className="flex justify-between items-start">
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Tasa Exclusivas</p>
-                </div>
-                <h3 className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">45% <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium ml-1">de 15 cierres</span></h3>
-            </div>
-            
-            <div className="glass-panel text-left rounded-xl p-4 flex flex-col justify-center shadow-sm">
-                <div className="flex justify-between items-start">
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">% Aceptación</p>
-                </div>
-                <h3 className="text-2xl font-bold text-brand-600 dark:text-brand-400 mt-1">92% <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium ml-1">margen +-$5k</span></h3>
+              ))}
+              <div className="bg-slate-900 dark:bg-nexus-blue/20 rounded-[32px] p-6 shadow-xl border border-slate-800 dark:border-nexus-blue/20 relative overflow-hidden group">
+                <p className="text-[9px] text-white/60 dark:text-nexus-blue uppercase font-black tracking-widest leading-none">{t('dash_stat_conversion')}</p>
+                <h3 className="text-3xl font-black text-white mt-2 italic">0%</h3>
+              </div>
             </div>
 
-            <div className="glass-panel text-left bg-gradient-to-br from-brand-50 to-white dark:from-dark-panel dark:to-[#161a22] rounded-xl p-4 flex flex-col justify-center shadow-sm relative overflow-hidden">
-                <p className="text-[10px] text-brand-600 dark:text-brand-300 uppercase font-bold tracking-wider relative z-10 leading-tight">Variación ACM vs Venta</p>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1 relative z-10 tracking-tight flex items-end">
-                    +4.5% 
-                    <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 ml-2 mb-1.5">promedio</span>
-                </h3>
+            {/* Filter Tabs */}
+            <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center shadow-inner overflow-x-auto no-scrollbar">
+              {tabs.map((tab, idx) => (
+                <button key={idx} className={`flex-1 py-3 px-4 rounded-xl transition-all ${idx === 0 ? 'bg-white dark:bg-slate-700 text-nexus-blue dark:text-white shadow-sm' : 'text-slate-500'}`}>
+                  {t(tab.key)}{tab.count ? ` ${tab.count}` : ''}
+                </button>
+              ))}
             </div>
-          </div>
 
-          <div className="flex justify-between items-end mb-4 px-1">
-             <div className="flex space-x-2">
-                 <button className="bg-gray-200 dark:bg-dark-panel border border-brand-500/30 text-brand-700 dark:text-brand-300 px-3 py-2 rounded-lg text-xs font-semibold transition-colors shadow-sm flex items-center">
-                     Todos
-                 </button>
-             </div>
-             <button className="bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white px-5 py-2.5 rounded-lg text-xs font-bold shadow-lg shadow-brand-500/25 flex items-center transition-all transform hover:scale-105">
-                 <span>Nuevo ACM</span>
-             </button>
-          </div>
-
-          {/* Table */}
-          <div className="bg-white dark:bg-dark-panel rounded-xl shadow-xl border border-gray-200 dark:border-dark-border transition-colors pb-16">
+            {/* Table */}
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
               <table className="w-full text-left border-collapse">
-                  <thead>
-                      <tr className="bg-gray-50 dark:bg-dark-bg/50 border-b border-gray-200 dark:border-dark-border">
-                          <th className="py-3 px-5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Propiedad / Lead</th>
-                          <th className="py-3 px-5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Zona Geográfica</th>
-                          <th className="py-3 px-5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status pipeline</th>
-                          <th className="py-3 px-5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Acción</th>
-                      </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-dark-border relative">
-                      <tr className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors group">
-                          <td className="py-4 px-5">
-                              <div className="flex items-center cursor-pointer">
-                                  <div>
-                                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Lote de Desarrollo Uvita</p>
-                                  </div>
-                              </div>
-                          </td>
-                          <td className="py-4 px-5"><p className="text-sm text-gray-700 dark:text-gray-300 font-medium">Uvita</p></td>
-                          <td className="py-4 px-5">
-                             <div className="inline-flex cursor-pointer items-center justify-center w-28 px-2 py-1.5 rounded text-[10px] font-bold badge-draft uppercase tracking-wider border border-gray-300/50">
-                                  Configuración
-                              </div>
-                          </td>
-                          <td className="py-4 px-5 text-right">
-                              <button className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-white bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border hover:bg-brand-500 dark:hover:bg-brand-600 px-3 py-1.5 rounded transition-all shadow-sm">Editar</button>
-                          </td>
-                      </tr>
-                  </tbody>
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+                    {headers.map((key, idx) => (
+                      <th key={idx} className="py-4 px-6 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{t(key)}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                  <tr>
+                    <td colSpan={5} className="py-16 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-3">
+                        <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-300 dark:text-slate-600">
+                          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        </div>
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Sin entrevistas registradas</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
               </table>
+            </div>
+          </div>
+
+          <hr className="border-slate-100 dark:border-slate-800" />
+
+          {/* ── REGISTRO ACM ── */}
+          <div className="fade-in space-y-6 pb-12">
+            <div className="flex justify-between items-end px-1">
+              <div>
+                <h2 className="text-3xl nexus-header text-nexus-blue dark:text-white leading-none">{t('dash_acm_title')}</h2>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 font-black uppercase tracking-widest">{t('dash_acm_subtitle')}</p>
+              </div>
+              <button className="bg-nexus-blue hover:bg-blue-700 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 transition-all transform hover:scale-105 active:scale-95">
+                {t('dash_btn_new_acm')}
+              </button>
+            </div>
+            
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] p-12 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-center space-y-4">
+               <div className="w-16 h-16 rounded-3xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-300 dark:text-slate-600">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+               </div>
+               <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{t('dash_acm_empty')}</p>
+            </div>
           </div>
 
         </div>
