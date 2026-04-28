@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RISE Costa Rica | Community Newsletter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,700;1,300&family=Raleway:wght@200;300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; background-color: #f9f8f2; font-family: 'Raleway', Helvetica, Arial, sans-serif; color: #4A4F41; -webkit-font-smoothing: antialiased; }
+        table { border-spacing: 0; width: 100%; border-collapse: collapse; }
+        td { padding: 0; vertical-align: top; }
+        img { border: 0; display: block; max-width: 100%; height: auto; }
+        
+        .wrapper { width: 100%; table-layout: fixed; background-color: #f9f8f2; padding-bottom: 30px; }
+        .main { background-color: #f9f8f2; margin: 0 auto; width: 100%; max-width: 800px; }
+        .content-padding { padding: 30px 50px; }
+        
+        h1, h2, h3 { text-align: center; margin: 0 0 10px 0; }
+        h1 { font-family: 'Merriweather', serif; font-size: 28px; font-weight: 300; line-height: 1.2; font-style: italic; color: #5D6451; }
+        h2 { font-family: 'Merriweather', serif; font-size: 22px; font-weight: 300; line-height: 1.3; font-style: italic; color: #5D6451; }
+        h3 { font-family: 'Raleway', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: #8C927D; }
+        p { font-family: 'Raleway', sans-serif; font-size: 15px; line-height: 1.6; color: #5D6451; margin-bottom: 12px; font-weight: 300; }
+        
+        .stats-table { margin: 15px 0; border-top: 1px solid #E7D9C2; border-bottom: 1px solid #E7D9C2; padding: 20px 0; }
+        .stat-num { font-family: 'Merriweather', serif; font-size: 32px; color: #5D6451; text-align: center; }
+        .stat-desc { font-size: 9px; font-family: 'Raleway', sans-serif; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; color: #8C927D; text-align: center; }
+
+        .hook-box { background-color: #FBF9F4; border: 1px solid #E7D9C2; padding: 35px; text-align: center; margin: 25px 0; border-radius: 4px; }
+        .hook-title { font-family: 'Merriweather', serif; font-size: 26px; font-weight: 700; color: #5D6451; margin-bottom: 15px; display: block; }
+        .hook-text { font-family: 'Raleway', sans-serif; font-size: 18px; line-height: 1.6; color: #5D6451; font-weight: 400; }
+
+        .btn-elegant { background-color: #5D6451; color: #f9f8f2 !important; padding: 18px 45px; text-decoration: none; font-size: 10px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; display: inline-block; border-radius: 2px; }
+
+        /* ===== MOBILE RESPONSIVE ===== */
+        @media screen and (max-width: 600px) {
+            .content-padding { padding: 22px 16px !important; }
+            h1 { font-size: 22px !important; }
+            h2 { font-size: 18px !important; }
+            h3 { font-size: 9px !important; letter-spacing: 2px !important; }
+            p { font-size: 14px !important; line-height: 1.5 !important; }
+            .header { padding: 18px !important; }
+            .bio-card-inner { padding: 25px 16px !important; }
+            .family-intro { font-size: 15px !important; line-height: 1.5 !important; }
+            .family-details { font-size: 13px !important; }
+            .family-welcome { font-size: 14px !important; }
+            .stat-num { font-size: 24px !important; }
+            .stat-desc { font-size: 8px !important; letter-spacing: 1px !important; }
+            .stat-big { font-size: 48px !important; }
+            .grid-cell { width: 50% !important; display: inline-block !important; vertical-align: top !important; }
+            .hook-box { padding: 20px 14px !important; margin: 15px 0 !important; }
+            .hook-title { font-size: 20px !important; }
+            .hook-text { font-size: 15px !important; }
+            .btn-elegant { 
+                padding: 16px 30px !important; 
+                font-size: 10px !important; 
+                letter-spacing: 2px !important;
+                display: block !important;
+                text-align: center !important;
+                margin-left: 10px !important;
+                margin-right: 10px !important;
+            }
+            .cta-section { padding: 25px 16px 35px !important; }
+            .cta-section h2 { font-size: 20px !important; }
+            .footer-section { padding: 25px 15px !important; }
+            .school-photo-col { display: block !important; width: 100% !important; text-align: center !important; }
+            .school-text-col { display: block !important; width: 100% !important; padding-left: 0 !important; padding-top: 15px !important; }
+        }
+
+        @media screen and (max-width: 380px) {
+            .content-padding { padding: 18px 12px !important; }
+            h1 { font-size: 20px !important; }
+            h2 { font-size: 16px !important; }
+            .stat-num { font-size: 20px !important; }
+            .stat-big { font-size: 40px !important; }
+            .hook-box { padding: 16px 12px !important; }
+            .hook-title { font-size: 18px !important; }
+            .btn-elegant { padding: 14px 20px !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <center class="wrapper">
+        <!-- View in Browser -->
+        <table width="100%" style="max-width: 800px;">
+            <tr>
+                <td style="padding: 12px 0; text-align: center;">
+                    <a href="{{ mirror }}" style="font-family: 'Raleway', sans-serif; font-size: 9px; color: #8C927D; text-decoration: underline; text-transform: uppercase; letter-spacing: 2px;">See in Browser</a>
+                </td>
+            </tr>
+        </table>
+
+        <table width="100%" class="main" style="max-width: 800px;">
+
+            <!-- ========== HEADER ========== -->
+            <tr>
+                <td style="text-align: center; padding: 25px; background-color: #5D6451;">
+                    <img src="https://risecostarica.com/wp-content/uploads/2022/01/RISE-Logo-text.png" alt="RISE" width="110" style="margin: 0 auto;">
+                </td>
+            </tr>
+
+            <!-- ========== HERO IMAGE ========== -->
+            <tr>
+                <td>
+                    <img src="https://img.mailinblue.com/4085147/images/content_library/original/69ee4e8e14ad20c7b2439272.png" alt="RISE Newsletter" style="width: 100%;">
+                </td>
+            </tr>
+
+            <!-- ========== INTRO ========== -->
+            <tr>
+                <td class="content-padding" style="padding: 30px 50px 10px; text-align: center;">
+                    <h2 style="margin-bottom: 15px;">Welcome to Our Community Newsletter</h2>
+                    <p style="text-align: center; max-width: 550px; margin-left: auto; margin-right: auto; font-size: 16px; line-height: 1.7;">We are truly humbled and excited to share with you everything that's been happening at RISE. From new families joining our community to construction milestones and school enrollment updates — there's so much to celebrate this month.</p>
+                </td>
+            </tr>
+
+            <!-- ========== SECTION 1: WELCOME NEW FAMILY ========== -->
+            <tr>
+                <td style="background-color: #ffffff; padding: 30px 50px;" class="content-padding">
+                    <h3>Welcome to a New Family</h3>
+                    <h2 style="margin-bottom: 25px;">A Warm Welcome to Our Newest Neighbors</h2>
+                    
+                    <!-- Family Bio Card -->
+                    <table width="100%" style="border: 1px solid #E7D9C2; background-color: #FBF9F4; border-radius: 4px; overflow: hidden;">
+                        <tr>
+                            <td class="bio-card-inner" style="padding: 40px 35px; text-align: center;">
+                                
+                                <h3 style="margin: 0 0 20px 0;">LOT #57</h3>
+
+                                <!-- Family portrait — swap src in Brevo -->
+                                <div style="margin-bottom: 25px;">
+                                    <img src="https://via.placeholder.com/220x280/EDE9DF/8C927D?text=Family+Photo" alt="New Family" width="220" style="width: 220px; margin: 0 auto; border: 6px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 2px;">
+                                </div>
+
+                                <p class="family-intro" style="font-family: 'Merriweather', serif; font-style: italic; font-size: 18px; line-height: 1.7; color: #5D6451; margin-bottom: 12px; font-weight: 300;">
+                                    [Insert a brief, warm introduction about the family — where they're from, what brought them to RISE, their story.]
+                                </p>
+
+                                <p class="family-details" style="font-family: 'Raleway', sans-serif; font-size: 14px; line-height: 1.8; color: #8C927D; margin-bottom: 20px; font-weight: 300; max-width: 500px; margin-left: auto; margin-right: auto;">
+                                    [Insert additional details — kids' ages, hobbies, interests, fun facts about the family.]
+                                </p>
+
+                                <p class="family-welcome" style="font-family: 'Raleway', sans-serif; font-weight: 600; font-size: 16px; color: #5D6451; margin: 0; letter-spacing: 1px;">
+                                    Welcome home, Brooks Family!
+                                </p>
+
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- ========== SECTION 2: DEVELOPMENT UPDATE / CONSTRUCTION ========== -->
+            <tr>
+                <td class="content-padding" style="padding: 30px 50px;">
+                    <h3>Development Update</h3>
+                    <h2>Building Toward September</h2>
+
+                    <p style="text-align: center;">Many families are planning their move to RISE with one clear goal in mind: <strong>being settled in time for the September school year.</strong> Construction is moving fast to make that happen.</p>
+
+                    <!-- Construction Stats Row -->
+                    <table width="100%" class="stats-table" style="margin: 15px 0; border-top: 1px solid #E7D9C2; border-bottom: 1px solid #E7D9C2; padding: 20px 0;">
+                        <tr>
+                            <td width="33%">
+                                <div class="stat-num">##</div>
+                                <div class="stat-desc">Completed</div>
+                            </td>
+                            <td width="33%" style="border-left: 1px solid #E7D9C2;">
+                                <div class="stat-num">##</div>
+                                <div class="stat-desc">Under Construction</div>
+                            </td>
+                            <td width="33%" style="border-left: 1px solid #E7D9C2;">
+                                <div class="stat-num">##</div>
+                                <div class="stat-desc">In Design</div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <p style="text-align: center;">From foundations going up to roofs being finished, the community is taking shape every single week. If your family wants to be part of the next school year at RISE, the time to start building is <strong>now</strong>.</p>
+                    
+                    <!-- Construction Photo Grid (3×2) -->
+                    <table width="100%" style="table-layout: fixed;">
+                        <tr>
+                            <td width="33.33%" style="padding: 4px;" class="grid-cell">
+                                <img src="https://img.mailinblue.com/4085147/images/content_library/original/69c07eaff3312ceeee4cb59a.jpg" alt="Construction 1" style="width: 100%; height: auto; object-fit: cover; border-radius: 2px;">
+                            </td>
+                            <td width="33.33%" style="padding: 4px;" class="grid-cell">
+                                <img src="https://img.mailinblue.com/4085147/images/content_library/original/69c07eaff3312ceeee4cb599.jpg" alt="Construction 2" style="width: 100%; height: auto; object-fit: cover; border-radius: 2px;">
+                            </td>
+                            <td width="33.33%" style="padding: 4px;" class="grid-cell">
+                                <img src="https://img.mailinblue.com/4085147/images/content_library/original/69c07cfbe16fcabad3fa48b8.jpg" alt="Construction 3" style="width: 100%; height: auto; object-fit: cover; border-radius: 2px;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px;" class="grid-cell">
+                                <img src="https://via.placeholder.com/260x180/EDE9DF/8C927D?text=Photo+4" alt="Construction 4" style="width: 100%; height: auto; object-fit: cover; border-radius: 2px;">
+                            </td>
+                            <td style="padding: 4px;" class="grid-cell">
+                                <img src="https://via.placeholder.com/260x180/EDE9DF/8C927D?text=Photo+5" alt="Construction 5" style="width: 100%; height: auto; object-fit: cover; border-radius: 2px;">
+                            </td>
+                            <td style="padding: 4px;" class="grid-cell">
+                                <img src="https://via.placeholder.com/260x180/EDE9DF/8C927D?text=Photo+6" alt="Construction 6" style="width: 100%; height: auto; object-fit: cover; border-radius: 2px;">
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- ========== SECTION 3: SCHOOL ENROLLMENT ========== -->
+            <tr>
+                <td class="content-padding" style="padding: 30px 50px;">
+                    <h3>Life at RISE School</h3>
+                    <h2>School Enrollment Is Now Open</h2>
+                    <p style="text-align: center;">The future of education in our community is taking shape — and the numbers speak for themselves.</p>
+
+                    <!-- School Stats highlight -->
+                    <div class="hook-box">
+                        <div class="stat-num stat-big" style="font-size: 64px; line-height: 1; margin-bottom: 5px;">~60</div>
+                        <div class="stat-desc" style="margin-bottom: 20px;">Students enrolled for next year</div>
+                        <p style="text-align: center; font-size: 15px;">We are proud to share that approximately <strong>60 children</strong> are already enrolled in the RISE school for the upcoming academic year. 🎓</p>
+                        <p style="text-align: center; font-size: 15px;">This milestone reflects the trust our families place in the educational vision we are building together — a nature-based, bilingual environment designed to nurture curious, confident, and compassionate kids.</p>
+                    </div>
+
+                    <!-- School photo + text side-by-side -->
+                    <table width="100%" style="margin: 15px 0 20px; border: 1px solid #E7D9C2; background-color: #FBF9F4; border-radius: 4px; overflow: hidden;">
+                        <tr>
+                            <td width="40%" class="school-photo-col" style="vertical-align: middle;">
+                                <img src="https://img.mailinblue.com/4085147/images/content_library/original/68f0aea5da393328fd38b633.jpeg" alt="RISE School" style="width: 100%; height: auto; display: block;">
+                            </td>
+                            <td width="60%" class="school-text-col" style="vertical-align: middle; padding: 25px 30px;">
+                                <p style="font-family: 'Merriweather', serif; font-style: italic; font-size: 17px; line-height: 1.6; color: #5D6451; margin-bottom: 10px; font-weight: 300;">
+                                    Enrollment is still open.
+                                </p>
+                                <p style="font-size: 14px; line-height: 1.7; color: #5D6451; margin-bottom: 0;">
+                                    If your family is ready to give your children a world-class education surrounded by nature, now is the time.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- ========== SECTION 4: FINANCING ========== -->
+            <tr>
+                <td class="content-padding" style="padding: 30px 50px;">
+                    <h3>Built for Your Family</h3>
+                    <h2>Introducing New Financing at RISE</h2>
+                    
+                    <!-- Financing infographic image -->
+                    <div style="text-align: center; margin: 15px 0;">
+                        <img src="https://img.mailinblue.com/4085147/images/content_library/original/6962d28f7e831ca2c055f895.png" alt="RISE Financing" style="width: 100%; max-width: 649px; margin: 0 auto;">
+                    </div>
+
+                    <p style="text-align: center;">At RISE, we've developed a new, streamlined financing path — designed specifically to make your move to RISE more accessible.</p>
+
+                    <div class="hook-box">
+                        <span class="hook-title">Turn $175K into a $600K Home</span>
+                        <div class="hook-text">
+                            <p style="text-align: center;">Stop dreaming and start packing! <br> With $175K cash, you can walk into a stunning $600K home and instantly own $180K in equity.</p>
+                            <p style="text-align: center;">Lock in a predictable payment of under $4,000 a month and finally call it yours.</p>
+                            <p style="text-align: center;"><strong>Are you ready to start your move to RISE?</strong></p>
+                        </div>
+                    </div>
+
+                    <p style="text-align: center;">This is more than a financial structure — it's the bridge to the life you want for you and your family. Let's start building your home in the best environment for your kids to grow, today.</p>
+                </td>
+            </tr>
+
+            <!-- ========== SECTION 5: VIDEO ========== -->
+            <tr>
+                <td class="content-padding" style="padding: 30px 50px 10px;">
+                    <h3>Life at RISE</h3>
+                    <h2>See What Awaits You</h2>
+                    <p style="text-align: center;">Take a closer look at the community, the nature, and the lifestyle that make RISE truly special.</p>
+
+                    <div style="position: relative; padding: 8px; background: #ffffff; border: 1px solid #E7D9C2; margin: 15px 0; text-align: center;">
+                        <a href="https://youtu.be/BUIfTHawyv0" target="_blank" style="display: block; position: relative;">
+                            <img src="https://img.youtube.com/vi/BUIfTHawyv0/maxresdefault.jpg" alt="Life at RISE Video" style="width: 100%;">
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background: rgba(249, 248, 242, 0.9); border-radius: 50%;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#5D6451" style="margin: 18px auto; display: block;"><path d="M8 5V19L19 12L8 5Z"></path></svg>
+                            </div>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+
+            <!-- ========== CTA / CLOSING ========== -->
+            <tr>
+                <td class="cta-section" style="text-align: center; padding: 30px 50px 50px;">
+                    <h2 style="font-size: 24px; margin-bottom: 12px;">Your HOME at RISE is waiting...</h2>
+                    <p style="margin-bottom: 25px; max-width: 500px; margin-left: auto; margin-right: auto; text-align: center;">
+                        Join a community where global hearts take root in Costa Rican soil. We invite you to be part of the RISE family and start your journey home today.
+                    </p>
+                    <a href="https://risecostarica.com/meetings/" class="btn-elegant">Schedule a Meeting</a>
+                </td>
+            </tr>
+
+            <!-- ========== FOOTER ========== -->
+            <tr>
+                <td class="footer-section" style="padding: 30px 20px; text-align: center; background-color: #F1EEE4;">
+                    <p style="font-size: 9px; letter-spacing: 2px; color: #8C927D; margin-bottom: 5px;">Pérez Zeledón, Costa Rica</p>
+                    <a href="https://www.risecostarica.com" style="color: #5D6451; text-decoration: none; font-size: 10px; font-weight: 600; letter-spacing: 1px;">WWW.RISECOSTARICA.COM</a><br><br>
+                    <a href="{{ unsubscribe }}" style="font-size: 9px; color: #8C927D; text-decoration: underline;">Unsubscribe</a>
+                </td>
+            </tr>
+
+        </table>
+    </center>
+
+</body>
+</html>

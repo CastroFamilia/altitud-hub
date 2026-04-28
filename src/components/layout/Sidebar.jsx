@@ -3,10 +3,17 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useApp } from '@/lib/context';
+import { useAuth } from '@/lib/auth-context';
 
 export default function Sidebar() {
   const { t } = useApp();
+  const { profile, isBroker, isTeamLeader, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const displayName = profile?.full_name || 'Agente';
+  const displayEmail = profile?.email || '';
+  const avatarUrl = profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=5a82bf&color=fff`;
 
   const navContent = (
     <>
@@ -83,17 +90,64 @@ export default function Sidebar() {
             <span className="ml-auto text-[9px] bg-gray-200 dark:bg-dark-border px-1.5 py-0.5 rounded text-gray-500 dark:text-gray-400">{t('nav_soon')}</span>
           </a>
 
+          {/* ── ADMIN (Role-based) ── */}
+          {(isBroker || isTeamLeader) && (
+            <>
+              <div className="mt-6 mb-2 px-3 text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wider">Administración</div>
+              
+              {isTeamLeader && (
+                <Link href="/equipo" onClick={() => setMobileOpen(false)} className="nav-item flex items-center px-3 py-2.5 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                  <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  <span className="nexus-header text-[11px] text-gray-800 dark:text-white leading-none">Mi Equipo</span>
+                </Link>
+              )}
+
+              {isBroker && (
+                <Link href="/oficina" onClick={() => setMobileOpen(false)} className="nav-item flex items-center px-3 py-2.5 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                  <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                  <span className="nexus-header text-[11px] text-gray-800 dark:text-white leading-none">Panel de Oficina</span>
+                </Link>
+              )}
+            </>
+          )}
         </nav>
       </div>
 
-      {/* User */}
-      <div className="h-16 md:h-20 border-t border-gray-200 dark:border-dark-border flex items-center px-4 md:px-6 hover:bg-brand-50 dark:hover:bg-white/5 cursor-pointer transition-colors">
-        <img src="https://ui-avatars.com/api/?name=Agente+Top&background=5a82bf&color=fff" className="w-8 h-8 md:w-9 md:h-9 rounded-full mr-3 border-2 border-brand-200 dark:border-dark-border" alt="Avatar" />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800 dark:text-white truncate">Agente Top</p>
-          <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{t('agent_hq')}</p>
+      {/* User — now with real data */}
+      <div className="relative">
+        <div 
+          onClick={() => setShowUserMenu(!showUserMenu)}
+          className="h-16 md:h-20 border-t border-gray-200 dark:border-dark-border flex items-center px-4 md:px-6 hover:bg-brand-50 dark:hover:bg-white/5 cursor-pointer transition-colors"
+        >
+          <img src={avatarUrl} className="w-8 h-8 md:w-9 md:h-9 rounded-full mr-3 border-2 border-brand-200 dark:border-dark-border object-cover" alt="Avatar" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-800 dark:text-white truncate">{displayName}</p>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+              {profile?.role === 'broker' ? '🏢 Broker' : profile?.role === 'team_leader' ? '👥 Team Leader' : t('agent_hq')}
+            </p>
+          </div>
+          <svg className={`w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+          </svg>
         </div>
-        <svg className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
+
+        {/* User dropdown menu */}
+        {showUserMenu && (
+          <div className="absolute bottom-full left-0 right-0 mx-3 mb-1 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 py-2 z-50">
+            <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-700">
+              <p className="text-[10px] text-slate-400 truncate">{displayEmail}</p>
+            </div>
+            <button
+              onClick={() => { signOut(); setShowUserMenu(false); }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Cerrar Sesión
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

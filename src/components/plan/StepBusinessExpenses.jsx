@@ -7,6 +7,42 @@ import { formatMoney, convertCurrency } from './PlanWizard';
 const ICONS = { office: '🏢', signs: '🪧', gas: '⛽', phone: '📱', marketing: '📣', convention: '✈️', training: '📖', platforms: '💻', custom: '➕' };
 const CATEGORIES = ['office', 'signs', 'gas', 'phone', 'marketing', 'convention', 'training', 'platforms'];
 
+/* ═══════════════════════════════════════════════════════
+   COMMISSION PLANS — RE/MAX Altitud
+   ═══════════════════════════════════════════════════════ */
+const COMMISSION_PLANS = [
+  {
+    id: 'plan_45',
+    split: 45,
+    fee: 75,
+    color: 'from-blue-500 to-blue-400',
+    bgLight: 'bg-blue-50 dark:bg-blue-500/10',
+    borderActive: 'border-blue-400 dark:border-blue-500',
+    ring: 'ring-blue-400',
+    emoji: '🌱',
+  },
+  {
+    id: 'plan_60',
+    split: 60,
+    fee: 200,
+    color: 'from-purple-500 to-violet-400',
+    bgLight: 'bg-purple-50 dark:bg-purple-500/10',
+    borderActive: 'border-purple-400 dark:border-purple-500',
+    ring: 'ring-purple-400',
+    emoji: '⚡',
+  },
+  {
+    id: 'plan_80',
+    split: 80,
+    fee: 500,
+    color: 'from-amber-500 to-yellow-400',
+    bgLight: 'bg-amber-50 dark:bg-amber-500/10',
+    borderActive: 'border-amber-400 dark:border-amber-500',
+    ring: 'ring-amber-400',
+    emoji: '🏆',
+  },
+];
+
 export default function StepBusinessExpenses({ plan, updatePlan }) {
   const { t } = useApp();
 
@@ -24,6 +60,28 @@ export default function StepBusinessExpenses({ plan, updatePlan }) {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const selectedPlan = COMMISSION_PLANS.find(p => p.split === (plan.agent_split_pct || 0));
+
+  const selectCommissionPlan = (cp) => {
+    const feeAmount = cp.fee;
+    // Fee is in USD — convert if needed
+    const feeInPlanCurrency = plan.currency === 'CRC'
+      ? Math.round(feeAmount * (plan.exchange_rate || 530))
+      : feeAmount;
+
+    // Update the office fee in business expenses
+    const expenses = [...(plan.business_expenses || [])];
+    const officeIdx = expenses.findIndex(e => e.category === 'office');
+    if (officeIdx >= 0) {
+      expenses[officeIdx] = { ...expenses[officeIdx], amount: feeInPlanCurrency, annual: false };
+    }
+    updatePlan({
+      agent_split_pct: cp.split,
+      commission_plan: cp.id,
+      business_expenses: expenses,
+    });
+  };
 
   const expenses = plan.business_expenses || [];
   const livingTotal = plan.total_living_monthly || 0;
@@ -69,14 +127,76 @@ export default function StepBusinessExpenses({ plan, updatePlan }) {
         </p>
       </div>
 
-      {/* Expense Items */}
+      {/* ── Commission System Selector ── */}
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white dark:bg-dark-panel rounded-3xl shadow-xl border border-gray-200 dark:border-dark-border p-6 space-y-4">
+          <div className="text-center">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest flex items-center justify-center gap-2">
+              🏅 {t('pw_s3_split_title')}
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('pw_s3_split_subtitle')}</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            {COMMISSION_PLANS.map((cp) => {
+              const isSelected = selectedPlan?.id === cp.id;
+              return (
+                <button
+                  key={cp.id}
+                  onClick={() => selectCommissionPlan(cp)}
+                  className={`relative rounded-2xl p-4 md:p-5 border-2 transition-all duration-200 text-center group ${
+                    isSelected
+                      ? `${cp.borderActive} ${cp.bgLight} shadow-lg scale-[1.02] ring-2 ${cp.ring} ring-offset-2 dark:ring-offset-gray-800`
+                      : 'border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md'
+                  }`}
+                >
+                  {isSelected && (
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center shadow-md">
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+
+                  <span className="text-2xl md:text-3xl block mb-2">{cp.emoji}</span>
+
+                  <div className={`text-3xl md:text-4xl font-black italic bg-gradient-to-r ${cp.color} bg-clip-text text-transparent leading-none`}>
+                    {cp.split}%
+                  </div>
+
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mt-2">
+                    {t('pw_s3_split_commission')}
+                  </p>
+
+                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-dark-border">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                      {t('pw_s3_split_fee')}
+                    </p>
+                    <p className="text-lg font-black text-gray-900 dark:text-white mt-0.5">
+                      ${cp.fee}
+                    </p>
+                    <p className="text-[9px] text-gray-400">USD/mes</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Expense Items ── */}
       <div className="max-w-2xl mx-auto space-y-2">
         {expenses.map((exp, i) => {
+          const isOfficeFee = exp.category === 'office';
           const monthlyEquiv = exp.annual ? Math.round((Number(exp.amount) || 0) / 12) : null;
           return (
             <div
               key={exp.id || i}
-              className="bg-white dark:bg-dark-panel rounded-2xl shadow-sm border border-gray-200 dark:border-dark-border p-4 group hover:shadow-md transition-all"
+              className={`bg-white dark:bg-dark-panel rounded-2xl shadow-sm border p-4 group hover:shadow-md transition-all ${
+                isOfficeFee && selectedPlan
+                  ? 'border-teal-300 dark:border-teal-700 bg-teal-50/50 dark:bg-teal-500/5'
+                  : 'border-gray-200 dark:border-dark-border'
+              }`}
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-500/10 flex items-center justify-center text-lg shrink-0">
@@ -92,9 +212,16 @@ export default function StepBusinessExpenses({ plan, updatePlan }) {
                       className="w-full text-sm font-semibold text-gray-900 dark:text-white bg-transparent border-0 border-b border-dashed border-gray-200 dark:border-dark-border focus:outline-none focus:border-teal-400 pb-0.5"
                     />
                   ) : (
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {t(`pw_s3_cat_${exp.category}`)}
-                    </span>
+                    <div>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {t(`pw_s3_cat_${exp.category}`)}
+                      </span>
+                      {isOfficeFee && selectedPlan && (
+                        <span className="text-[9px] font-bold text-teal-600 dark:text-teal-400 ml-2 bg-teal-100 dark:bg-teal-500/10 px-1.5 py-0.5 rounded">
+                          {selectedPlan.split}% plan
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
@@ -146,7 +273,7 @@ export default function StepBusinessExpenses({ plan, updatePlan }) {
         </button>
       </div>
 
-      {/* Totals */}
+      {/* ── Totals ── */}
       <div className="max-w-2xl mx-auto space-y-3">
         <div className="bg-teal-50 dark:bg-teal-500/5 rounded-2xl p-4 border border-teal-200 dark:border-teal-800">
           <div className="flex items-center justify-between">
