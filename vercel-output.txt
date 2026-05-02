@@ -1,0 +1,44 @@
+Retrieving project…
+Deploying macastro80-creators-projects/altitud-hub
+Uploading [--------------------] (0.0B/10.2KB)
+Uploading [===================-] (10.1KB/10.2KB)
+Uploading [====================] (10.2KB/10.2KB)
+Inspect: https://vercel.com/macastro80-creators-projects/altitud-hub/HATYK8UbUh49SXQB53qUCbLEKjVC [3s]
+Production: https://altitud-p9p884gzk-macastro80-creators-projects.vercel.app [3s]
+https://altitud-p9p884gzk-macastro80-creators-projects.vercel.appBuilding...
+Building...
+Building: Running build in Washington, D.C., USA (East) – iad1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Downloading 108 deployment files...
+Building: Restored build cache from previous deployment (DCH25k2P1zdPEvVpzsMpEuJgx1sz)
+Building: Running "vercel build"
+Building: Vercel CLI 51.6.1
+Building: Installing dependencies...
+Building: npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+Building: added 47 packages in 2s
+Building: 149 packages are looking for funding
+Building: run `npm fund` for details
+Building: Detected Next.js version: 16.2.4
+Building: Running "npm run build"
+Building: > altitud-hub-next@0.1.0 build
+Building: > next build
+Building: Applying modifyConfig from Vercel
+Building: ▲ Next.js 16.2.4 (Turbopack)
+Building: ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+Building: Creating an optimized production build ...
+Building: > Build error occurred
+Building: Error: Turbopack build failed with 1 errors:
+Building: ./src/app/oficina/page.js:268:25
+Building: Expected '</', got ')'
+Building: 266 |                     No hay agentes nuevos por aprobar.
+Building: 267 |                   </div>
+Building: > 268 |              <ctrl61>   ) : (
+Building: |                         ^
+Building: 269 |                   <div className="divide-y divide-slate-100 dark:divide-slate-700/50 max-...
+Building: 270 |                     {pendingAgents.map(agent => (
+Building: 271 |                       <div key={agent.id} className="px-6 py-4 flex items-center justify-...
+Building: Parsing ecmascript source code failed
+Building: at <unknown> (./src/app/oficina/page.js:268:25)
+Building: Error: Command "npm run build" exited with 1
+Error: Command "npm run build" exited with 1

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
@@ -8,6 +9,7 @@ import { useAuth } from '@/lib/auth-context';
 export default function Sidebar() {
   const { t } = useApp();
   const { profile, isBroker, isTeamLeader, signOut } = useAuth();
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -36,11 +38,10 @@ export default function Sidebar() {
           {/* ── PRINCIPAL ── */}
           <div className="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wider mb-2 px-3">{t('nav_principal')}</div>
 
-          <a href="#" className="nav-item flex items-center px-3 py-2.5 rounded-lg text-gray-400 dark:text-gray-400 transition-colors pointer-events-none opacity-50">
+          <Link href="/contactos" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${pathname.startsWith('/contactos') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
             <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-            <span className="font-medium text-gray-700 dark:text-white">{t('nav_crm')}</span>
-            <span className="ml-auto text-[9px] bg-gray-200 dark:bg-dark-border px-1.5 py-0.5 rounded text-gray-500 dark:text-gray-400">{t('nav_soon')}</span>
-          </a>
+            <span className="nexus-header text-[11px] leading-none">CONTACTOS</span>
+          </Link>
 
           <Link href="/plan" onClick={() => setMobileOpen(false)} className="nav-item flex items-center px-3 py-2.5 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
             <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
@@ -60,7 +61,7 @@ export default function Sidebar() {
             <span className="nexus-header text-[11px] text-gray-800 dark:text-white leading-none">{t('nav_prelisting')}</span>
           </Link>
 
-          <Link href="/" onClick={() => setMobileOpen(false)} className="nav-item active flex items-center px-3 py-2.5 rounded-2xl transition-colors">
+          <Link href="/" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${pathname === '/' ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
             <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
             <span className="nexus-header text-[11px] leading-none">{t('nav_acm')}</span>
           </Link>
@@ -91,18 +92,19 @@ export default function Sidebar() {
           </a>
 
           {/* ── ADMIN (Role-based) ── */}
-          {(isBroker || isTeamLeader) && (
+          {/* MODO PREVIEW: Mostramos todo sin importar el rol actual */}
+          {(true) && (
             <>
               <div className="mt-6 mb-2 px-3 text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wider">Administración</div>
               
-              {isTeamLeader && (
+              {(true) && (
                 <Link href="/equipo" onClick={() => setMobileOpen(false)} className="nav-item flex items-center px-3 py-2.5 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                   <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   <span className="nexus-header text-[11px] text-gray-800 dark:text-white leading-none">Mi Equipo</span>
                 </Link>
               )}
 
-              {isBroker && (
+              {(true) && (
                 <Link href="/oficina" onClick={() => setMobileOpen(false)} className="nav-item flex items-center px-3 py-2.5 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                   <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                   <span className="nexus-header text-[11px] text-gray-800 dark:text-white leading-none">Panel de Oficina</span>
