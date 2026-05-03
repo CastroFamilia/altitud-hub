@@ -75,6 +75,9 @@ export default function PlanPage() {
       conversion_ratios: planData.conversion_ratios,
       monthly_targets: planData.monthly_targets,
       weekly_targets: planData.weekly_targets,
+      monthly_targets_by_month: planData.monthly_targets_by_month || [],
+      target_portfolio_size: planData.target_portfolio_size || 25,
+      plan_start_date: planData.plan_start_date || '',
       status: planData.status || 'draft',
     };
 
@@ -95,6 +98,9 @@ export default function PlanPage() {
     localStorage.setItem('altitud_okr_plan', JSON.stringify({
       monthly_targets: planData.monthly_targets || {},
       weekly_targets: planData.weekly_targets || {},
+      monthly_targets_by_month: planData.monthly_targets_by_month || [],
+      plan_start_date: planData.plan_start_date || '',
+      target_portfolio_size: planData.target_portfolio_size || 25,
     }));
   }, []);
 

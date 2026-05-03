@@ -438,7 +438,13 @@ export default function OKRDashboard() {
         setHasPlan(parsed.status === 'active');
         // If active plan has targets, use them
         if (parsed.monthly_targets && Object.keys(parsed.monthly_targets).length > 0) {
-          setPlan({ monthly_targets: parsed.monthly_targets, weekly_targets: parsed.weekly_targets || {} });
+          setPlan({
+            monthly_targets: parsed.monthly_targets,
+            weekly_targets: parsed.weekly_targets || {},
+            monthly_targets_by_month: parsed.monthly_targets_by_month || [],
+            plan_start_date: parsed.plan_start_date || '',
+            target_portfolio_size: parsed.target_portfolio_size || 25,
+          });
         }
       } catch { /* ignore */ }
     }
@@ -461,19 +467,54 @@ export default function OKRDashboard() {
 
   // Current dates (for summary cards — always current period)
   const weekDates=new Set(getWeekDates()); const monthDates=new Set(getMonthDates()); const ytdDates=new Set(getYTDDates());
+
+  // Helper: get the relative month index (0-11) from plan_start_date
+  const getRelativeMonth = (year, month) => {
+    if (!plan.plan_start_date) return month;
+    const [sy, sm] = plan.plan_start_date.split('-').map(Number);
+    if (!sy || isNaN(sm)) return month;
+    const relM = (year - sy) * 12 + (month - (sm - 1));
+    return Math.max(0, Math.min(11, relM));
+  };
+
+  // Get target for a specific activity for a specific month (uses progressive if available)
+  const getMonthTarget = (actKey, year, month) => {
+    const byMonth = plan.monthly_targets_by_month;
+    if (byMonth && byMonth.length === 12) {
+      const relM = getRelativeMonth(year, month);
+      return byMonth[relM]?.[actKey] ?? (plan.monthly_targets[actKey] || 0);
+    }
+    return plan.monthly_targets[actKey] || 0;
+  };
+
+  // Get cumulative YTD target (sum of per-month targets for months elapsed)
+  const getYtdTarget = (actKey, year) => {
+    const byMonth = plan.monthly_targets_by_month;
+    if (byMonth && byMonth.length === 12) {
+      const monthsToSum = year === now.getFullYear() ? now.getMonth() + 1 : 12;
+      let total = 0;
+      for (let m = 0; m < monthsToSum; m++) {
+        const relM = getRelativeMonth(year, m);
+        total += byMonth[relM]?.[actKey] ?? (plan.monthly_targets[actKey] || 0);
+      }
+      return total;
+    }
+    const monthsE = year === now.getFullYear() ? now.getMonth() + 1 : 12;
+    return (plan.monthly_targets[actKey] || 0) * monthsE;
+  };
   const monthsElapsed=new Date().getMonth()+1;
 
   // How many months elapsed in the selected year for YTD target calculation
   const navMonthsElapsed = selectedYear === now.getFullYear() ? now.getMonth() + 1 : 12;
 
   const overallYTD = mounted ? Math.round(ACTIVITIES.reduce((s,a)=>{
-    const act=sumEntries(entries,ytdDates,a.key); const tgt=(plan.monthly_targets[a.key]||0)*monthsElapsed;
+    const act=sumEntries(entries,ytdDates,a.key); const tgt=getYtdTarget(a.key, now.getFullYear());
     return s+completionPct(act,tgt);
   },0)/ACTIVITIES.length) : 0;
 
   // Monthly plan compliance
   const monthCompliance = mounted ? Math.round(ACTIVITIES.reduce((s,a)=>{
-    const act=sumEntries(entries,monthDates,a.key); const tgt=plan.monthly_targets[a.key]||0;
+    const act=sumEntries(entries,monthDates,a.key); const tgt=getMonthTarget(a.key, now.getFullYear(), now.getMonth());
     return s+completionPct(act,tgt);
   },0)/ACTIVITIES.length) : 0;
 
@@ -578,11 +619,11 @@ export default function OKRDashboard() {
               </div>
               <div className="glass-panel rounded-xl p-3 flex flex-col justify-center shadow-sm">
                 <p className="text-[8px] md:text-[9px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">{t('okr_closes_ytd')}</p>
-                <h3 className="text-lg md:text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{mounted?sumEntries(entries,ytdDates,'cierres'):0}<span className="text-[10px] text-gray-400 font-medium ml-1">/{plan.monthly_targets.cierres*12}</span></h3>
+                <h3 className="text-lg md:text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{mounted?sumEntries(entries,ytdDates,'cierres'):0}<span className="text-[10px] text-gray-400 font-medium ml-1">/{getYtdTarget('cierres', now.getFullYear())}</span></h3>
               </div>
               <div className="glass-panel rounded-xl p-3 flex flex-col justify-center shadow-sm">
                 <p className="text-[8px] md:text-[9px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">{t('okr_captures_ytd')}</p>
-                <h3 className="text-lg md:text-xl font-bold text-teal-600 dark:text-teal-400 mt-0.5">{mounted?sumEntries(entries,ytdDates,'captaciones'):0}<span className="text-[10px] text-gray-400 font-medium ml-1">/{plan.monthly_targets.captaciones*monthsElapsed}</span></h3>
+                <h3 className="text-lg md:text-xl font-bold text-teal-600 dark:text-teal-400 mt-0.5">{mounted?sumEntries(entries,ytdDates,'captaciones'):0}<span className="text-[10px] text-gray-400 font-medium ml-1">/{getYtdTarget('captaciones', now.getFullYear())}</span></h3>
               </div>
               <div className="glass-panel rounded-xl p-3 flex flex-col justify-center shadow-sm">
                 <p className="text-[8px] md:text-[9px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">{t('okr_streak_label')}</p>
@@ -626,8 +667,8 @@ export default function OKRDashboard() {
                 {mounted && ACTIVITIES.map(a => (
                   <StatRow key={a.key} activity={a} t={t}
                     weekVal={sumEntries(entries,navWeekDates,a.key)} weekTarget={plan.weekly_targets[a.key]}
-                    monthVal={sumEntries(entries,navMonthDates,a.key)} monthTarget={plan.monthly_targets[a.key]}
-                    ytdVal={sumEntries(entries,navYearDates,a.key)} ytdTarget={(plan.monthly_targets[a.key]||0)*navMonthsElapsed}
+                    monthVal={sumEntries(entries,navMonthDates,a.key)} monthTarget={getMonthTarget(a.key, selectedYear, selectedMonth)}
+                    ytdVal={sumEntries(entries,navYearDates,a.key)} ytdTarget={getYtdTarget(a.key, selectedYear)}
                   />
                 ))}
               </tbody>

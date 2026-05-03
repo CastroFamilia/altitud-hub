@@ -36,8 +36,11 @@ const DEFAULT_PLAN = {
     listing_to_capture: 0.65,
     capture_to_close: 0.50,
   },
+  target_portfolio_size: 25,
+  plan_start_date: new Date().toISOString().slice(0, 7), // YYYY-MM
   monthly_targets: {},
   weekly_targets: {},
+  monthly_targets_by_month: [], // array of 12 objects with per-month targets
   status: 'draft',
 };
 

@@ -226,13 +226,22 @@ export default function PrelistingDashboard() {
               <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Entrevistas Pre-Listing</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Gestión del funnel de captación y seguimiento de clientes.</p>
             </div>
-            <button 
-              onClick={() => setShowWizard(true)}
-              className="bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white px-6 py-3 rounded-xl text-xs font-bold shadow-xl shadow-brand-500/20 flex items-center transition-all transform hover:scale-[1.02] active:scale-95"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg>
-              Nueva Entrevista
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push('/prelisting/carpeta')}
+                className="bg-white dark:bg-dark-panel border-2 border-nexus-blue text-nexus-blue hover:bg-nexus-blue hover:text-white dark:hover:bg-nexus-blue px-5 py-3 rounded-xl text-xs font-bold shadow-lg flex items-center transition-all transform hover:scale-[1.02] active:scale-95"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                Carpeta Prelisting
+              </button>
+              <button 
+                onClick={() => setShowWizard(true)}
+                className="bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white px-6 py-3 rounded-xl text-xs font-bold shadow-xl shadow-brand-500/20 flex items-center transition-all transform hover:scale-[1.02] active:scale-95"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg>
+                Nueva Entrevista
+              </button>
+            </div>
           </div>
 
           {/* ── Status Filtering Tabs ── */}
