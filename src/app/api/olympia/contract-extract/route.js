@@ -26,14 +26,20 @@ Devuelve tu respuesta ÚNICAMENTE en este formato JSON exacto:
 {
   "type": "LOI" o "SPA",
   "property_address": "string (dirección o descripción breve del inmueble)",
-  "client_name": "string (nombre de nuestro cliente)",
+  "buyer_name": "string (nombre completo o razón social del comprador)",
+  "seller_name": "string (nombre completo o razón social del vendedor)",
+  "registry_numbers": "string (número(s) de finca o folio real, separados por coma)",
+  "plan_numbers": "string (número(s) de plano catastrado, separados por coma)",
   "side": "listing" (si representamos al vendedor), "buying" (al comprador) o "both" (ambos),
   "sale_price": "number (precio de venta total en USD, solo números sin comas)",
   "reservation_amount": "number (monto del depósito/enganche en USD, solo números)",
   "commission_pct": "number (porcentaje de comisión, ej: 5)",
-  "counterpart_name": "string (nombre de la contraparte compradora/vendedora)",
-  "counterpart_agent": "string (nombre del agente de la contraparte si se menciona)",
-  "counterpart_office": "string (oficina de la contraparte si se menciona)",
+  "buyer_agent_name": "string (nombre del agente del comprador si se menciona)",
+  "buyer_agent_office": "string (oficina del agente del comprador si se menciona)",
+  "seller_agent_name": "string (nombre del agente del vendedor si se menciona)",
+  "seller_agent_office": "string (oficina del agente del vendedor si se menciona)",
+  "buyer_notary_name": "string (nombre del abogado/notario designado por el comprador si se menciona)",
+  "seller_notary_name": "string (nombre del abogado/notario designado por el vendedor si se menciona)",
   "expected_sign_date": "YYYY-MM-DD (fecha esperada de firma de este documento, si se menciona)",
   "close_deadline": "YYYY-MM-DD (fecha límite de cierre/traspaso)",
   "earnest_money_deadline": "YYYY-MM-DD (fecha límite para el depósito/enganche)",
@@ -69,6 +75,6 @@ Para las fechas, si mencionan "X días después de la firma", calcula una fecha 
 
   } catch (error) {
     console.error('Olympia Contract Extract API Error:', error);
-    return NextResponse.json({ error: 'Hubo un error al procesar el contrato con Olympia.' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Hubo un error al procesar el contrato con Olympia.' }, { status: 500 });
   }
 }

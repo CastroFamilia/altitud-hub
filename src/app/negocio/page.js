@@ -10,6 +10,7 @@ export default function NegocioPage() {
   const { t } = useApp();
   
   const [reservations, setReservations] = useState([]);
+  const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   
   // Modals/Drawers
@@ -19,7 +20,12 @@ export default function NegocioPage() {
   // Form state
   const [formData, setFormData] = useState({
     property_address: '',
-    client_name: '',
+    buyer_name: '',
+    buyer_contact_id: '',
+    seller_name: '',
+    seller_contact_id: '',
+    registry_numbers: '',
+    plan_numbers: '',
     type: 'LOI',
     side: 'listing',
     reservation_amount: '',
@@ -29,20 +35,68 @@ export default function NegocioPage() {
     close_deadline: '',
     earnest_money_deadline: '',
     earnest_money_non_refundable_date: '',
-    counterpart_name: '',
-    counterpart_agent: '',
-    counterpart_office: '',
+    earnest_money_non_refundable_date: '',
+    buyer_agent_name: '',
+    buyer_agent_office: '',
+    seller_agent_name: '',
+    seller_agent_office: '',
+    buyer_notary_id: '',
+    buyer_notary_name: '',
+    seller_notary_id: '',
+    seller_notary_name: '',
     negotiation_details: '',
     drive_folder_url: ''
   });
 
   const [aiLoading, setAiLoading] = useState(false);
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 
   useEffect(() => {
     if (profile?.id) {
       fetchReservations();
+      fetchContacts();
     }
   }, [profile?.id]);
+
+  async function fetchContacts() {
+    try {
+      const { data } = await supabase.from('contacts').select('id, first_name, last_name, type').order('first_name');
+      if (data) setContacts(data);
+    } catch (err) {
+      console.error('Error fetching contacts:', err);
+    }
+  }
+
+  async function handleCreateDriveFolder() {
+    if (!formData.property_address) {
+      alert("Por favor asegúrate de tener una dirección de propiedad en el formulario para crear la carpeta.");
+      return;
+    }
+    const agentName = profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Agente';
+
+    try {
+      setIsCreatingFolder(true);
+      const res = await fetch('/api/drive/create-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentName: agentName,
+          propertyName: `[${formData.type || 'LOI'}] ${formData.property_address}`
+        })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al crear carpeta');
+      
+      setFormData(prev => ({ ...prev, drive_folder_url: data.folderUrl }));
+      alert(`✅ Carpeta creada en Drive dentro de: ALTITUD HUB > ${data.agentFolder}`);
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setIsCreatingFolder(false);
+    }
+  }
 
   async function fetchReservations() {
     try {
@@ -84,25 +138,61 @@ export default function NegocioPage() {
     try {
       const isEditing = !!formData.id;
       
+      const safeNumber = (val) => {
+        if (!val) return 0;
+        const num = Number(val.toString().replace(/[^0-9.-]+/g,""));
+        return isNaN(num) ? 0 : num;
+      };
+
+      const safeDate = (val) => {
+        if (!val || val.trim() === '') return null;
+        // Check if it's a valid date
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? null : val;
+      };
+
+      const price = safeNumber(formData.sale_price);
+      const commission = safeNumber(formData.commission_pct);
+
+      let finalBuyerNotaryId = formData.buyer_notary_id;
+      if (!finalBuyerNotaryId && formData.buyer_notary_name) {
+        const { data: n1 } = await supabase.from('contacts').insert({ first_name: formData.buyer_notary_name, type: 'Notary', user_id: user.id }).select().single();
+        if (n1) finalBuyerNotaryId = n1.id;
+      }
+
+      let finalSellerNotaryId = formData.seller_notary_id;
+      if (!finalSellerNotaryId && formData.seller_notary_name) {
+        const { data: n2 } = await supabase.from('contacts').insert({ first_name: formData.seller_notary_name, type: 'Notary', user_id: user.id }).select().single();
+        if (n2) finalSellerNotaryId = n2.id;
+      }
+
       const payload = {
         profile_id: profile.id,
         property_address: formData.property_address,
-        client_name: formData.client_name,
+        buyer_name: formData.buyer_name,
+        buyer_contact_id: formData.buyer_contact_id || null,
+        seller_name: formData.seller_name,
+        seller_contact_id: formData.seller_contact_id || null,
+        registry_numbers: formData.registry_numbers,
+        plan_numbers: formData.plan_numbers,
         type: formData.type,
         side: formData.side,
-        reservation_amount: Number(formData.reservation_amount),
-        sale_price: Number(formData.sale_price),
-        commission_pct: Number(formData.commission_pct),
-        expected_sign_date: formData.expected_sign_date || null,
-        close_deadline: formData.close_deadline || null,
-        earnest_money_deadline: formData.earnest_money_deadline || null,
-        earnest_money_non_refundable_date: formData.earnest_money_non_refundable_date || null,
-        counterpart_name: formData.counterpart_name,
-        counterpart_agent: formData.counterpart_agent,
-        counterpart_office: formData.counterpart_office,
+        reservation_amount: safeNumber(formData.reservation_amount),
+        sale_price: price,
+        commission_pct: commission,
+        expected_sign_date: safeDate(formData.expected_sign_date),
+        close_deadline: safeDate(formData.close_deadline),
+        earnest_money_deadline: safeDate(formData.earnest_money_deadline),
+        earnest_money_non_refundable_date: safeDate(formData.earnest_money_non_refundable_date),
+        buyer_agent_name: formData.buyer_agent_name,
+        buyer_agent_office: formData.buyer_agent_office,
+        seller_agent_name: formData.seller_agent_name,
+        seller_agent_office: formData.seller_agent_office,
+        buyer_notary_id: finalBuyerNotaryId || null,
+        seller_notary_id: finalSellerNotaryId || null,
         negotiation_details: formData.negotiation_details,
         drive_folder_url: formData.drive_folder_url,
-        agent_commission_amount: (Number(formData.sale_price) * (Number(formData.commission_pct)/100)) * 0.5 // Rough calc
+        agent_commission_amount: (price * (commission/100)) * 0.5
       };
 
       if (isEditing) {
@@ -118,11 +208,18 @@ export default function NegocioPage() {
         if (error) throw error;
       }
 
+      if (formData.buyer_contact_id && finalBuyerNotaryId) {
+        await supabase.from('contact_relations').upsert({ contact_id: formData.buyer_contact_id, related_contact_id: finalBuyerNotaryId, relation_type: 'Notary' }, { onConflict: 'contact_id,related_contact_id' });
+      }
+      if (formData.seller_contact_id && finalSellerNotaryId) {
+        await supabase.from('contact_relations').upsert({ contact_id: formData.seller_contact_id, related_contact_id: finalSellerNotaryId, relation_type: 'Notary' }, { onConflict: 'contact_id,related_contact_id' });
+      }
+
       setIsAddModalOpen(false);
       fetchReservations();
     } catch (err) {
       console.error('Save error:', err);
-      alert('Error guardando reserva');
+      alert('Error guardando reserva: ' + err.message);
     }
   }
 
@@ -165,15 +262,18 @@ export default function NegocioPage() {
         body: data,
       });
 
-      if (!res.ok) throw new Error('Error al extraer datos');
       const extracted = await res.json();
+      if (!res.ok) throw new Error(extracted.error || 'Error al extraer datos');
       
       // Merge extracted data into formData
       setFormData(prev => ({
         ...prev,
         type: extracted.type || prev.type,
         property_address: extracted.property_address || prev.property_address,
-        client_name: extracted.client_name || prev.client_name,
+        buyer_name: extracted.buyer_name || prev.buyer_name,
+        seller_name: extracted.seller_name || prev.seller_name,
+        registry_numbers: extracted.registry_numbers || prev.registry_numbers,
+        plan_numbers: extracted.plan_numbers || prev.plan_numbers,
         side: extracted.side || prev.side,
         sale_price: extracted.sale_price || prev.sale_price,
         reservation_amount: extracted.reservation_amount || prev.reservation_amount,
@@ -191,7 +291,7 @@ export default function NegocioPage() {
       alert(t('neg_ai_success'));
     } catch (err) {
       console.error(err);
-      alert(t('neg_ai_error'));
+      alert(err.message || t('neg_ai_error'));
     } finally {
       setAiLoading(false);
       // reset file input
@@ -238,7 +338,7 @@ export default function NegocioPage() {
             <h3 className="text-3xl font-bold text-slate-900 dark:text-white text-emerald-600 dark:text-emerald-400">
               ${expectedCommission.toLocaleString()}
             </h3>
-            <p className="text-xs text-slate-500 mt-2">Estimado basado en splits</p>
+            <p className="text-xs text-slate-500 mt-2">{t('neg_estimated_splits')}</p>
           </div>
         </div>
 
@@ -269,14 +369,15 @@ export default function NegocioPage() {
                   {reservations.map(res => (
                     <tr key={res.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
                       <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-900 dark:text-white">{res.property_address || 'Sin dirección'}</div>
+                        <div className="font-semibold text-slate-900 dark:text-white">{res.property_address || t('neg_no_address')}</div>
                         <div className="text-xs text-slate-500 mt-1 flex gap-2">
                           <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 font-medium">{res.type}</span>
                           {res.broker_help_requested && <span className="text-red-500 font-bold" title="Ayuda del broker solicitada">🚨</span>}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
-                        {res.client_name}
+                        <div><span className="font-semibold">V:</span> {res.seller_name || '-'}</div>
+                        <div><span className="font-semibold">C:</span> {res.buyer_name || '-'}</div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm font-medium text-slate-900 dark:text-white">${Number(res.sale_price||0).toLocaleString()}</div>
@@ -302,7 +403,7 @@ export default function NegocioPage() {
                           onClick={() => setSelectedRes(res)}
                           className="text-sm text-brand-600 hover:text-brand-700 font-medium"
                         >
-                          Ver Detalle →
+                          {t('neg_view_detail')}
                         </button>
                       </td>
                     </tr>
@@ -345,22 +446,62 @@ export default function NegocioPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium mb-1">{t('res_property')}</label>
-                    <input type="text" required value={formData.property_address} onChange={e => setFormData({...formData, property_address: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                    <input type="text" required value={formData.property_address || ''} onChange={e => setFormData({...formData, property_address: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                  </div>
+                  <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">{t('neg_seller_label')}</label>
+                      <select 
+                        value={formData.seller_contact_id || ''} 
+                        onChange={e => {
+                          const id = e.target.value;
+                          const contact = contacts.find(c => c.id === id);
+                          setFormData({...formData, seller_contact_id: id, seller_name: contact ? `${contact.first_name} ${contact.last_name||''}`.trim() : formData.seller_name});
+                        }} 
+                        className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 mb-2 text-sm"
+                      >
+                        <option value="">{t('neg_link_crm')}</option>
+                        {contacts.map(c => <option key={c.id} value={c.id}>{c.first_name} {c.last_name||''}</option>)}
+                      </select>
+                      <input type="text" placeholder={t('neg_seller_placeholder')} required value={formData.seller_name || ''} onChange={e => setFormData({...formData, seller_name: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">{t('neg_buyer_label')}</label>
+                      <select 
+                        value={formData.buyer_contact_id || ''} 
+                        onChange={e => {
+                          const id = e.target.value;
+                          const contact = contacts.find(c => c.id === id);
+                          setFormData({...formData, buyer_contact_id: id, buyer_name: contact ? `${contact.first_name} ${contact.last_name||''}`.trim() : formData.buyer_name});
+                        }} 
+                        className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 mb-2 text-sm"
+                      >
+                        <option value="">{t('neg_link_crm')}</option>
+                        {contacts.map(c => <option key={c.id} value={c.id}>{c.first_name} {c.last_name||''}</option>)}
+                      </select>
+                      <input type="text" placeholder={t('neg_buyer_placeholder')} required value={formData.buyer_name || ''} onChange={e => setFormData({...formData, buyer_name: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">{t('neg_registry_numbers')}</label>
+                    <input type="text" placeholder={t('neg_registry_placeholder')} value={formData.registry_numbers || ''} onChange={e => setFormData({...formData, registry_numbers: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">{t('res_client')}</label>
-                    <input type="text" required value={formData.client_name} onChange={e => setFormData({...formData, client_name: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                    <label className="block text-sm font-medium mb-1">{t('neg_plan_numbers')}</label>
+                    <input type="text" placeholder={t('neg_plan_placeholder')} value={formData.plan_numbers || ''} onChange={e => setFormData({...formData, plan_numbers: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium mb-1">{t('res_type')}</label>
-                    <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent">
+                    <select value={formData.type || 'LOI'} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent">
                       <option value="LOI">LOI</option>
                       <option value="SPA">SPA</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">{t('neg_side')}</label>
-                    <select value={formData.side} onChange={e => setFormData({...formData, side: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent">
+                    <select value={formData.side || 'listing'} onChange={e => setFormData({...formData, side: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent">
                       <option value="listing">{t('neg_side_listing')}</option>
                       <option value="buying">{t('neg_side_buying')}</option>
                       <option value="both">{t('neg_side_both')}</option>
@@ -368,20 +509,49 @@ export default function NegocioPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">{t('neg_sale_price')} ($)</label>
-                    <input type="number" required value={formData.sale_price} onChange={e => setFormData({...formData, sale_price: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                    <input type="number" required value={formData.sale_price || ''} onChange={e => setFormData({...formData, sale_price: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">{t('res_amount')} de Reserva ($)</label>
-                    <input type="number" required value={formData.reservation_amount} onChange={e => setFormData({...formData, reservation_amount: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                    <input type="number" required value={formData.reservation_amount || ''} onChange={e => setFormData({...formData, reservation_amount: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">{t('neg_commission_pct')}</label>
-                    <input type="number" step="0.1" value={formData.commission_pct} onChange={e => setFormData({...formData, commission_pct: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                    <input type="number" step="0.1" value={formData.commission_pct || ''} onChange={e => setFormData({...formData, commission_pct: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-1 flex items-center gap-2">
-                      <svg className="w-4 h-4 text-[#0F9D58]" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
-                      {t('neg_drive_link')}
+                    <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 rounded-xl mt-2">
+                      <h4 className="text-sm font-bold text-emerald-800 dark:text-emerald-400 mb-2">💰 {t('neg_commission_projection')}</h4>
+                      <div className="flex justify-between items-center text-sm mb-1 text-emerald-700 dark:text-emerald-300">
+                        <span>{t('neg_sale_price')}:</span>
+                        <span>${Number(formData.sale_price||0).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm mb-2 text-emerald-700 dark:text-emerald-300">
+                        <span>{t('neg_commission_pct')}:</span>
+                        <span>{formData.commission_pct||0}%</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-emerald-200/50 dark:border-emerald-800/50">
+                        <span className="font-bold text-emerald-900 dark:text-emerald-100">{t('neg_gross_commission')}</span>
+                        <span className="font-bold text-lg text-emerald-600 dark:text-emerald-400">
+                          ${(Number(formData.sale_price||0) * (Number(formData.commission_pct||0)/100)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-[#0F9D58]" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                        {t('neg_drive_link')}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleCreateDriveFolder}
+                        disabled={isCreatingFolder || !!formData.drive_folder_url}
+                        className="text-xs px-3 py-1 bg-[#0F9D58]/10 hover:bg-[#0F9D58]/20 text-[#0F9D58] rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isCreatingFolder ? 'Creando...' : '✨ Auto-Crear Carpeta'}
+                      </button>
                     </label>
                     <input type="url" placeholder="https://drive.google.com/drive/folders/..." value={formData.drive_folder_url || ''} onChange={e => setFormData({...formData, drive_folder_url: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
                   </div>
@@ -392,29 +562,64 @@ export default function NegocioPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">{t('neg_date_sign')}</label>
-                      <input type="date" value={formData.expected_sign_date} onChange={e => setFormData({...formData, expected_sign_date: e.target.value})} className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent text-sm" />
+                      <input type="date" value={formData.expected_sign_date || ''} onChange={e => setFormData({...formData, expected_sign_date: e.target.value})} className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent text-sm" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">{t('neg_date_close')}</label>
-                      <input type="date" value={formData.close_deadline} onChange={e => setFormData({...formData, close_deadline: e.target.value})} className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent text-sm" />
+                      <input type="date" value={formData.close_deadline || ''} onChange={e => setFormData({...formData, close_deadline: e.target.value})} className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent text-sm" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">{t('neg_date_deposit')}</label>
-                      <input type="date" value={formData.earnest_money_deadline} onChange={e => setFormData({...formData, earnest_money_deadline: e.target.value})} className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent text-sm" />
+                      <input type="date" value={formData.earnest_money_deadline || ''} onChange={e => setFormData({...formData, earnest_money_deadline: e.target.value})} className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent text-sm" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">{t('neg_date_dd')}</label>
-                      <input type="date" value={formData.earnest_money_non_refundable_date} onChange={e => setFormData({...formData, earnest_money_non_refundable_date: e.target.value})} className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent text-sm" />
+                      <input type="date" value={formData.earnest_money_non_refundable_date || ''} onChange={e => setFormData({...formData, earnest_money_non_refundable_date: e.target.value})} className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent text-sm" />
                     </div>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-slate-200 dark:border-white/10">
-                  <h3 className="font-semibold mb-4 text-brand-600">{t('neg_counterpart')}</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" placeholder={t('neg_counterpart_name')} value={formData.counterpart_name || ''} onChange={e => setFormData({...formData, counterpart_name: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
-                    <input type="text" placeholder={t('neg_counterpart_agent')} value={formData.counterpart_agent || ''} onChange={e => setFormData({...formData, counterpart_agent: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
-                    <input type="text" placeholder={t('neg_counterpart_office')} value={formData.counterpart_office || ''} onChange={e => setFormData({...formData, counterpart_office: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                  <h3 className="font-semibold mb-4 text-brand-600">{t('neg_seller_agent')} & {t('neg_seller_notary')}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" placeholder={t('neg_seller_agent')} value={formData.seller_agent_name || ''} onChange={e => setFormData({...formData, seller_agent_name: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                    <input type="text" placeholder={t('neg_seller_office')} value={formData.seller_agent_office || ''} onChange={e => setFormData({...formData, seller_agent_office: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <select 
+                        value={formData.seller_notary_id || ''} 
+                        onChange={e => {
+                          const id = e.target.value;
+                          const contact = contacts.find(c => c.id === id);
+                          setFormData({...formData, seller_notary_id: id, seller_notary_name: contact ? `${contact.first_name} ${contact.last_name||''}`.trim() : formData.seller_notary_name});
+                        }} 
+                        className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-sm"
+                      >
+                        <option value="">{t('neg_link_notary')}</option>
+                        {contacts.filter(c => c.type === 'Notary' || c.type?.toLowerCase().includes('abogad') || c.type?.toLowerCase().includes('notari')).map(c => <option key={c.id} value={c.id}>{c.first_name} {c.last_name||''}</option>)}
+                      </select>
+                      <input type="text" placeholder={t('neg_seller_notary')} required={!formData.seller_notary_id} value={formData.seller_notary_name || ''} onChange={e => setFormData({...formData, seller_notary_name: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                    </div>
+                  </div>
+
+                  <h3 className="font-semibold mb-4 text-brand-600 border-t border-slate-100 dark:border-white/5 pt-4">{t('neg_buyer_agent')} & {t('neg_buyer_notary')}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" placeholder={t('neg_buyer_agent')} value={formData.buyer_agent_name || ''} onChange={e => setFormData({...formData, buyer_agent_name: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                    <input type="text" placeholder={t('neg_buyer_office')} value={formData.buyer_agent_office || ''} onChange={e => setFormData({...formData, buyer_agent_office: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <select 
+                        value={formData.buyer_notary_id || ''} 
+                        onChange={e => {
+                          const id = e.target.value;
+                          const contact = contacts.find(c => c.id === id);
+                          setFormData({...formData, buyer_notary_id: id, buyer_notary_name: contact ? `${contact.first_name} ${contact.last_name||''}`.trim() : formData.buyer_notary_name});
+                        }} 
+                        className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-sm"
+                      >
+                        <option value="">{t('neg_link_notary')}</option>
+                        {contacts.filter(c => c.type === 'Notary' || c.type?.toLowerCase().includes('abogad') || c.type?.toLowerCase().includes('notari')).map(c => <option key={c.id} value={c.id}>{c.first_name} {c.last_name||''}</option>)}
+                      </select>
+                      <input type="text" placeholder={t('neg_buyer_notary')} required={!formData.buyer_notary_id} value={formData.buyer_notary_name || ''} onChange={e => setFormData({...formData, buyer_notary_name: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+                    </div>
                   </div>
                 </div>
 
@@ -441,7 +646,7 @@ export default function NegocioPage() {
             <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
               <div>
                 <h2 className="text-2xl font-bold">{selectedRes.property_address}</h2>
-                <p className="text-slate-500 mt-1">{selectedRes.client_name} • {selectedRes.type}</p>
+                <p className="text-slate-500 mt-1"><span className="font-medium">Vendedor:</span> {selectedRes.seller_name || '-'} • <span className="font-medium">Comprador:</span> {selectedRes.buyer_name || '-'} • {selectedRes.type}</p>
               </div>
               <button onClick={() => setSelectedRes(null)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 transition-colors">✕</button>
             </div>
@@ -460,6 +665,16 @@ export default function NegocioPage() {
                   }`}
                 >
                   {selectedRes.broker_help_requested ? t('neg_broker_help_sent') : t('neg_broker_help')}
+                </button>
+                <button 
+                  onClick={() => {
+                    const url = `${window.location.origin}/negocio/transaccion/${selectedRes.id}`;
+                    navigator.clipboard.writeText(url);
+                    alert('Deal Room link copied!');
+                  }}
+                  className="px-4 py-3 rounded-xl font-medium border-2 border-brand-500 bg-brand-50 hover:bg-brand-100 dark:bg-brand-500/10 dark:hover:bg-brand-500/20 text-brand-600 transition-colors"
+                >
+                  🔗 {t('neg_share_deal_room')}
                 </button>
                 <button 
                   onClick={() => {
@@ -505,12 +720,12 @@ export default function NegocioPage() {
                   </div>
                   {/* We would render DD items here in a separate component */}
                   <div className="text-sm text-brand-600 font-medium cursor-pointer">
-                    Gestión en construcción...
+                    {t('neg_under_construction')}
                   </div>
                 </div>
                 
                 <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-200 dark:border-white/10 border-dashed">
-                  <p className="text-slate-500 text-sm">La funcionalidad completa de checklist y compartir con notario está en desarrollo.</p>
+                  <p className="text-slate-500 text-sm">{t('neg_dd_in_development')}</p>
                 </div>
               </div>
 

@@ -107,7 +107,7 @@ export default function PlanPage() {
   const handleComplete = useCallback(async (planData) => {
     await handleSave({ ...planData, status: 'active', completed_at: new Date().toISOString() });
     // Navigate back to OKR
-    window.location.href = '/okr';
+    window.location.href = '/';
   }, [handleSave]);
 
   const handleSaveDraft = useCallback(async (planData) => {
