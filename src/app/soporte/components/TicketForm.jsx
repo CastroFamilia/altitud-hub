@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useApp } from '@/lib/context';
-import { supabase } from '@/lib/supabase-browser';
 
 export default function TicketForm({ onClose, onSuccess }) {
-  const { profile } = useAuth();
+  const { profile, supabase } = useAuth();
   const { t } = useApp();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

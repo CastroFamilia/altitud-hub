@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useApp } from '@/lib/context';
-import { supabase } from '@/lib/supabase-browser';
 
 export default function AdminSoportePage() {
-  const { profile, isBroker, isTeamLeader } = useAuth();
+  const { profile, isBroker, isTeamLeader, supabase } = useAuth();
   const { t } = useApp();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);

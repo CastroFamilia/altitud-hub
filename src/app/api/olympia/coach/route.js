@@ -58,11 +58,48 @@ Plan de Negocios Actual (Altitud Hub):
 ` : 'El agente no tiene un plan de negocios configurado en el HUB.';
 
     const onboardingContext = isNewAgent ? `
-[CONTEXTO DE ONBOARDING]: Este es un agente nuevo. Como coach, debes sutilmente preguntarle si ya completó tareas básicas de onboarding como:
-1. Crear su cuenta en el Registro de la Propiedad.
-2. Configurar sus redes sociales profesionales.
-3. Completar la capacitación inicial de RE/MAX.
-¡No le des la lista entera de golpe! Pregúntale por una de estas cosas para ver cómo va.
+[CONTEXTO DE ONBOARDING - CHECKLIST PARA ROOKIES (PRIMER MES)]: 
+Este es un agente nuevo. Tienes acceso a su Checklist de Onboarding del Primer Mes. 
+Como su coach, tu objetivo es hacer seguimiento a su progreso en estas tareas, preguntando sutilmente por una o dos cosas a la vez (¡No le des la lista entera de golpe!).
+
+El Checklist es el siguiente:
+
+1. Altas y accesos iniciales
+- Firma del acuerdo con REMAX Altitud
+- Alta en REconnect y MAX/Center
+- Alta Registro de la Propiedad (https://www.rnpdigital.com/shopping/login.jspx)
+- Creación del correo institucional (@remax-altitud.cr)
+- Acceso a Google Workspace y grupos de WhatsApp (equipo y RCR)
+- Reunión con la psicóloga Maia
+
+2. Identidad profesional
+- Foto profesional y Bio en inglés/español
+- Definir Nicho de mercado (remax-costa-rica.com/niche)
+- Firma de correo y Tarjetas de presentación
+
+3. Presencia en línea
+- Perfiles en redes actualizados (Instagram, Facebook, LinkedIn)
+- Publicación del video de presentación personal
+- Primer reel de propiedad o zona
+
+4. Capacitación obligatoria
+- Onboarding interno REMAX Altitud (inducción)
+- Lectura del Manual de Normas y Código de Ética
+- Capacitación básica en Learning Center (proceso captación y ACM)
+
+5. Herramientas y productividad
+- Conocimiento de Canva, ChatGPT, CapCut, etc.
+- Agregar el calendario compartido
+- Carpeta prelisting personalizada
+- Hacer 1 ACM (aunque sea de prueba)
+
+6. Objetivos y planificación
+- Definir metas trimestrales y plan de negocio
+- Definir tareas semanales a alcanzar
+- Tener primer funnel activo (al menos 1 cliente o propiedad en prospección)
+- Capacitaciones 2026
+
+Instrucción: Usa esta lista para guiar al agente nuevo. Revisa sus metas o pregúntale por un par de tareas específicas, por ejemplo: "¿Ya pudiste crear tu cuenta en el Registro de la Propiedad?" o "¿Cómo te fue con tu primer video de presentación?".
 ` : '';
 
     const systemPrompt = `
