@@ -91,6 +91,11 @@ export default function Sidebar() {
                 <span className="ml-auto text-[9px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-500">{t('nav_soon')}</span>
               </a>
 
+              <Link href="/oficina/soporte" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-lg transition-colors ${pathname.startsWith('/oficina/soporte') ? 'bg-white/10 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>
+                <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                <span className="font-medium text-slate-300">Tickets Soporte</span>
+              </Link>
+
               <div className="mt-8 px-3 pb-6">
                 <Link href="/contactos" className="flex items-center justify-center gap-2 w-full py-3 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 hover:text-white transition-all shadow-sm">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
@@ -119,10 +124,11 @@ export default function Sidebar() {
             <span className="nexus-header text-[11px] leading-none">{t('neg_title')}</span>
           </Link>
 
-          <Link href="/estado-cuenta" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${pathname.startsWith('/estado-cuenta') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+          <a href="#" className="nav-item flex items-center px-3 py-2.5 rounded-2xl text-gray-400 dark:text-gray-500 transition-colors pointer-events-none opacity-50">
             <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span className="nexus-header text-[11px] leading-none">ESTADO DE CUENTA</span>
-          </Link>
+            <span className="ml-auto text-[9px] bg-gray-200 dark:bg-dark-border px-1.5 py-0.5 rounded text-gray-500 dark:text-gray-400">{t('nav_soon')}</span>
+          </a>
 
           {/* ── HERRAMIENTAS ── */}
           <div className="mt-6 mb-2 px-3 text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wider">{t('nav_tools')}</div>
@@ -158,6 +164,11 @@ export default function Sidebar() {
             <span className="font-medium text-gray-700 dark:text-white text-[11px] leading-tight">Personalizar documentos legales</span>
             <span className="ml-auto text-[9px] bg-gray-200 dark:bg-dark-border px-1.5 py-0.5 rounded text-gray-500 dark:text-gray-400">{t('nav_soon')}</span>
           </a>
+
+          <Link href="/soporte" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${pathname.startsWith('/soporte') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+            <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            <span className="nexus-header text-[11px] leading-none">{t('nav_support') || 'Soporte Técnico'}</span>
+          </Link>
 
           {/* ── PORTAFOLIO ── */}
           <div className="mt-6 mb-2 px-3 text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wider">{t('nav_portfolio')}</div>
