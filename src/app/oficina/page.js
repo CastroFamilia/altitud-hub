@@ -5,6 +5,8 @@ import { useAuth } from '@/lib/auth-context';
 import { useApp } from '@/lib/context';
 import TopNav from '@/components/layout/TopNav';
 import { useRouter } from 'next/navigation';
+import PropertyApprovalTab from '@/components/oficina/PropertyApprovalTab';
+import ListingVelocityPanel from '@/components/oficina/ListingVelocityPanel';
 
 /* ═══════════════════════════════════════
    OFFICE PANEL — Broker Admin Dashboard
@@ -12,7 +14,7 @@ import { useRouter } from 'next/navigation';
 
 export default function OficinaPage() {
   const { profile, isBroker, supabase } = useAuth();
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const router = useRouter();
 
   // State
@@ -21,6 +23,8 @@ export default function OficinaPage() {
   const [apiAgents, setApiAgents] = useState([]);
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('equipo');
+  const [milestones, setMilestones] = useState([]);
   
   // Modals
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -72,6 +76,12 @@ export default function OficinaPage() {
       const agentsRes = await fetch(`/api/agents-feed?office=${selectedOffice}`);
       const agentsData = await agentsRes.json();
       setApiAgents(agentsData.agents || []);
+
+      // Fetch listing milestones for velocity analytics
+      const { data: msData } = await supabase
+        .from('listing_milestones')
+        .select('*');
+      setMilestones(msData || []);
     } catch (err) {
       console.error('Load error:', err);
     } finally {
@@ -203,7 +213,7 @@ export default function OficinaPage() {
 
   return (
     <>
-      <TopNav title="Panel de Oficina" subtitle="Gestión de equipo, aprobaciones y roles" />
+      <TopNav title={t('ofc_title')} subtitle={t('ofc_subtitle')} />
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 relative z-0 bg-slate-50 dark:bg-dark-bg">
         <div className="max-w-6xl mx-auto space-y-8">
@@ -236,17 +246,48 @@ export default function OficinaPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              Asignación Manual
+              {t('ofc_manual_assign')}
             </button>
           </div>
 
+          {/* ── Tab Navigation ── */}
+          <div className="flex bg-white dark:bg-slate-800 rounded-2xl p-1 shadow-sm border border-slate-200 dark:border-slate-700 w-fit mb-6">
+            {[
+              { key: 'equipo', label: t('ofc_team'), icon: '👥' },
+              { key: 'propiedades', label: t('ofc_properties'), icon: '🏠' },
+              { key: 'velocidad', label: t('ofc_velocity'), icon: '⏱️' },
+            ].map(tab => (
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                className={`px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === tab.key ? 'bg-nexus-blue text-white shadow-lg shadow-blue-500/20' : 'text-slate-500 hover:text-slate-700 dark:hover:text-white'}`}>
+                <span>{tab.icon}</span> {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === 'velocidad' ? (
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
+              <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <span>⏱️</span> {lang === 'en' ? 'Listing Process Velocity' : 'Velocidad del Proceso de Listing'}
+              </h3>
+              <p className="text-xs text-slate-400 mb-6">
+                {lang === 'en' ? 'Track how long each step takes from first contact to published listing. Identify bottlenecks and improve team efficiency.' : 'Mide cuánto toma cada paso desde el primer contacto hasta la publicación. Identifica cuellos de botella y mejora la eficiencia del equipo.'}
+              </p>
+              <ListingVelocityPanel t={t} lang={lang} milestones={milestones} profiles={profiles} />
+            </div>
+          ) : activeTab === 'propiedades' ? (
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
+              <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4">{t('ofc_property_approval')}</h3>
+              <PropertyApprovalTab />
+            </div>
+          ) : (
+          <>
           {/* ── Stats Grid ── */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Total Registrados', val: totalAgents, color: 'text-slate-900 dark:text-white' },
-              { label: 'Agentes Activos', val: activeCount, color: 'text-emerald-500' },
-              { label: 'Team Leaders', val: teamLeaders, color: 'text-nexus-blue' },
-              { label: 'Por Aprobar (API)', val: pendingAgents.length, color: 'text-amber-500' },
+              { label: t('ofc_total_registered'), val: totalAgents, color: 'text-slate-900 dark:text-white' },
+              { label: t('ofc_active_agents'), val: activeCount, color: 'text-emerald-500' },
+              { label: t('ofc_team_leaders'), val: teamLeaders, color: 'text-nexus-blue' },
+              { label: t('ofc_pending_api'), val: pendingAgents.length, color: 'text-amber-500' },
             ].map((s, i) => (
               <div key={i} className="bg-white dark:bg-slate-800 rounded-[24px] p-5 shadow-sm border border-slate-200 dark:border-slate-700 group hover:shadow-lg transition-all">
                 <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-black tracking-widest leading-none">{s.label}</p>
@@ -264,9 +305,9 @@ export default function OficinaPage() {
               <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-amber-50/50 dark:bg-amber-900/10">
                   <div>
-                    <h3 className="text-lg font-black italic text-amber-600 dark:text-amber-500">Pendientes de Aprobación</h3>
+                    <h3 className="text-lg font-black italic text-amber-600 dark:text-amber-500">{t('ofc_pending_approval')}</h3>
                     <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-1">
-                      Agentes encontrados en RE/MAX
+                      {t('ofc_agents_found')}
                     </p>
                   </div>
                   <span className="bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 px-3 py-1 rounded-full text-xs font-black">
@@ -278,7 +319,7 @@ export default function OficinaPage() {
                   <div className="p-8 flex justify-center"><div className="animate-spin w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full"></div></div>
                 ) : pendingAgents.length === 0 ? (
                   <div className="p-8 text-center text-slate-400 text-xs uppercase tracking-widest font-bold">
-                    No hay agentes nuevos por aprobar.
+                    {t('ofc_no_new_agents')}
                   </div>
                 ) : (
                   <div className="divide-y divide-slate-100 dark:divide-slate-700/50 max-h-[400px] overflow-y-auto">
@@ -300,7 +341,7 @@ export default function OficinaPage() {
                           disabled={inviting || !agent.email}
                           className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50"
                         >
-                          Aprobar
+                          {t('ofc_approve')}
                         </button>
                       </div>
                     ))}
@@ -312,9 +353,9 @@ export default function OficinaPage() {
               <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-black italic text-slate-900 dark:text-white">Roster Registrado</h3>
+                    <h3 className="text-lg font-black italic text-slate-900 dark:text-white">{t('ofc_registered_roster')}</h3>
                     <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mt-1">
-                      Todos los miembros de la oficina
+                      {t('ofc_all_members')}
                     </p>
                   </div>
                 </div>
@@ -336,10 +377,10 @@ export default function OficinaPage() {
                         : p.role === 'team_leader' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                         : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
                       }`}>
-                        {p.role === 'broker' ? 'Broker / Admin' : p.role === 'team_leader' ? 'Team Leader' : 'Agente (Junior)'}
+                        {p.role === 'broker' ? t('ofc_role_admin') : p.role === 'team_leader' ? t('ofc_role_leader') : t('ofc_role_junior')}
                       </span>
                       <span className="text-[10px] text-slate-400 font-medium w-24 truncate text-right">
-                        {p.teams?.name || 'Sin Equipo'}
+                        {p.teams?.name || t('ofc_manual_no_team')}
                       </span>
                       {p.role !== 'broker' && (
                         <button
@@ -361,9 +402,9 @@ export default function OficinaPage() {
             {/* ── Right Column: Teams ── */}
             <div className="space-y-8">
               <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 p-6">
-                <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4">Equipos</h3>
+                <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4">{t('ofc_teams_title')}</h3>
                 {teams.filter(t => t.office === selectedOffice).length === 0 ? (
-                  <p className="text-xs text-slate-400">No hay equipos configurados.</p>
+                  <p className="text-xs text-slate-400">{t('ofc_no_teams_configured')}</p>
                 ) : (
                   <div className="space-y-4">
                     {teams.filter(team => team.office === selectedOffice).map(team => {
@@ -376,7 +417,7 @@ export default function OficinaPage() {
                           
                           {/* Team Leader */}
                           <div className="mb-3">
-                            <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400 mb-2">Líder</p>
+                            <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400 mb-2">{t('ofc_leader')}</p>
                             {leader ? (
                               <div className="flex items-center gap-3">
                                 <img src={leader.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.full_name)}&background=5a82bf&color=fff`} className="w-8 h-8 rounded-full" alt="" />
@@ -386,13 +427,13 @@ export default function OficinaPage() {
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-[10px] text-slate-400 italic">Sin asignar</p>
+                              <p className="text-[10px] text-slate-400 italic">{t('ofc_unassigned')}</p>
                             )}
                           </div>
 
                           {/* Members / Juniors */}
                           <div>
-                            <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400 mb-2">Agentes / Juniors ({members.length})</p>
+                            <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400 mb-2">{t('ofc_agents_juniors')} ({members.length})</p>
                             <div className="flex flex-col gap-2">
                               {members.map(m => (
                                 <div key={m.id} className="flex items-center gap-2">
@@ -400,7 +441,7 @@ export default function OficinaPage() {
                                   <p className="text-[11px] text-slate-700 dark:text-slate-300">{m.full_name}</p>
                                 </div>
                               ))}
-                              {members.length === 0 && <p className="text-[10px] text-slate-400 italic">Sin agentes</p>}
+                              {members.length === 0 && <p className="text-[10px] text-slate-400 italic">{t('ofc_no_agents')}</p>}
                             </div>
                           </div>
                         </div>
@@ -412,6 +453,8 @@ export default function OficinaPage() {
             </div>
 
           </div>
+          </>
+          )}
 
         </div>
       </div>
@@ -425,12 +468,12 @@ export default function OficinaPage() {
             onClick={e => e.stopPropagation()}
           >
             <div>
-              <h3 className="text-xl font-black italic text-slate-900 dark:text-white">Asignación Manual</h3>
-              <p className="text-xs text-slate-400 mt-1">Crea perfiles para Team Leaders, Administrativos o Agentes Juniors que no estén en la API.</p>
+              <h3 className="text-xl font-black italic text-slate-900 dark:text-white">{t('ofc_manual_assign')}</h3>
+              <p className="text-xs text-slate-400 mt-1">{t('ofc_manual_assign_desc')}</p>
             </div>
 
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Nombre Completo</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">{t('ofc_manual_fullname')}</label>
               <input
                 type="text"
                 placeholder="Ej. Juan Pérez"
@@ -441,7 +484,7 @@ export default function OficinaPage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Email de Acceso</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">{t('ofc_manual_email')}</label>
               <input
                 type="email"
                 placeholder="correo@remax-altitud.cr"
@@ -452,12 +495,12 @@ export default function OficinaPage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Rol</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">{t('ofc_manual_role')}</label>
               <div className="flex gap-2">
                 {[
-                  { key: 'agent', label: 'Junior / Agente' },
-                  { key: 'team_leader', label: 'Team Leader' },
-                  { key: 'broker', label: 'Admin / Broker' },
+                  { key: 'agent', label: t('ofc_role_junior') },
+                  { key: 'team_leader', label: t('ofc_role_leader') },
+                  { key: 'broker', label: t('ofc_role_admin') },
                 ].map(r => (
                   <button
                     key={r.key}
@@ -476,13 +519,13 @@ export default function OficinaPage() {
 
             {inviteForm.role !== 'broker' && (
               <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Equipo</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">{t('ofc_manual_team')}</label>
                 <select
                   value={inviteForm.team_id}
                   onChange={e => setInviteForm(prev => ({ ...prev, team_id: e.target.value }))}
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">Sin equipo</option>
+                  <option value="">{t('ofc_manual_no_team')}</option>
                   {teams.filter(team => team.office === selectedOffice).map(team => (
                     <option key={team.id} value={team.id}>{team.name}</option>
                   ))}
@@ -495,14 +538,14 @@ export default function OficinaPage() {
                 onClick={() => setShowInviteModal(false)}
                 className="flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-500 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors"
               >
-                Cancelar
+                {t('ofc_manual_cancel')}
               </button>
               <button
                 onClick={handleManualInvite}
                 disabled={!inviteForm.email || !inviteForm.full_name || inviting}
                 className="flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest bg-nexus-blue text-white shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:opacity-50"
               >
-                {inviting ? 'Procesando...' : 'Crear Perfil'}
+                {inviting ? t('ofc_manual_processing') : t('ofc_manual_create')}
               </button>
             </div>
           </div>
@@ -530,7 +573,7 @@ export default function OficinaPage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Rol</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">{t('ofc_manual_role')}</label>
               <div className="flex gap-2">
                 {['agent', 'team_leader'].map(r => (
                   <button
@@ -542,20 +585,20 @@ export default function OficinaPage() {
                         : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'
                     }`}
                   >
-                    {r === 'agent' ? 'Junior / Agente' : 'Team Leader'}
+                    {r === 'agent' ? t('ofc_role_junior') : t('ofc_role_leader')}
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Equipo</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">{t('ofc_manual_team')}</label>
               <select
                 value={editingProfile.team_id || ''}
                 onChange={e => handleUpdateProfile(editingProfile.id, { team_id: e.target.value || null })}
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Sin equipo</option>
+                <option value="">{t('ofc_manual_no_team')}</option>
                 {teams.filter(team => team.office === selectedOffice).map(team => (
                   <option key={team.id} value={team.id}>{team.name}</option>
                 ))}
@@ -566,7 +609,7 @@ export default function OficinaPage() {
               onClick={() => setEditingProfile(null)}
               className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-500 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors"
             >
-              Hecho
+              {t('ofc_done')}
             </button>
           </div>
         </div>

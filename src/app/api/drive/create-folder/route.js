@@ -45,7 +45,7 @@ async function findOrCreateFolder(drive, name, parentId) {
 
 export async function POST(req) {
   try {
-    const { agentName, propertyName } = await req.json();
+    const { agentName, agentEmail, propertyName } = await req.json();
 
     if (!agentName || !propertyName) {
       return NextResponse.json({ error: 'agentName y propertyName son requeridos' }, { status: 400 });
@@ -66,11 +66,67 @@ export async function POST(req) {
     // 2. Crea la carpeta de la propiedad adentro de la carpeta del agente
     const propertyFolder = await findOrCreateFolder(drive, propertyName, agentFolder.id);
 
+    // 3. Share the AGENT FOLDER with the agent's email as writer.
+    //    Drive inheritance means ALL property subfolders appear in "Shared with me".
+    //    Only runs once per agent (Drive ignores duplicate permission grants).
+    if (agentEmail) {
+      try {
+        await drive.permissions.create({
+          fileId: agentFolder.id,
+          requestBody: {
+            role: 'writer',
+            type: 'user',
+            emailAddress: agentEmail,
+          },
+          sendNotificationEmail: false,
+        });
+      } catch (permError) {
+        // Permission may already exist — safe to ignore
+        console.log('Agent folder share (may already exist):', permError.message);
+      }
+    }
+
+    // 4. Share agent folder with broker email (if configured)
+    const brokerEmail = process.env.BROKER_EMAIL;
+    if (brokerEmail) {
+      try {
+        await drive.permissions.create({
+          fileId: agentFolder.id,
+          requestBody: {
+            role: 'writer',
+            type: 'user',
+            emailAddress: brokerEmail,
+          },
+          sendNotificationEmail: false,
+        });
+      } catch (permError) {
+        console.log('Broker share (may already exist):', permError.message);
+      }
+    }
+
+    // 5. Share agent folder with photographer email (if configured)
+    const photographerEmail = process.env.PHOTOGRAPHER_EMAIL;
+    if (photographerEmail) {
+      try {
+        await drive.permissions.create({
+          fileId: agentFolder.id,
+          requestBody: {
+            role: 'writer',
+            type: 'user',
+            emailAddress: photographerEmail,
+          },
+          sendNotificationEmail: false,
+        });
+      } catch (permError) {
+        console.log('Photographer share (may already exist):', permError.message);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       folderId: propertyFolder.id,
       folderUrl: propertyFolder.webViewLink,
-      agentFolder: agentFolderName
+      agentFolder: agentFolderName,
     });
 
   } catch (error) {

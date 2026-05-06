@@ -1,0 +1,106 @@
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { createProperty, isWriteConfigured } from '@/lib/reconnect-api';
+
+/* ═══════════════════════════════════════════════════════════════
+   PUBLISH PROPERTY TO RECONNECT
+   POST /api/properties/publish
+   
+   Takes a property ID, pushes it to RECONNECT, and updates
+   the Hub with the external listing ID.
+   
+   SCAFFOLDED — write operations activate when RECONNECT 
+   credentials are configured. Local status update works now.
+   ═══════════════════════════════════════════════════════════════ */
+
+function getSupabaseAdmin() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
+export async function POST(req) {
+  try {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { propertyId } = await req.json();
+
+    if (!propertyId) {
+      return NextResponse.json({ error: 'propertyId is required' }, { status: 400 });
+    }
+
+    // 1. Fetch property from Hub
+    const { data: property, error: fetchError } = await supabaseAdmin
+      .from('properties')
+      .select('*')
+      .eq('id', propertyId)
+      .single();
+
+    if (fetchError || !property) {
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 });
+    }
+
+    if (property.status !== 'approved' && property.status !== 'published') {
+      return NextResponse.json(
+        { error: 'Property must be approved before publishing' },
+        { status: 400 }
+      );
+    }
+
+    // 2. Attempt RECONNECT publish (if credentials available)
+    let reconnectResult = null;
+
+    if (isWriteConfigured()) {
+      reconnectResult = await createProperty(property);
+
+      if (!reconnectResult.success) {
+        return NextResponse.json(
+          { error: 'RECONNECT publish failed', details: reconnectResult.error },
+          { status: 502 }
+        );
+      }
+    }
+
+    // 3. Update Hub status
+    const updates = {
+      status: 'published',
+    };
+
+    if (reconnectResult?.listingId) {
+      updates.reconnect_listing_id = reconnectResult.listingId;
+      updates.reconnect_listing_key = reconnectResult.listingKey;
+      updates.reconnect_last_sync = new Date().toISOString();
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from('properties')
+      .update(updates)
+      .eq('id', propertyId);
+
+    if (updateError) {
+      return NextResponse.json({ error: 'Failed to update property status' }, { status: 500 });
+    }
+
+    // 4. Create syndication record
+    if (reconnectResult?.listingId) {
+      await supabaseAdmin.from('property_syndication').upsert({
+        property_id: propertyId,
+        portal_name: 'reconnect',
+        portal_listing_id: String(reconnectResult.listingId),
+        status: 'synced',
+        last_synced_at: new Date().toISOString(),
+      }, { onConflict: 'property_id,portal_name' });
+    }
+
+    return NextResponse.json({
+      success: true,
+      published: true,
+      reconnect_configured: isWriteConfigured(),
+      reconnect_listing_id: reconnectResult?.listingId || null,
+      message: isWriteConfigured()
+        ? 'Published to RECONNECT and Hub'
+        : 'Published locally in Hub. RECONNECT sync will activate when credentials are configured.',
+    });
+
+  } catch (err) {
+    console.error('Publish error:', err);
+    return NextResponse.json({ error: 'Publish failed: ' + err.message }, { status: 500 });
+  }
+}
