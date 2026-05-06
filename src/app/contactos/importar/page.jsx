@@ -14,9 +14,13 @@ const SYSTEM_FIELDS = [
   { id: 'last_name', label: 'Apellidos' },
   { id: 'email', label: 'Correo Electrónico' },
   { id: 'phone', label: 'Teléfono' },
-  { id: 'type', label: 'Perfil (Comprador, Vendedor...)' },
+  { id: 'type', label: 'Perfil (Comprador, Vendedor... separar con coma)' },
   { id: 'lead_origin', label: 'Origen (Digital, Rótulo...)' },
   { id: 'market', label: 'Mercado (Nacional, Extranjero)' },
+  { id: 'primary_language', label: 'Idioma Primario' },
+  { id: 'secondary_language', label: 'Idioma Secundario' },
+  { id: 'tertiary_language', label: 'Idioma Terciario' },
+  { id: 'favorite_language', label: 'Idioma Favorito' },
   { id: 'contact_classification', label: 'Clasificación (A+, A, B, C)' },
   { id: 'notes', label: 'Notas / Detalles' }
 ];
@@ -32,14 +36,29 @@ export default function ImportarContactosPage() {
   const [csvData, setCsvData] = useState([]);
   const [mapping, setMapping] = useState({});
   const [loading, setLoading] = useState(false);
+  const [disclosureAccepted, setDisclosureAccepted] = useState(false);
   const [globalDefaults, setGlobalDefaults] = useState({
     type: 'Comprador',
     lead_origin: 'Esfera de Influencia',
     market: 'Nacional',
-    contact_classification: 'B'
+    contact_classification: 'B',
+    newsletter_opt_in: false
   });
 
   const fileInputRef = useRef(null);
+
+  const downloadTemplate = () => {
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + "Nombre,Apellidos,Correo,Telefono,Perfil,Origen,Mercado,IdiomaPrimario,IdiomaSecundario,IdiomaTerciario,IdiomaFavorito,Clasificacion,Notas\n"
+      + "Ejemplo,Cliente,correo@ejemplo.com,88888888,\"Comprador, Inversor\",Digital,Nacional,Español,Inglés,Ninguno,Español,A+,Cliente de prueba";
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "Plantilla_Contactos_AltitudHub.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // STEP 1: Handle File Upload
   const handleFileUpload = (e) => {
@@ -113,18 +132,34 @@ export default function ImportarContactosPage() {
         };
 
         const firstName = extractValue('first_name') || 'Sin Nombre';
-        let type = extractValue('type');
+        let typeRaw = extractValue('type');
         let origin = extractValue('lead_origin');
         let market = extractValue('market');
+        let primary_language = extractValue('primary_language');
+        let secondary_language = extractValue('secondary_language');
+        let tertiary_language = extractValue('tertiary_language');
+        let favorite_language = extractValue('favorite_language');
         let classification = extractValue('contact_classification');
         let notes = extractValue('notes');
         let originDetails = '';
 
-        // SMART FALLBACKS
-        const validTypes = ['Comprador', 'Vendedor', 'Inversionista', 'Desarrollador', 'Inquilino', 'Otro'];
-        if (!validTypes.includes(type)) {
-          if (type) notes += `\n[Tipo original: ${type}]`;
-          type = globalDefaults.type;
+        // SMART FALLBACKS FOR TYPE (Array handling)
+        const validTypes = ['Comprador', 'Vendedor', 'Inversor', 'Inversionista', 'Desarrollador', 'Otro'];
+        let typeArray = [];
+        if (typeRaw) {
+          const splitTypes = typeRaw.split(',').map(t => t.trim());
+          splitTypes.forEach(t => {
+            // Map "Inversionista" to "Inversor" to standardize if needed, or just allow both
+            const standardT = t === 'Inversionista' ? 'Inversor' : t;
+            if (validTypes.includes(standardT)) {
+              typeArray.push(standardT);
+            } else {
+              notes += `\n[Tipo no reconocido: ${t}]`;
+            }
+          });
+        }
+        if (typeArray.length === 0) {
+          typeArray = [globalDefaults.type];
         }
 
         const validOrigins = ['Esfera de Influencia', 'Referido', 'Digital', 'Rótulo', 'Oficina', 'Manual'];
@@ -159,12 +194,17 @@ export default function ImportarContactosPage() {
           last_name: extractValue('last_name'),
           email: extractValue('email'),
           phone: extractValue('phone'),
-          type: type,
+          type: typeArray,
           lead_origin: origin,
           origin_details: originDetails,
           market: market || globalDefaults.market,
+          primary_language: primary_language || 'Español',
+          secondary_language: secondary_language || 'Ninguno',
+          tertiary_language: tertiary_language || 'Ninguno',
+          favorite_language: favorite_language || 'Español',
           contact_classification: classification || globalDefaults.contact_classification,
           notes: notes.trim(),
+          newsletter_opt_in: globalDefaults.newsletter_opt_in,
           status: 'active'
         };
       });
@@ -211,6 +251,32 @@ export default function ImportarContactosPage() {
             </div>
           </div>
 
+          {/* DATA PRIVACY DISCLOSURE */}
+          <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-2xl p-5 mb-6">
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-amber-800 dark:text-amber-300 mb-1">{t('contact_imp_disclosure_title')}</h4>
+                <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+                  {t('contact_imp_disclosure_text')}
+                </p>
+                <label className="flex items-center gap-2 mt-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={disclosureAccepted}
+                    onChange={(e) => setDisclosureAccepted(e.target.checked)}
+                    className="w-4 h-4 rounded border-amber-300 text-brand-500 focus:ring-brand-500"
+                  />
+                  <span className="text-xs font-medium text-amber-800 dark:text-amber-300 group-hover:text-amber-900 dark:group-hover:text-amber-200 transition-colors">
+                    {t('contact_imp_disclosure_accept')}
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+
           {/* STEP 1 */}
           {step === 1 && (
             <div className="text-center py-12">
@@ -229,13 +295,24 @@ export default function ImportarContactosPage() {
                 ref={fileInputRef} 
                 onChange={handleFileUpload} 
               />
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white transition-colors text-sm font-medium shadow-md shadow-brand-500/20"
-              >
-                {t('contact_imp_btn_file')}
-              </button>
-              <p className="text-xs text-gray-400 mt-4">*Por ahora, por favor exporta tu Excel a formato .CSV antes de subirlo.</p>
+              <div className="flex justify-center gap-3">
+                <button 
+                  onClick={downloadTemplate}
+                  className="px-6 py-3 rounded-xl bg-white dark:bg-dark-panel border border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 transition-colors text-sm font-medium shadow-sm flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                  {t('contact_imp_btn_template')}
+                </button>
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={!disclosureAccepted}
+                  className={`px-6 py-3 rounded-xl text-white transition-colors text-sm font-medium shadow-md shadow-brand-500/20 ${disclosureAccepted ? 'bg-brand-500 hover:bg-brand-600' : 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed shadow-none'}`}
+                >
+                  {t('contact_imp_btn_file')}
+                </button>
+              </div>
+              {!disclosureAccepted && <p className="text-xs text-amber-600 dark:text-amber-400 mt-3 font-medium">{t('contact_imp_disclosure_required')}</p>}
+              <p className="text-xs text-gray-400 mt-4">*{t('contact_imp_csv_hint')}</p>
             </div>
           )}
 
@@ -300,6 +377,34 @@ export default function ImportarContactosPage() {
                       <option value="B">B</option>
                       <option value="C">C</option>
                     </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Newsletter Opt-In Toggle */}
+              <div className="bg-blue-50 dark:bg-blue-900/10 p-5 rounded-2xl border border-blue-100 dark:border-blue-900/20 mb-8">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-1">{t('contact_imp_newsletter_title')}</h4>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mb-3">{t('contact_imp_newsletter_desc')}</p>
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={globalDefaults.newsletter_opt_in}
+                          onChange={(e) => setGlobalDefaults({...globalDefaults, newsletter_opt_in: e.target.checked})}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-brand-500 transition-colors"></div>
+                        <div className="absolute left-[2px] top-[2px] bg-white w-5 h-5 rounded-full transition-transform peer-checked:translate-x-5 shadow-sm"></div>
+                      </div>
+                      <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                        {globalDefaults.newsletter_opt_in ? t('contact_imp_newsletter_yes') : t('contact_imp_newsletter_no')}
+                      </span>
+                    </label>
                   </div>
                 </div>
               </div>

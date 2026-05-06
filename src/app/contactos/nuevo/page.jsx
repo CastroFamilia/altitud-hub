@@ -19,17 +19,37 @@ export default function NuevoContactoPage() {
     last_name: '',
     email: '',
     phone: '',
-    type: 'Comprador',
+    type: ['Comprador'],
     lead_origin: 'Esfera de Influencia',
     origin_details: '',
     referred_by_name: '',
     market: 'Nacional',
+    primary_language: 'Español',
+    secondary_language: 'Ninguno',
+    tertiary_language: 'Ninguno',
+    favorite_language: 'Español',
     contact_classification: 'B',
+    newsletter_opt_in: false,
     notes: ''
   });
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleTypeChange = (typeOption) => {
+    setFormData(prev => {
+      const isSelected = prev.type.includes(typeOption);
+      let newType = [];
+      if (isSelected) {
+        newType = prev.type.filter(t => t !== typeOption);
+      } else {
+        newType = [...prev.type, typeOption];
+      }
+      // Aseguramos que siempre haya al menos una opción seleccionada
+      if (newType.length === 0) newType = [typeOption];
+      return { ...prev, type: newType };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -51,7 +71,12 @@ export default function NuevoContactoPage() {
             origin_details: formData.origin_details,
             referred_by_name: formData.referred_by_name,
             market: formData.market,
+            primary_language: formData.primary_language,
+            secondary_language: formData.secondary_language,
+            tertiary_language: formData.tertiary_language,
+            favorite_language: formData.favorite_language,
             contact_classification: formData.contact_classification,
+            newsletter_opt_in: formData.newsletter_opt_in,
             notes: formData.notes,
             status: 'active'
           }
@@ -136,15 +161,87 @@ export default function NuevoContactoPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('contact_new_market')}</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Origen / Residencia</label>
                 <select
                   name="market"
                   value={formData.market}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-200 dark:border-dark-border rounded-xl bg-slate-50 dark:bg-dark-bg focus:ring-2 focus:ring-brand-500 outline-none transition-colors text-gray-900 dark:text-white"
                 >
-                  <option value="Nacional">{t('contact_market_national')}</option>
-                  <option value="Extranjero">{t('contact_market_foreign')}</option>
+                  <option value="Nacional">Nacional</option>
+                  <option value="Extranjero residente">Extranjero residente</option>
+                  <option value="Extranjero">Extranjero</option>
+                  <option value="Otro / No lo sé">Otro / No lo sé</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Idioma Primario</label>
+                <select
+                  name="primary_language"
+                  value={formData.primary_language}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-200 dark:border-dark-border rounded-xl bg-slate-50 dark:bg-dark-bg focus:ring-2 focus:ring-brand-500 outline-none transition-colors text-gray-900 dark:text-white"
+                >
+                  <option value="Español">Español</option>
+                  <option value="Inglés">Inglés</option>
+                  <option value="Francés">Francés</option>
+                  <option value="Alemán">Alemán</option>
+                  <option value="Portugués">Portugués</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Idioma Secundario</label>
+                <select
+                  name="secondary_language"
+                  value={formData.secondary_language}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-200 dark:border-dark-border rounded-xl bg-slate-50 dark:bg-dark-bg focus:ring-2 focus:ring-brand-500 outline-none transition-colors text-gray-900 dark:text-white"
+                >
+                  <option value="Ninguno">Ninguno</option>
+                  <option value="Español">Español</option>
+                  <option value="Inglés">Inglés</option>
+                  <option value="Francés">Francés</option>
+                  <option value="Alemán">Alemán</option>
+                  <option value="Portugués">Portugués</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Idioma Terciario</label>
+                <select
+                  name="tertiary_language"
+                  value={formData.tertiary_language}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-200 dark:border-dark-border rounded-xl bg-slate-50 dark:bg-dark-bg focus:ring-2 focus:ring-brand-500 outline-none transition-colors text-gray-900 dark:text-white"
+                >
+                  <option value="Ninguno">Ninguno</option>
+                  <option value="Español">Español</option>
+                  <option value="Inglés">Inglés</option>
+                  <option value="Francés">Francés</option>
+                  <option value="Alemán">Alemán</option>
+                  <option value="Portugués">Portugués</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Idioma Favorito</label>
+                <select
+                  name="favorite_language"
+                  value={formData.favorite_language}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-200 dark:border-dark-border rounded-xl bg-slate-50 dark:bg-dark-bg focus:ring-2 focus:ring-brand-500 outline-none transition-colors text-gray-900 dark:text-white"
+                >
+                  <option value="Español">Español</option>
+                  <option value="Inglés">Inglés</option>
+                  <option value="Francés">Francés</option>
+                  <option value="Alemán">Alemán</option>
+                  <option value="Portugués">Portugués</option>
+                  <option value="Otro">Otro</option>
                 </select>
               </div>
 
@@ -163,20 +260,24 @@ export default function NuevoContactoPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('contact_new_type')}</label>
-                <select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-200 dark:border-dark-border rounded-xl bg-slate-50 dark:bg-dark-bg focus:ring-2 focus:ring-brand-500 outline-none transition-colors text-gray-900 dark:text-white"
-                >
-                  <option value="Comprador">Comprador</option>
-                  <option value="Vendedor">Vendedor</option>
-                  <option value="Inversionista">Inversionista / Inversor</option>
-                  <option value="Desarrollador">Desarrollador</option>
-                  <option value="Otro">Otro</option>
-                </select>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipos de Cliente (Múltiple Selección)</label>
+                <div className="flex flex-wrap gap-3">
+                  {['Comprador', 'Vendedor', 'Desarrollador', 'Inversor', 'Otro'].map(option => (
+                    <button
+                      type="button"
+                      key={option}
+                      onClick={() => handleTypeChange(option)}
+                      className={`px-4 py-2 rounded-xl border text-sm font-medium transition-all ${
+                        formData.type.includes(option)
+                          ? 'bg-brand-500 border-brand-500 text-white shadow-md'
+                          : 'bg-white dark:bg-dark-panel border-gray-200 dark:border-dark-border text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
               </div>
               
               <div>
@@ -222,6 +323,34 @@ export default function NuevoContactoPage() {
                   />
                 </div>
               )}
+            </div>
+
+            {/* Newsletter Opt-In */}
+            <div className="bg-blue-50 dark:bg-blue-900/10 p-5 rounded-2xl border border-blue-100 dark:border-blue-900/20">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-1">{t('contact_newsletter_title')}</h4>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-3">{t('contact_newsletter_desc')}</p>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={formData.newsletter_opt_in}
+                        onChange={(e) => setFormData(prev => ({ ...prev, newsletter_opt_in: e.target.checked }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-brand-500 transition-colors"></div>
+                      <div className="absolute left-[2px] top-[2px] bg-white w-5 h-5 rounded-full transition-transform peer-checked:translate-x-5 shadow-sm"></div>
+                    </div>
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                      {formData.newsletter_opt_in ? t('contact_newsletter_yes') : t('contact_newsletter_no')}
+                    </span>
+                  </label>
+                </div>
+              </div>
             </div>
 
             <div>

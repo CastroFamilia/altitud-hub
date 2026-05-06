@@ -15,6 +15,7 @@ export default function ContactProfilePage() {
   const { t } = useApp();
   
   const [contact, setContact] = useState(null);
+  const [properties, setProperties] = useState([]);
   const [acms, setAcms] = useState([]);
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,12 @@ export default function ContactProfilePage() {
   const [showInquiryModal, setShowInquiryModal] = useState(false);
   const [inquiryForm, setInquiryForm] = useState({ remax_property_id: '', notes: '' });
   const [submittingInquiry, setSubmittingInquiry] = useState(false);
+
+  // Property Modal State
+  const [showPropertyModal, setShowPropertyModal] = useState(false);
+  const [propertyForm, setPropertyForm] = useState({ name: '', property_type: 'Lote' });
+  const [submittingProperty, setSubmittingProperty] = useState(false);
+  const [syncingPropertyId, setSyncingPropertyId] = useState(null);
 
   // Olympia State
   const [olympiaSuggestion, setOlympiaSuggestion] = useState('');
@@ -35,7 +42,7 @@ export default function ContactProfilePage() {
 
   useEffect(() => {
     async function fetchContactData() {
-      if (!profile || !id) return;
+      if (!id) return;
       
       try {
         // Fetch contact details
@@ -59,6 +66,17 @@ export default function ContactProfilePage() {
           setAcms(acmData);
         }
 
+        // Fetch properties
+        const { data: propData, error: propError } = await supabase
+          .from('properties')
+          .select('*')
+          .eq('contact_id', id)
+          .order('created_at', { ascending: false });
+          
+        if (!propError && propData) {
+          setProperties(propData);
+        }
+
         // Fetch inquiries
         const { data: inquiryData, error: inquiryError } = await supabase
           .from('property_inquiries')
@@ -78,7 +96,7 @@ export default function ContactProfilePage() {
     }
     
     fetchContactData();
-  }, [id, profile]);
+  }, [id]);
 
   const handleInquirySubmit = async (e) => {
     e.preventDefault();
@@ -107,6 +125,101 @@ export default function ContactProfilePage() {
       alert('Error al registrar consulta.');
     } finally {
       setSubmittingInquiry(false);
+    }
+  };
+
+  const handlePropertySubmit = async (e) => {
+    e.preventDefault();
+    if (!propertyForm.name) return;
+    
+    setSubmittingProperty(true);
+    try {
+      const driveRes = await fetch('/api/drive/create-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentName: profile?.full_name || profile?.email?.split('@')[0] || 'Agente Local',
+          propertyName: propertyForm.name
+        })
+      });
+      const driveData = await driveRes.json();
+      if (!driveRes.ok) throw new Error(driveData.error || 'Error creando carpeta en Drive');
+
+      const { data, error } = await supabase
+        .from('properties')
+        .insert([{
+          agent_id: profile?.id || null,
+          contact_id: id,
+          name: propertyForm.name,
+          property_type: propertyForm.property_type,
+          drive_folder_id: driveData.folderId,
+          drive_folder_url: driveData.folderUrl
+        }])
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      setProperties([data, ...properties]);
+      setShowPropertyModal(false);
+      setPropertyForm({ name: '', property_type: 'Lote' });
+    } catch (err) {
+      console.error(err);
+      alert('Error al asignar propiedad: ' + err.message);
+    } finally {
+      setSubmittingProperty(false);
+    }
+  };
+
+  const handleSyncProperty = async (property) => {
+    if (!property.drive_folder_id) return;
+    setSyncingPropertyId(property.id);
+    
+    try {
+      const readRes = await fetch('/api/drive/read-docs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderId: property.drive_folder_id })
+      });
+      const readData = await readRes.json();
+      if (!readData.success || !readData.files || readData.files.length === 0) {
+        throw new Error('No se encontraron archivos PDF en la carpeta de Drive de esta propiedad. Sube el plano o registro primero.');
+      }
+      
+      const fileId = readData.files[0].id;
+
+      const extractRes = await fetch('/api/olympia/extract-property', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileId })
+      });
+      const extractData = await extractRes.json();
+      if (!extractData.success) {
+        throw new Error(extractData.error || 'Error al extraer info.');
+      }
+      
+      const { size_sqm, finca_number, plano_number } = extractData.data;
+
+      const { data: updatedProp, error } = await supabase
+        .from('properties')
+        .update({
+          size_sqm: size_sqm !== null ? size_sqm : property.size_sqm,
+          finca_number: finca_number || property.finca_number,
+          plano_number: plano_number || property.plano_number
+        })
+        .eq('id', property.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setProperties(properties.map(p => p.id === updatedProp.id ? updatedProp : p));
+      alert('¡Información de la propiedad actualizada mágicamente por Olympia!');
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setSyncingPropertyId(null);
     }
   };
 
@@ -228,12 +341,26 @@ export default function ContactProfilePage() {
               </div>
               
               <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                  {contact.type || t('contact_prof_undef')}
-                </span>
+                {Array.isArray(contact.type) ? contact.type.map(t => (
+                  <span key={t} className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    {t}
+                  </span>
+                )) : (
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    {contact.type || t('contact_prof_undef')}
+                  </span>
+                )}
                 <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                  {t('contact_new_market')} {contact.market === 'Nacional' ? t('contact_market_national') : contact.market === 'Extranjero' ? t('contact_market_foreign') : contact.market || t('contact_market_national')}
+                  Residencia: {contact.market || 'Local'}
                 </span>
+                {contact.primary_language && (
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300 border border-pink-200 dark:border-pink-800">
+                    🗣️ {contact.primary_language}
+                    {contact.secondary_language && contact.secondary_language !== 'Ninguno' ? ` / ${contact.secondary_language}` : ''}
+                    {contact.tertiary_language && contact.tertiary_language !== 'Ninguno' ? ` / ${contact.tertiary_language}` : ''}
+                    {contact.favorite_language && contact.favorite_language !== 'Ninguno' ? ` (Fav: ${contact.favorite_language})` : ''}
+                  </span>
+                )}
                 <span className="px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                   {t('contact_th_class')} {contact.contact_classification || 'B'}
                 </span>
@@ -397,6 +524,143 @@ export default function ContactProfilePage() {
                 </div>
               </div>
             </div>
+
+          {/* PROPERTY MODAL OVERLAY */}
+          {showPropertyModal && (
+            <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-dark-panel rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+                    🏠 Asignar Nueva Propiedad
+                  </h3>
+                  <button onClick={() => setShowPropertyModal(false)} className="text-gray-500 hover:text-gray-700">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  </button>
+                </div>
+                <form onSubmit={handlePropertySubmit}>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre Corto / Dirección</label>
+                    <input 
+                      required
+                      type="text" 
+                      value={propertyForm.name}
+                      onChange={(e) => setPropertyForm({...propertyForm, name: e.target.value})}
+                      placeholder="Ej. Casa en Escazú / Lote 45" 
+                      className="w-full px-4 py-2 border border-gray-200 dark:border-dark-border rounded-xl bg-slate-50 dark:bg-dark-bg focus:ring-2 focus:ring-brand-500 outline-none" 
+                    />
+                  </div>
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de Propiedad</label>
+                    <select 
+                      value={propertyForm.property_type}
+                      onChange={(e) => setPropertyForm({...propertyForm, property_type: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-200 dark:border-dark-border rounded-xl bg-slate-50 dark:bg-dark-bg focus:ring-2 focus:ring-brand-500 outline-none"
+                    >
+                      <option value="Lote">Lote</option>
+                      <option value="Casa">Casa</option>
+                      <option value="Apartamento">Apartamento</option>
+                      <option value="Comercial">Comercial</option>
+                    </select>
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <button 
+                      type="button" 
+                      onClick={() => setShowPropertyModal(false)}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      type="submit" 
+                      disabled={submittingProperty}
+                      className="px-6 py-2 text-sm font-bold bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors disabled:opacity-50"
+                    >
+                      {submittingProperty ? 'Creando Carpeta...' : 'Asignar Propiedad'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 1.5: PROPIEDADES ASIGNADAS */}
+          <div className="glass-panel p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Propiedades Asignadas</h3>
+                  <p className="text-xs text-gray-500">Propiedades que el cliente está vendiendo.</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowPropertyModal(true)}
+                className="text-sm bg-brand-50 text-brand-600 dark:bg-brand-900/20 dark:text-brand-400 px-3 py-1.5 rounded-lg hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors shadow-sm"
+              >
+                + Asignar Propiedad
+              </button>
+            </div>
+            
+            {properties.length === 0 ? (
+              <div className="text-center py-8 bg-slate-50 dark:bg-dark-bg rounded-xl border border-dashed border-gray-200 dark:border-dark-border">
+                <p className="text-gray-500 dark:text-gray-400 text-sm">Este contacto no tiene propiedades asignadas.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {properties.map(prop => (
+                  <div key={prop.id} className="border border-gray-200 dark:border-dark-border rounded-xl p-5 bg-white dark:bg-white/5 relative flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-bold text-gray-900 dark:text-white text-lg">{prop.name}</h4>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-gray-300">
+                          {prop.property_type}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-400 mb-4 mt-3">
+                        <div className="bg-gray-50 dark:bg-dark-bg p-2 rounded-lg">
+                          <span className="block text-xs text-gray-400">Área:</span>
+                          <span className="font-semibold text-gray-800 dark:text-gray-200">{prop.size_sqm ? `${prop.size_sqm} m²` : '--'}</span>
+                        </div>
+                        <div className="bg-gray-50 dark:bg-dark-bg p-2 rounded-lg">
+                          <span className="block text-xs text-gray-400">Finca:</span>
+                          <span className="font-semibold text-gray-800 dark:text-gray-200">{prop.finca_number || '--'}</span>
+                        </div>
+                        <div className="bg-gray-50 dark:bg-dark-bg p-2 rounded-lg col-span-2">
+                          <span className="block text-xs text-gray-400">Plano Catastrado:</span>
+                          <span className="font-semibold text-gray-800 dark:text-gray-200">{prop.plano_number || '--'}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between border-t border-gray-100 dark:border-white/10 pt-4 mt-2">
+                      <div className="flex gap-2">
+                        {prop.drive_folder_url && (
+                          <a 
+                            href={prop.drive_folder_url} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded"
+                          >
+                            Abrir Drive
+                          </a>
+                        )}
+                      </div>
+                      <button 
+                        onClick={() => handleSyncProperty(prop)}
+                        disabled={syncingPropertyId === prop.id}
+                        className="text-xs font-bold text-white bg-gradient-to-r from-brand-500 to-purple-600 hover:shadow-md transition-all px-3 py-1.5 rounded-lg flex items-center gap-1 disabled:opacity-50"
+                      >
+                        {syncingPropertyId === prop.id ? 'Sincronizando...' : '✨ Extraer Info'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* SECTION 2: ACMS & PRELISTINGS (Vendedor) */}
           <div className="glass-panel p-6">
