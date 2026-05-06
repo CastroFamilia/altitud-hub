@@ -1,10 +1,44 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { supabase } from '@/lib/supabase';
+import { rateLimitAI } from '@/lib/rate-limit';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+/* ═══════════════════════════════════════════════════════════════
+   CHAT HISTORY MANAGEMENT
+   
+   Problem: Sending entire chat history grows token usage linearly.
+   After ~20 messages, a single request can use 5K+ tokens.
+   
+   Solution: Sliding window — keep last N messages + a summary.
+   ═══════════════════════════════════════════════════════════════ */
+
+const MAX_HISTORY_MESSAGES = 16; // Keep last 16 messages (8 exchanges)
+
+/**
+ * Truncate chat history to prevent token explosion.
+ * Keeps the most recent messages and adds a context summary if truncated.
+ */
+function truncateHistory(messages) {
+  if (messages.length <= MAX_HISTORY_MESSAGES) {
+    return messages;
+  }
+
+  const truncatedCount = messages.length - MAX_HISTORY_MESSAGES;
+  const summary = {
+    role: 'user',
+    content: `[Nota del sistema: Se omitieron ${truncatedCount} mensajes anteriores de esta conversación para optimizar el rendimiento. Continúa la conversación de manera natural basándote en los mensajes recientes.]`,
+  };
+
+  return [summary, ...messages.slice(-MAX_HISTORY_MESSAGES)];
+}
+
 export async function POST(req) {
+  // ── Rate Limiting ────────────────────────────────────────────
+  const limited = rateLimitAI(req);
+  if (limited) return limited;
+
   try {
     const data = await req.json();
     const { messages, context } = data;
@@ -12,6 +46,9 @@ export async function POST(req) {
     if (!messages || messages.length === 0) {
       return NextResponse.json({ error: 'Faltan mensajes' }, { status: 400 });
     }
+
+    // ── Truncate history to control token usage ──────────────
+    const trimmedMessages = truncateHistory(messages);
 
     // Try to get agent email from context
     const agentEmail = context?.plan?.agent_email || '';
@@ -126,19 +163,11 @@ Instrucciones Críticas:
 5. Mantén tus respuestas relativamente cortas y fáciles de leer en un chat (usa viñetas o negritas).
 `;
 
-    // Format history for Gemini
-    const chatHistory = messages.map(msg => ({
+    // Format history for Gemini — use truncated messages
+    const chatHistory = trimmedMessages.map(msg => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: msg.content }]
     }));
-    
-    // We remove the last message to use it as the current prompt, or we just pass the history
-    // Since Gemini SDK allows history:
-    // But actually, we can just send the last message, and pass the history.
-    // Or with google-genai, we can use `contents` array.
-    
-    // The google-genai SDK format for contents is an array of objects with role and parts.
-    // We need to inject the system prompt as the first message or use `systemInstruction`.
     
     const requestContents = [...chatHistory];
 
@@ -152,6 +181,26 @@ Instrucciones Críticas:
 
   } catch (error) {
     console.error('Olympia Coach API Error:', error);
-    return NextResponse.json({ error: 'Hubo un error al conectar con Olympia.' }, { status: 500 });
+    
+    // ── Graceful degradation based on error type ─────────────
+    const errorMessage = error.message || '';
+    
+    if (errorMessage.includes('quota') || errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
+      return NextResponse.json({ 
+        reply: '⏸️ Olympia está tomando un breve descanso por alta demanda. Todos los demás módulos del Hub siguen funcionando normalmente. Intenta de nuevo en unos minutos.',
+        isQuotaError: true,
+      }, { status: 200 }); // Return 200 so the UI handles it gracefully
+    }
+    
+    if (errorMessage.includes('API key') || errorMessage.includes('INVALID_API_KEY')) {
+      return NextResponse.json({ 
+        reply: '🔧 Olympia está en mantenimiento. El equipo técnico ya fue notificado. Los demás módulos del Hub siguen funcionando normalmente.',
+        isConfigError: true,
+      }, { status: 200 });
+    }
+
+    return NextResponse.json({ 
+      reply: 'Lo siento, tuve un problema al procesar tu solicitud. Por favor intenta de nuevo.',
+    }, { status: 200 });
   }
 }

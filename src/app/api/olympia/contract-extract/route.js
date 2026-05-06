@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import { rateLimitAI } from '@/lib/rate-limit';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(req) {
+  const limited = rateLimitAI(req);
+  if (limited) return limited;
+
   try {
     const formData = await req.formData();
     const file = formData.get('file');

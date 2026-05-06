@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import TopNav from '@/components/layout/TopNav';
 import Step1Owners from '@/components/prelisting/Step1Owners';
@@ -39,6 +39,37 @@ export default function PrelistingDashboard() {
     property_type: 'house',
     status: 'draft',
   });
+  const [availableProperties, setAvailableProperties] = useState([]);
+
+  useEffect(() => {
+    async function fetchProperties() {
+      const { data } = await supabase
+        .from('properties')
+        .select('*, contacts(first_name, last_name, phone, email)')
+        .order('created_at', { ascending: false });
+      if (data) setAvailableProperties(data);
+    }
+    fetchProperties();
+  }, []);
+
+  const handleSelectProperty = (e) => {
+    const propId = e.target.value;
+    if (!propId) return;
+    const prop = availableProperties.find(p => p.id === propId);
+    if (prop) {
+      setFormData(prev => ({
+        ...prev,
+        property_name: prop.name,
+        property_type: prop.property_type === 'Comercial' ? 'commercial' : prop.property_type === 'Lote' ? 'land' : 'house',
+        owner_name: prop.contacts ? `${prop.contacts.first_name} ${prop.contacts.last_name || ''}`.trim() : '',
+        phones: prop.contacts?.phone || '',
+        emails: prop.contacts?.email || '',
+        finca: prop.finca_number || '',
+        plano: prop.plano_number || '',
+        m2_lot: prop.size_sqm || ''
+      }));
+    }
+  };
 
   const updateForm = (key, value) => {
     setFormData(prev => ({ ...prev, [key]: value }));
@@ -119,6 +150,24 @@ export default function PrelistingDashboard() {
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
               Volver a Entrevistas
             </button>
+          </div>
+        </div>
+
+        {/* Property Selector */}
+        <div className="w-full bg-slate-50 dark:bg-dark-bg border-b border-gray-100 dark:border-dark-border/50 shrink-0">
+          <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
+            <span className="text-sm font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">Vincular Propiedad:</span>
+            <select 
+              onChange={handleSelectProperty}
+              className="flex-1 max-w-sm px-3 py-1.5 text-sm border border-gray-200 dark:border-dark-border rounded-lg bg-white dark:bg-dark-panel focus:ring-2 focus:ring-brand-500 outline-none text-gray-700 dark:text-white"
+            >
+              <option value="">-- Seleccionar desde Contactos --</option>
+              {availableProperties.map(prop => (
+                <option key={prop.id} value={prop.id}>
+                  {prop.name} ({prop.contacts?.first_name} {prop.contacts?.last_name})
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
