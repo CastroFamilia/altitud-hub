@@ -104,12 +104,12 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
   // Handle Quick Approve
   const handleApproveAgent = async (agent) => {
     if (!agent.email) {
-      alert("Este agente no tiene un correo asignado en la API.");
+      alert(t('ofc_agent_no_email'));
       return;
     }
     
     // Check if it's a valid remax-altitud.cr email or prompt
-    const confirmEmail = confirm(`¿Aprobar a ${agent.name} con el correo ${agent.email}?`);
+    const confirmEmail = confirm(t('ofc_confirm_approve').replace('{name}', agent.name).replace('{email}', agent.email));
     if (!confirmEmail) return;
 
     setInviting(true);
@@ -133,7 +133,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
       if (data.success) {
         loadData();
       } else {
-        alert(data.error || 'Error al aprobar');
+        alert(data.error || t('ofc_approve_error'));
       }
     } catch (err) {
       alert('Error: ' + err.message);
@@ -168,7 +168,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
         setInviteForm({ full_name: '', email: '', role: 'agent', team_id: '' });
         loadData();
       } else {
-        alert(data.error || 'Error al invitar manualmente');
+        alert(data.error || t('ofc_invite_error'));
       }
     } catch (err) {
       alert('Error: ' + err.message);
@@ -267,10 +267,10 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
           {activeTab === 'velocidad' ? (
             <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
               <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <span>⏱️</span> {lang === 'en' ? 'Listing Process Velocity' : 'Velocidad del Proceso de Listing'}
+                <span>⏱️</span> {t('ofc_velocity_title')}
               </h3>
               <p className="text-xs text-slate-400 mb-6">
-                {lang === 'en' ? 'Track how long each step takes from first contact to published listing. Identify bottlenecks and improve team efficiency.' : 'Mide cuánto toma cada paso desde el primer contacto hasta la publicación. Identifica cuellos de botella y mejora la eficiencia del equipo.'}
+                {t('ofc_velocity_desc')}
               </p>
               <ListingVelocityPanel t={t} lang={lang} milestones={milestones} profiles={profiles} />
             </div>
@@ -333,7 +333,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
                           />
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-white">{agent.name}</p>
-                            <p className="text-[10px] text-slate-400">{agent.email || 'Sin correo asociado'}</p>
+                            <p className="text-[10px] text-slate-400">{agent.email || t('ofc_no_email_label')}</p>
                           </div>
                         </div>
                         <button

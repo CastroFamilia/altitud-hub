@@ -70,7 +70,7 @@ export default function NegocioClient({ initialReservations = [], initialContact
 
   async function handleCreateDriveFolder() {
     if (!formData.property_address) {
-      alert("Por favor asegúrate de tener una dirección de propiedad en el formulario para crear la carpeta.");
+      alert(t('neg_drive_alert_missing'));
       return;
     }
     const agentName = profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Agente';
@@ -87,10 +87,10 @@ export default function NegocioClient({ initialReservations = [], initialContact
       });
       
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al crear carpeta');
+      if (!res.ok) throw new Error(data.error || t('neg_drive_error'));
       
       setFormData(prev => ({ ...prev, drive_folder_url: data.folderUrl }));
-      alert(`✅ Carpeta creada en Drive dentro de: ALTITUD HUB > ${data.agentFolder}`);
+      alert(`${t('neg_drive_success')} ${data.agentFolder}`);
     } catch (err) {
       console.error(err);
       alert(err.message);
@@ -220,7 +220,7 @@ export default function NegocioClient({ initialReservations = [], initialContact
       fetchReservations();
     } catch (err) {
       console.error('Save error:', err);
-      alert('Error guardando reserva: ' + err.message);
+      alert(t('neg_save_error') + err.message);
     }
   }
 
@@ -264,7 +264,7 @@ export default function NegocioClient({ initialReservations = [], initialContact
       });
 
       const extracted = await res.json();
-      if (!res.ok) throw new Error(extracted.error || 'Error al extraer datos');
+      if (!res.ok) throw new Error(extracted.error || t('neg_ai_extract_error'));
       
       // Merge extracted data into formData
       setFormData(prev => ({
@@ -346,7 +346,7 @@ export default function NegocioClient({ initialReservations = [], initialContact
         {/* Reservations List */}
         <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
           {loading ? (
-            <div className="p-8 text-center text-slate-500">Cargando...</div>
+            <div className="p-8 text-center text-slate-500">{t('neg_loading')}</div>
           ) : reservations.length === 0 ? (
             <div className="p-12 text-center">
               <div className="text-5xl mb-4">📝</div>
@@ -551,7 +551,7 @@ export default function NegocioClient({ initialReservations = [], initialContact
                         disabled={isCreatingFolder || !!formData.drive_folder_url}
                         className="text-xs px-3 py-1 bg-[#0F9D58]/10 hover:bg-[#0F9D58]/20 text-[#0F9D58] rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {isCreatingFolder ? 'Creando...' : '✨ Auto-Crear Carpeta'}
+                        {isCreatingFolder ? t('neg_drive_creating') : t('neg_drive_auto_btn')}
                       </button>
                     </label>
                     <input type="url" placeholder="https://drive.google.com/drive/folders/..." value={formData.drive_folder_url || ''} onChange={e => setFormData({...formData, drive_folder_url: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
@@ -647,7 +647,7 @@ export default function NegocioClient({ initialReservations = [], initialContact
             <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
               <div>
                 <h2 className="text-2xl font-bold">{selectedRes.property_address}</h2>
-                <p className="text-slate-500 mt-1"><span className="font-medium">Vendedor:</span> {selectedRes.seller_name || '-'} • <span className="font-medium">Comprador:</span> {selectedRes.buyer_name || '-'} • {selectedRes.type}</p>
+                <p className="text-slate-500 mt-1"><span className="font-medium">{t('neg_detail_seller')}:</span> {selectedRes.seller_name || '-'} • <span className="font-medium">{t('neg_detail_buyer')}:</span> {selectedRes.buyer_name || '-'} • {selectedRes.type}</p>
               </div>
               <button onClick={() => setSelectedRes(null)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 transition-colors">✕</button>
             </div>
@@ -704,11 +704,11 @@ export default function NegocioClient({ initialReservations = [], initialContact
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 uppercase tracking-wider">{t('res_expected_date')}</p>
-                  <p className="font-semibold">{selectedRes.expected_sign_date ? new Date(selectedRes.expected_sign_date).toLocaleDateString() : 'No definida'}</p>
+                  <p className="font-semibold">{selectedRes.expected_sign_date ? new Date(selectedRes.expected_sign_date).toLocaleDateString() : t('neg_detail_date_undef')}</p>
                 </div>
                 <div className="col-span-2 pt-2 mt-2 border-t border-slate-200 dark:border-white/10">
                   <p className="text-xs text-slate-500 uppercase tracking-wider">{t('neg_negotiation_details')}</p>
-                  <p className="text-sm mt-1 whitespace-pre-wrap">{selectedRes.negotiation_details || 'Sin detalles'}</p>
+                  <p className="text-sm mt-1 whitespace-pre-wrap">{selectedRes.negotiation_details || t('neg_detail_no_notes')}</p>
                 </div>
               </div>
 
