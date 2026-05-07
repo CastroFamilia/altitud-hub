@@ -19,6 +19,7 @@ export async function middleware(request) {
   const publicPaths = [
     '/login',
     '/auth/callback',
+    '/d/',             // Public development landing pages
     '/api/public',     // Public property feeds
     '/api/health',     // Health check endpoint
     '/api/invite',     // Invitation acceptance
