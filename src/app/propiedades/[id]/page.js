@@ -10,6 +10,8 @@ import PropertyStatusBadge from '@/components/propiedades/PropertyStatusBadge';
 import PropertyTimeline from '@/components/propiedades/PropertyTimeline';
 import { PROPERTY_TYPES, formatPrice } from '@/components/propiedades/PropertyCard';
 import SyndicationPanel from '@/components/propiedades/SyndicationPanel';
+import CommissionCalculator from '@/components/propiedades/CommissionCalculator';
+import SoldCongratsModal from '@/components/propiedades/SoldCongratsModal';
 import Link from 'next/link';
 
 const AMENITY_LABELS = {
@@ -56,6 +58,9 @@ export default function PropertyDetailPage() {
   const [milestones, setMilestones] = useState(null);
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [syncingPhotos, setSyncingPhotos] = useState(false);
+  const [showSoldModal, setShowSoldModal] = useState(false);
+  const [showCongratsModal, setShowCongratsModal] = useState(false);
+  const [soldResult, setSoldResult] = useState(null);
 
   const fetchProperty = async () => {
     const { data, error } = await supabase
@@ -277,6 +282,19 @@ export default function PropertyDetailPage() {
                   ✅ {lang === 'en' ? 'Approved — Ready to Publish' : 'Aprobada — Lista para Publicar'}
                 </span>
               )}
+              {(p.status === 'published' || p.status === 'approved') && p.status !== 'sold' && (
+                <button
+                  onClick={() => setShowSoldModal(true)}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5"
+                >
+                  🎉 {lang === 'en' ? 'Mark as Sold' : 'Marcar como Vendida'}
+                </button>
+              )}
+              {p.status === 'sold' && (
+                <span className="px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-sm font-bold border border-emerald-200 dark:border-emerald-800">
+                  🏆 {lang === 'en' ? 'SOLD' : 'VENDIDA'} — {p.sold_price ? formatPrice(p.sold_price, p.list_price_currency_id) : ''}
+                </span>
+              )}
             </div>
           </div>
 
@@ -452,6 +470,56 @@ export default function PropertyDetailPage() {
 
         </div>
       </div>
+
+      {/* ═══ MARK AS SOLD MODAL ═══ */}
+      {showSoldModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowSoldModal(false)}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div
+            className="relative bg-white dark:bg-slate-800 rounded-[32px] shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 md:p-8"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-black italic text-slate-900 dark:text-white">
+                  🎉 {lang === 'en' ? 'Record Sale' : 'Registrar Venta'}
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">{title}</p>
+              </div>
+              <button onClick={() => setShowSoldModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <CommissionCalculator
+              property={p}
+              agentProfile={profile}
+              onConfirm={(result) => {
+                setShowSoldModal(false);
+                setSoldResult(result);
+                setShowCongratsModal(true);
+                fetchProperty();
+              }}
+              onCancel={() => setShowSoldModal(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ═══ CONGRATS MODAL ═══ */}
+      <SoldCongratsModal
+        isOpen={showCongratsModal}
+        onClose={() => {
+          setShowCongratsModal(false);
+          setSoldResult(null);
+        }}
+        propertyTitle={title}
+        agentAmount={soldResult?.agentAmount}
+        officeAmount={soldResult?.officeAmount}
+        grossCommission={soldResult?.grossCommission}
+        closingDate={soldResult?.closingDate}
+        buyerName={soldResult?.buyerName}
+        lang={lang}
+      />
     </>
   );
 }

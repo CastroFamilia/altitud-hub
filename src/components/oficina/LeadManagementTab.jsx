@@ -1,7 +1,8 @@
 "use client";
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useApp } from '@/lib/context';
+import CommunicationPanel from './CommunicationPanel';
 
 const TYPE_COLORS = {
   propiedad_especifica: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -20,12 +21,14 @@ const LANG_FLAGS = { es: '🇪🇸', en: '🇺🇸', other: '🌐' };
 
 const EMPTY_FORM = { lead_name:'', lead_email:'', lead_phone:'', lead_type:'otro', source:'manual', lead_language:'es', property_id:'', assigned_agent_id:'', notes:'' };
 
-export default function LeadManagementTab({ profiles = [], initialLeads = [], initialSources = [] }) {
+export default function LeadManagementTab({ profiles = [], initialLeads = [], initialSources = [], initialCommunications = [], initialFollowUps = [] }) {
   const { lang, t } = useApp();
   const es = lang === 'es';
 
   const [leads, setLeads] = useState(initialLeads);
   const [sources, setSources] = useState(initialSources);
+  const [communications, setCommunications] = useState(initialCommunications);
+  const [followUps, setFollowUps] = useState(initialFollowUps);
   const [loading, setLoading] = useState(initialLeads.length === 0);
   const [filter, setFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -46,10 +49,34 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
     setSources(data || []);
   };
 
-  useEffect(() => { fetchLeads(); fetchSources(); }, []);
+  const fetchComms = useCallback(async () => {
+    const { data } = await supabase.from('lead_communications').select('*').order('created_at', { ascending: false });
+    setCommunications(data || []);
+  }, []);
+  const fetchFollowUps = useCallback(async () => {
+    const { data } = await supabase.from('lead_follow_ups').select('*, property_inquiries(lead_name)').eq('status', 'pending').order('due_date');
+    setFollowUps(data || []);
+  }, []);
+
+  useEffect(() => { fetchLeads(); fetchSources(); fetchComms(); fetchFollowUps(); }, []);
 
   const agents = profiles.filter(p => p.role !== 'photographer');
   const agentMap = useMemo(() => Object.fromEntries(agents.map(a => [a.id, a])), [agents]);
+
+  // Follow-up lookup: inquiry_id → pending follow-ups
+  const followUpMap = useMemo(() => {
+    const map = {};
+    (followUps || []).filter(f => f.status === 'pending').forEach(f => {
+      if (!map[f.inquiry_id]) map[f.inquiry_id] = [];
+      map[f.inquiry_id].push(f);
+    });
+    return map;
+  }, [followUps]);
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const hasOverdueFollowUp = (leadId) => (followUpMap[leadId] || []).some(f => f.due_date < todayStr);
+  const hasTodayFollowUp = (leadId) => (followUpMap[leadId] || []).some(f => f.due_date === todayStr);
+  const hasFutureFollowUp = (leadId) => (followUpMap[leadId] || []).some(f => f.due_date > todayStr);
 
   const filtered = useMemo(() => {
     let list = leads;
@@ -181,6 +208,10 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
                       {lead.lead_email && <span className="truncate">{lead.lead_email}</span>}
                     </div>
                   </div>
+                  {/* Follow-up badge */}
+                  {hasOverdueFollowUp(lead.id) && <span className="text-[9px] font-black px-2 py-1 rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 flex-shrink-0 animate-pulse">🔔 {t('ofc_leads_followup_overdue')}</span>}
+                  {!hasOverdueFollowUp(lead.id) && hasTodayFollowUp(lead.id) && <span className="text-[9px] font-black px-2 py-1 rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 flex-shrink-0">🔔 {t('ofc_leads_followup_today')}</span>}
+                  {!hasOverdueFollowUp(lead.id) && !hasTodayFollowUp(lead.id) && hasFutureFollowUp(lead.id) && <span className="text-[9px] font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-500 dark:bg-blue-900/20 dark:text-blue-400 flex-shrink-0">🔔</span>}
                   {/* Type badge */}
                   <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-full flex-shrink-0 ${TYPE_COLORS[lead.lead_type] || TYPE_COLORS.otro}`}>{typeLabel(lead.lead_type)}</span>
                   {/* Language */}
@@ -223,16 +254,17 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
                           {agents.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
                         </select>
                       </div>
-                      {lead.lead_phone && (
-                        <a href={`https://wa.me/${lead.lead_phone.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener noreferrer" className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-colors">
-                          💬 WhatsApp
-                        </a>
-                      )}
-                      {lead.lead_email && (
-                        <a href={`mailto:${lead.lead_email}`} className="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-colors">
-                          📧 Email
-                        </a>
-                      )}
+                    </div>
+
+                    {/* Communication Panel */}
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-700">
+                      <CommunicationPanel
+                        lead={lead}
+                        agentId={lead.assigned_agent_id}
+                        communications={communications}
+                        onUpdate={() => { fetchComms(); fetchFollowUps(); }}
+                        onFollowUpCreated={fetchFollowUps}
+                      />
                     </div>
                   </div>
                 )}

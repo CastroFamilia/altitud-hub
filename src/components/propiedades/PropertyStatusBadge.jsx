@@ -40,6 +40,13 @@ const STATUS_CONFIG = {
     dot: 'bg-blue-500',
     icon: '🔵',
   },
+  sold: {
+    label_es: 'Vendida',
+    label_en: 'Sold',
+    color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    dot: 'bg-emerald-500',
+    icon: '🏆',
+  },
   cancelled: {
     label_es: 'Cancelada',
     label_en: 'Cancelled',

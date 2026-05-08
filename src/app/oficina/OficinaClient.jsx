@@ -13,7 +13,7 @@ import LeadManagementTab from '@/components/oficina/LeadManagementTab';
    OFFICE PANEL — Broker Admin Dashboard
    ═══════════════════════════════════════ */
 
-export default function OficinaClient({ initialProfiles = [], initialTeams = [], initialMilestones = [], initialInquiries = [], initialLeadSources = [] }) {
+export default function OficinaClient({ initialProfiles = [], initialTeams = [], initialMilestones = [], initialInquiries = [], initialLeadSources = [], initialCommunications = [], initialFollowUps = [] }) {
   const { profile, isBroker, supabase } = useAuth();
   const { t, lang } = useApp();
   const router = useRouter();
@@ -284,7 +284,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
               <p className="text-xs text-slate-400 mb-6">
                 {t('ofc_leads_desc')}
               </p>
-              <LeadManagementTab profiles={profiles} initialLeads={initialInquiries} initialSources={initialLeadSources} />
+              <LeadManagementTab profiles={profiles} initialLeads={initialInquiries} initialSources={initialLeadSources} initialCommunications={initialCommunications} initialFollowUps={initialFollowUps} />
             </div>
           ) : activeTab === 'propiedades' ? (
             <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">

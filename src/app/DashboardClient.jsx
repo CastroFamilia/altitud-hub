@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import TopNav from '@/components/layout/TopNav';
+import CommissionBar from '@/components/layout/CommissionBar';
 import { useApp } from '@/lib/context';
+import { supabase } from '@/lib/supabase';
 
 /* ═══════════════════════════════════════════════════════
    PIPELINE / FUNNEL ACTIVITIES — 10 stages
@@ -419,6 +421,7 @@ export default function DashboardClient() {
   const [plan, setPlan] = useState(DEFAULT_PLAN);
   const [mounted, setMounted] = useState(false);
   const [hasPlan, setHasPlan] = useState(false);
+  const [followUps, setFollowUps] = useState([]);
 
   // Navigation state
   const now = new Date();
@@ -450,6 +453,29 @@ export default function DashboardClient() {
     }
     setMounted(true);
   }, []);
+
+  // Fetch follow-ups
+  useEffect(() => {
+    async function loadFollowUps() {
+      const { data } = await supabase
+        .from('lead_follow_ups')
+        .select('*, property_inquiries(lead_name, lead_phone)')
+        .eq('status', 'pending')
+        .order('due_date');
+      setFollowUps(data || []);
+    }
+    loadFollowUps();
+  }, []);
+
+  const markFollowUpDone = async (id) => {
+    await supabase.from('lead_follow_ups').update({ status: 'completed' }).eq('id', id);
+    setFollowUps(prev => prev.filter(f => f.id !== id));
+  };
+
+  const todayISO_ = todayISO();
+  const overdueFollowUps = followUps.filter(f => f.due_date < todayISO_);
+  const todayFollowUps = followUps.filter(f => f.due_date === todayISO_);
+  const upcomingFollowUps = followUps.filter(f => f.due_date > todayISO_).slice(0, 3);
 
   const todayEntry = entries.find(e=>e.date===todayISO());
   const hasFilledToday = !!todayEntry;
@@ -579,6 +605,55 @@ export default function DashboardClient() {
               </div>
             </div>
           </div>
+          )}
+
+          {/* ── Commission Progress Bar ── */}
+          {mounted && (
+            <div className="mb-4 md:mb-6">
+              <CommissionBar />
+            </div>
+          )}
+
+          {/* ── Follow-Up Reminders ── */}
+          {mounted && followUps.length > 0 && (
+            <div className="bg-white dark:bg-dark-panel rounded-xl shadow-sm border border-gray-200 dark:border-dark-border p-4 md:p-5 mb-4 md:mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🔔</span>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t('dash_followups_title')}</h3>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400">{t('dash_followups_subtitle')}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {overdueFollowUps.length > 0 && <span className="text-[9px] font-black px-2 py-1 rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 animate-pulse">{overdueFollowUps.length} {t('ofc_leads_followup_overdue')}</span>}
+                  {todayFollowUps.length > 0 && <span className="text-[9px] font-black px-2 py-1 rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">{todayFollowUps.length} {t('ofc_leads_followup_today')}</span>}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                {[...overdueFollowUps, ...todayFollowUps, ...upcomingFollowUps].slice(0, 5).map(f => {
+                  const isOverdue = f.due_date < todayISO_;
+                  const isToday = f.due_date === todayISO_;
+                  return (
+                    <div key={f.id} className={`flex items-center gap-3 py-2 px-3 rounded-lg border transition-all ${isOverdue ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30' : isToday ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30' : 'bg-gray-50 dark:bg-dark-bg border-gray-100 dark:border-dark-border'}`}>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{f.property_inquiries?.lead_name || 'Lead'}</p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{f.note}</p>
+                      </div>
+                      <span className={`text-[9px] font-bold whitespace-nowrap ${isOverdue ? 'text-red-500' : isToday ? 'text-amber-500' : 'text-gray-400'}`}>
+                        {isToday ? (lang === 'es' ? 'Hoy' : 'Today') : new Date(f.due_date + 'T12:00:00').toLocaleDateString()}
+                      </span>
+                      <button onClick={() => markFollowUpDone(f.id)} className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors whitespace-nowrap">
+                        ✓ {t('dash_followups_mark_done')}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              <Link href="/oficina" className="block text-center mt-3 text-[10px] font-bold text-brand-600 dark:text-brand-400 hover:underline">
+                {t('dash_followups_view_all')} →
+              </Link>
+            </div>
           )}
 
           {/* ── Top Section ── */}

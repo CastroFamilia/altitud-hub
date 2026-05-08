@@ -22,6 +22,7 @@ const TABS = [
   { key: 'needs_changes', labelKey: 'prop_tab_changes' },
   { key: 'approved', labelKey: 'prop_tab_approved' },
   { key: 'published', labelKey: 'prop_tab_published' },
+  { key: 'sold', labelKey: 'prop_tab_sold' },
 ];
 
 export default function PropiedadesPage() {
@@ -101,6 +102,7 @@ export default function PropiedadesPage() {
     needs_changes: properties.filter(p => p.status === 'needs_changes').length,
     approved: properties.filter(p => p.status === 'approved').length,
     published: properties.filter(p => p.status === 'published').length,
+    sold: properties.filter(p => p.status === 'sold').length,
   }), [properties]);
 
   return (
