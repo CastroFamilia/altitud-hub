@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { cancelProperty as reconnectCancel, isWriteConfigured } from '@/lib/reconnect-api';
+import { rateLimit } from '@/lib/rate-limit';
 
 /* ═══════════════════════════════════════════════════════════════
    CANCEL PROPERTY ON RECONNECT
@@ -15,6 +16,9 @@ function getSupabaseAdmin() {
 }
 
 export async function POST(req) {
+  const limited = rateLimit(req, { keyPrefix: 'prop-cancel' });
+  if (limited) return limited;
+
   try {
     const supabaseAdmin = getSupabaseAdmin();
     const { propertyId } = await req.json();

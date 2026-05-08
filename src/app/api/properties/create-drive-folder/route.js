@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { google } from 'googleapis';
+import { rateLimit } from '@/lib/rate-limit';
 
 /* ═══════════════════════════════════════════════════════════════
    CREATE GOOGLE DRIVE FOLDER
@@ -26,6 +27,9 @@ async function getAuthClient() {
 }
 
 export async function POST(req) {
+  const limited = rateLimit(req, { maxRequests: 10, keyPrefix: 'prop-drive' });
+  if (limited) return limited;
+
   try {
     const supabaseAdmin = getSupabaseAdmin();
     const { propertyId } = await req.json();

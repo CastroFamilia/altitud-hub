@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/rate-limit';
 
 async function getAuthClient() {
   const oauth2Client = new google.auth.OAuth2(
@@ -44,6 +45,9 @@ async function findOrCreateFolder(drive, name, parentId) {
 }
 
 export async function POST(req) {
+  const limited = rateLimit(req, { maxRequests: 10, keyPrefix: 'drive-folder' });
+  if (limited) return limited;
+
   try {
     const { agentName, agentEmail, propertyName } = await req.json();
 

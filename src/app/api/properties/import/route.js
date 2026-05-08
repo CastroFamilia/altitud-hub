@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { fetchOfficeProperties, mapReconnectToHub, extractReconnectImages, OFFICE_GUIDS } from '@/lib/reconnect-api';
+import { rateLimit } from '@/lib/rate-limit';
 
 /* ═══════════════════════════════════════════════════════════════
    IMPORT PROPERTIES FROM RECONNECT
@@ -15,6 +16,9 @@ function getSupabaseAdmin() {
 }
 
 export async function POST(req) {
+  const limited = rateLimit(req, { maxRequests: 5, keyPrefix: 'prop-import' });
+  if (limited) return limited;
+
   try {
     const supabaseAdmin = getSupabaseAdmin();
     const { officeKey, agentId } = await req.json();

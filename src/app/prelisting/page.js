@@ -7,6 +7,7 @@ import Step1Owners from '@/components/prelisting/Step1Owners';
 import Step2Property from '@/components/prelisting/Step2Property';
 import Step3Tech from '@/components/prelisting/Step3Tech';
 import { supabase } from '@/lib/supabase';
+import { useApp } from '@/lib/context';
 
 /* ── Interviews state (real data to be fetched from Supabase) ── */
 
@@ -20,16 +21,17 @@ const STATUS_STYLES = {
 };
 
 const TABS = [
-  { id: 'all', label: 'Todos' },
-  { id: 'pendientes', label: 'Pendientes' },
-  { id: 'realizadas', label: 'Realizadas' },
-  { id: 'rechazadas', label: 'Rechazadas' },
-  { id: 'followup', label: 'Follow Up' },
-  { id: 'acm', label: 'Hacer ACM' },
+  { id: 'all', labelKey: 'pre_tab_all' },
+  { id: 'pendientes', labelKey: 'pre_tab_pending' },
+  { id: 'realizadas', labelKey: 'pre_tab_done' },
+  { id: 'rechazadas', labelKey: 'pre_tab_rejected' },
+  { id: 'followup', labelKey: 'pre_tab_followup' },
+  { id: 'acm', labelKey: 'pre_tab_acm' },
 ];
 
 export default function PrelistingDashboard() {
   const router = useRouter();
+  const { t } = useApp();
   const [showWizard, setShowWizard] = useState(false);
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,7 +130,7 @@ export default function PrelistingDashboard() {
       resetWizard();
     } catch (e) {
       console.error(e);
-      alert('Error guardando en Supabase: ' + e.message);
+      alert(t('pre_save_error') + e.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -138,7 +140,7 @@ export default function PrelistingDashboard() {
   if (showWizard) {
     return (
       <>
-        <TopNav title="Entrevista Pre-Listing" subtitle="Captura de perfil psicológico y datos de propiedad" />
+        <TopNav title={t('pre_wizard_title')} subtitle={t('pre_wizard_subtitle')} />
         
         {/* Back button */}
         <div className="w-full bg-white dark:bg-[#1a1d24] border-b border-gray-100 dark:border-dark-border/50 shrink-0">
@@ -148,7 +150,7 @@ export default function PrelistingDashboard() {
               className="flex items-center text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
             >
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
-              Volver a Entrevistas
+               {t('pre_back_to_list')}
             </button>
           </div>
         </div>
@@ -156,12 +158,12 @@ export default function PrelistingDashboard() {
         {/* Property Selector */}
         <div className="w-full bg-slate-50 dark:bg-dark-bg border-b border-gray-100 dark:border-dark-border/50 shrink-0">
           <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
-            <span className="text-sm font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">Vincular Propiedad:</span>
+            <span className="text-sm font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">{t('pre_link_property')}</span>
             <select 
               onChange={handleSelectProperty}
               className="flex-1 max-w-sm px-3 py-1.5 text-sm border border-gray-200 dark:border-dark-border rounded-lg bg-white dark:bg-dark-panel focus:ring-2 focus:ring-brand-500 outline-none text-gray-700 dark:text-white"
             >
-              <option value="">-- Seleccionar desde Contactos --</option>
+              <option value="">{t('pre_select_contact')}</option>
               {availableProperties.map(prop => (
                 <option key={prop.id} value={prop.id}>
                   {prop.name} ({prop.contacts?.first_name} {prop.contacts?.last_name})
@@ -175,18 +177,15 @@ export default function PrelistingDashboard() {
         <div className="w-full bg-white dark:bg-[#1a1d24] border-b border-gray-100 dark:border-dark-border/50 shrink-0">
           <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider relative z-10">
             <div className={`flex items-center ${step >= 1 ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400 dark:text-gray-500'}`}>
-              <span className={`w-5 h-5 rounded-full flex justify-center items-center mr-2 ${step >= 1 ? 'bg-brand-100 dark:bg-brand-500/20' : 'bg-gray-100 dark:bg-dark-input'}`}>1</span> 
-              <span>Propietarios</span>
+              <span className={`w-5 h-5 rounded-full flex justify-center items-center mr-2 ${step >= 1 ? 'bg-brand-100 dark:bg-brand-500/20' : 'bg-gray-100 dark:bg-dark-input'}`}>1</span>               <span>{t('pre_step_owners')}</span>
             </div>
             <div className="flex-1 h-px bg-gray-200 dark:bg-dark-border mx-4"></div>
             <div className={`flex items-center ${step >= 2 ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400 dark:text-gray-500'}`}>
-              <span className={`w-5 h-5 rounded-full flex justify-center items-center mr-2 ${step >= 2 ? 'bg-brand-100 dark:bg-brand-500/20' : 'bg-gray-100 dark:bg-dark-input'}`}>2</span> 
-              <span>Propiedad</span>
+              <span className={`w-5 h-5 rounded-full flex justify-center items-center mr-2 ${step >= 2 ? 'bg-brand-100 dark:bg-brand-500/20' : 'bg-gray-100 dark:bg-dark-input'}`}>2</span>               <span>{t('pre_step_property')}</span>
             </div>
             <div className="flex-1 h-px bg-gray-200 dark:bg-dark-border mx-4"></div>
             <div className={`flex items-center ${step >= 3 ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400 dark:text-gray-500'}`}>
-              <span className={`w-5 h-5 rounded-full flex justify-center items-center mr-2 ${step >= 3 ? 'bg-brand-100 dark:bg-brand-500/20' : 'bg-gray-100 dark:bg-dark-input'}`}>3</span> 
-              <span>Ficha Técnica</span>
+              <span className={`w-5 h-5 rounded-full flex justify-center items-center mr-2 ${step >= 3 ? 'bg-brand-100 dark:bg-brand-500/20' : 'bg-gray-100 dark:bg-dark-input'}`}>3</span>               <span>{t('pre_step_tech')}</span>
             </div>
           </div>
         </div>
@@ -211,7 +210,7 @@ export default function PrelistingDashboard() {
     setInterviews(prev => prev.map(item => {
       if (item.id === id) {
         const tab = TABS.find(t => t.id === newStatus);
-        return { ...item, status: newStatus, status_label: tab ? tab.label.toUpperCase() : newStatus.toUpperCase() };
+        return { ...item, status: newStatus, status_label: tab ? t(tab.labelKey).toUpperCase() : newStatus.toUpperCase() };
       }
       return item;
     }));
@@ -219,7 +218,7 @@ export default function PrelistingDashboard() {
 
   return (
     <>
-      <TopNav title="Prelisting" subtitle="Gestión de entrevistas y prospección inteligente." />
+      <TopNav title={t('nav_prelisting')} subtitle={t('pre_section_desc')} />
       
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 md:p-8 relative z-0">
         <div className="fade-in max-w-6xl mx-auto space-y-8">
@@ -228,23 +227,23 @@ export default function PrelistingDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 pt-2">
             <div className="glass-panel rounded-2xl p-5 border border-white/10 shadow-lg bg-gradient-to-br from-white/5 to-white/[0.02] relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-brand-500/10 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-brand-500/20 transition-all duration-700"></div>
-              <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.1em] mb-1">Prelistings del Mes</p>
+              <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.1em] mb-1">{t('pre_stat_month')}</p>
               <div className="flex items-baseline gap-2">
                 <h3 className="text-3xl font-black text-gray-900 dark:text-white">{interviews.length}</h3>
               </div>
-              <p className="text-[10px] text-gray-400 mt-2">Total registradas</p>
+              <p className="text-[10px] text-gray-400 mt-2">{t('pre_stat_total')}</p>
             </div>
 
             <div className="glass-panel rounded-2xl p-5 border border-white/10 shadow-lg bg-gradient-to-br from-white/5 to-white/[0.02] col-span-1 md:col-span-2 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full -mr-10 -mt-10 blur-3xl"></div>
-              <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.1em] mb-3">Origen de Prelistings</p>
+              <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.1em] mb-3">{t('pre_stat_origin')}</p>
               <div className="flex flex-wrap gap-6">
                 {(() => {
                   const total = interviews.length || 1;
                   const origins = interviews.reduce((acc, i) => { acc[i.origin || 'Sin origen'] = (acc[i.origin || 'Sin origen'] || 0) + 1; return acc; }, {});
                   const colorMap = { 'Digital': 'bg-brand-500', 'Referido': 'bg-indigo-500', 'Prospección': 'bg-emerald-500' };
                   const entries = Object.entries(origins);
-                  if (entries.length === 0) return <span className="text-[10px] text-gray-400">Sin datos aún</span>;
+                  if (entries.length === 0) return <span className="text-[10px] text-gray-400">{t('pre_stat_no_data')}</span>;
                   return entries.map(([label, count], idx) => (
                     <div key={idx} className="flex flex-col">
                       <div className="flex items-center gap-1.5 mb-1">
@@ -272,8 +271,8 @@ export default function PrelistingDashboard() {
           {/* Section Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-2">
             <div>
-              <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Entrevistas Pre-Listing</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Gestión del funnel de captación y seguimiento de clientes.</p>
+              <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">{t('pre_section_title')}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('pre_section_desc')}</p>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -281,14 +280,14 @@ export default function PrelistingDashboard() {
                 className="bg-white dark:bg-dark-panel border-2 border-nexus-blue text-nexus-blue hover:bg-nexus-blue hover:text-white dark:hover:bg-nexus-blue px-5 py-3 rounded-xl text-xs font-bold shadow-lg flex items-center transition-all transform hover:scale-[1.02] active:scale-95"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                Carpeta Prelisting
+                {t('pre_btn_carpeta')}
               </button>
               <button 
                 onClick={() => setShowWizard(true)}
                 className="bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white px-6 py-3 rounded-xl text-xs font-bold shadow-xl shadow-brand-500/20 flex items-center transition-all transform hover:scale-[1.02] active:scale-95"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg>
-                Nueva Entrevista
+                {t('pre_btn_new')}
               </button>
             </div>
           </div>
@@ -305,7 +304,7 @@ export default function PrelistingDashboard() {
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                 }`}
               >
-                {tab.label}
+                {t(tab.labelKey)}
               </button>
             ))}
           </div>
@@ -315,11 +314,11 @@ export default function PrelistingDashboard() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-white dark:bg-dark-bg/50 border-b border-gray-100 dark:border-dark-border">
-                  <th className="py-4 px-5 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Cliente / Interés</th>
-                  <th className="py-4 px-5 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Zona</th>
-                  <th className="py-4 px-5 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-center">Origen</th>
-                  <th className="py-4 px-5 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Status Funnel</th>
-                  <th className="py-4 px-5 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-center">Acción</th>
+                  <th className="py-4 px-5 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{t('pre_th_client')}</th>
+                  <th className="py-4 px-5 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{t('pre_th_zone')}</th>
+                  <th className="py-4 px-5 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-center">{t('pre_th_origin')}</th>
+                  <th className="py-4 px-5 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{t('pre_th_status')}</th>
+                  <th className="py-4 px-5 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-center">{t('pre_th_action')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-dark-border">

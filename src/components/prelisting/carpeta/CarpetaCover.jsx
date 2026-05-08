@@ -1,4 +1,10 @@
-export default function CarpetaCover({ cfg, agentName }) {
+export default function CarpetaCover({ cfg, agentName, t }) {
+  // Fallback for when t is not provided (direct PDF rendering, etc.)
+  const tr = t || ((key) => {
+    const fallback = { pre_carpeta_title: 'Carpeta de Presentación', pre_carpeta_prepared: 'Preparado por' };
+    return fallback[key] || key;
+  });
+
   return (
     <div className="carpeta-page" style={{ padding: 0, display: 'flex', flexDirection: 'column' }}>
       {/* Full-bleed hero image */}
@@ -41,10 +47,10 @@ export default function CarpetaCover({ cfg, agentName }) {
 
           {/* Title */}
           <h2 style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>
-            Carpeta de Presentación
+            {tr('pre_carpeta_title')}
           </h2>
           <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 500 }}>
-            Preparado por <strong style={{ color: 'rgba(255,255,255,0.7)' }}>{agentName}</strong>
+            {tr('pre_carpeta_prepared')} <strong style={{ color: 'rgba(255,255,255,0.7)' }}>{agentName}</strong>
           </p>
         </div>
       </div>

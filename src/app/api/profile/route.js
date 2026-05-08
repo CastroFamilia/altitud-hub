@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase-server';
+import { rateLimit } from '@/lib/rate-limit';
 
 /**
  * PATCH /api/profile
@@ -6,6 +7,9 @@ import { createClient } from '@/lib/supabase-server';
  * Updates a profile. Only callable by broker.
  */
 export async function PATCH(request) {
+  const limited = rateLimit(request, { keyPrefix: 'profile' });
+  if (limited) return limited;
+
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

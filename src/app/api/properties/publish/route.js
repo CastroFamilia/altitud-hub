@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createProperty, isWriteConfigured } from '@/lib/reconnect-api';
+import { rateLimit } from '@/lib/rate-limit';
 
 /* ═══════════════════════════════════════════════════════════════
    PUBLISH PROPERTY TO RECONNECT
@@ -18,6 +19,9 @@ function getSupabaseAdmin() {
 }
 
 export async function POST(req) {
+  const limited = rateLimit(req, { keyPrefix: 'prop-publish' });
+  if (limited) return limited;
+
   try {
     const supabaseAdmin = getSupabaseAdmin();
     const { propertyId } = await req.json();
