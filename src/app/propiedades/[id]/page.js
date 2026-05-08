@@ -12,6 +12,7 @@ import { PROPERTY_TYPES, formatPrice } from '@/components/propiedades/PropertyCa
 import SyndicationPanel from '@/components/propiedades/SyndicationPanel';
 import CommissionCalculator from '@/components/propiedades/CommissionCalculator';
 import SoldCongratsModal from '@/components/propiedades/SoldCongratsModal';
+import ListingAnalyticsPanel from '@/components/propiedades/ListingAnalyticsPanel';
 import Link from 'next/link';
 
 const AMENITY_LABELS = {
@@ -465,6 +466,11 @@ export default function PropertyDetailPage() {
                   </a>
                 </SectionCard>
               )}
+
+              {/* Analytics */}
+              <SectionCard title={lang === 'en' ? 'Analytics' : 'Analíticas'} icon="📊">
+                <ListingAnalyticsPanel propertyId={p.id} />
+              </SectionCard>
             </div>
           </div>
 

@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { useApp } from '@/lib/context';
+import AgentCommissionsPanel from '@/components/negocio/AgentCommissionsPanel';
 
-export default function NegocioClient({ initialReservations = [], initialContacts = [] }) {
+export default function NegocioClient({ initialReservations = [], initialContacts = [], initialCommissions = [], initialTiers = [] }) {
   const { user, profile } = useAuth();
   const { t } = useApp();
   
@@ -50,6 +51,7 @@ export default function NegocioClient({ initialReservations = [], initialContact
 
   const [aiLoading, setAiLoading] = useState(false);
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [activeTab, setActiveTab] = useState('reservas');
 
   // Re-fetch only when profile changes (initial data comes from server)
   useEffect(() => {
@@ -323,6 +325,23 @@ export default function NegocioClient({ initialReservations = [], initialContact
           </button>
         </div>
 
+        {/* ── Tab Navigation ── */}
+        <div className="flex bg-white dark:bg-slate-800/50 rounded-2xl p-1 shadow-sm border border-slate-200 dark:border-white/10 w-fit mb-8">
+          {[
+            { key: 'reservas', label: t('neg_tab_reservas'), icon: '📋' },
+            { key: 'comisiones', label: t('neg_tab_comisiones'), icon: '💰' },
+          ].map(tab => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+              className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${activeTab === tab.key ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' : 'text-slate-500 hover:text-slate-700 dark:hover:text-white'}`}>
+              <span>{tab.icon}</span> {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'comisiones' ? (
+          <AgentCommissionsPanel initialCommissions={initialCommissions} initialTiers={initialTiers} />
+        ) : (
+        <>
         {/* Pipeline Summary (Reservómetro) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
@@ -414,6 +433,8 @@ export default function NegocioClient({ initialReservations = [], initialContact
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
 
       {/* Add/Edit Modal */}

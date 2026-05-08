@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation';
 import PropertyApprovalTab from '@/components/oficina/PropertyApprovalTab';
 import ListingVelocityPanel from '@/components/oficina/ListingVelocityPanel';
 import LeadManagementTab from '@/components/oficina/LeadManagementTab';
+import AgentDataImportTab from '@/components/oficina/AgentDataImportTab';
+import CommissionAnalyticsTab from '@/components/oficina/CommissionAnalyticsTab';
 
 /* ═══════════════════════════════════════
    OFFICE PANEL — Broker Admin Dashboard
@@ -257,6 +259,8 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
               { key: 'equipo', label: t('ofc_team'), icon: '👥' },
               { key: 'propiedades', label: t('ofc_properties'), icon: '🏠' },
               { key: 'leads', label: 'Leads', icon: '📩' },
+              { key: 'importar', label: lang === 'en' ? 'Import' : 'Importar', icon: '📥' },
+              { key: 'comisiones', label: t('neg_tab_comisiones'), icon: '💰' },
               { key: 'velocidad', label: t('ofc_velocity'), icon: '⏱️' },
             ].map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key)}
@@ -266,7 +270,17 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
             ))}
           </div>
 
-          {activeTab === 'velocidad' ? (
+          {activeTab === 'comisiones' ? (
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
+              <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <span>💰</span> {t('ofc_comm_title')}
+              </h3>
+              <p className="text-xs text-slate-400 mb-6">
+                {t('ofc_comm_desc')}
+              </p>
+              <CommissionAnalyticsTab profiles={profiles} />
+            </div>
+          ) : activeTab === 'velocidad' ? (
             <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
               <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <span>⏱️</span> {t('ofc_velocity_title')}
@@ -285,6 +299,10 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
                 {t('ofc_leads_desc')}
               </p>
               <LeadManagementTab profiles={profiles} initialLeads={initialInquiries} initialSources={initialLeadSources} initialCommunications={initialCommunications} initialFollowUps={initialFollowUps} />
+            </div>
+          ) : activeTab === 'importar' ? (
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
+              <AgentDataImportTab profiles={profiles} />
             </div>
           ) : activeTab === 'propiedades' ? (
             <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
