@@ -10,12 +10,13 @@ import ListingVelocityPanel from '@/components/oficina/ListingVelocityPanel';
 import LeadManagementTab from '@/components/oficina/LeadManagementTab';
 import AgentDataImportTab from '@/components/oficina/AgentDataImportTab';
 import CommissionAnalyticsTab from '@/components/oficina/CommissionAnalyticsTab';
+import WebsiteAnalyticsTab from '@/components/oficina/WebsiteAnalyticsTab';
 
 /* ═══════════════════════════════════════
    OFFICE PANEL — Broker Admin Dashboard
    ═══════════════════════════════════════ */
 
-export default function OficinaClient({ initialProfiles = [], initialTeams = [], initialMilestones = [], initialInquiries = [], initialLeadSources = [], initialCommunications = [], initialFollowUps = [] }) {
+export default function OficinaClient({ initialProfiles = [], initialTeams = [], initialMilestones = [], initialInquiries = [], initialLeadSources = [], initialCommunications = [], initialFollowUps = [], initialProperties = [], initialDevelopments = [] }) {
   const { profile, isBroker, supabase } = useAuth();
   const { t, lang } = useApp();
   const router = useRouter();
@@ -261,6 +262,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
               { key: 'leads', label: 'Leads', icon: '📩' },
               { key: 'importar', label: lang === 'en' ? 'Import' : 'Importar', icon: '📥' },
               { key: 'comisiones', label: t('neg_tab_comisiones'), icon: '💰' },
+              { key: 'analytics', label: t('ofc_wa_title'), icon: '📊' },
               { key: 'velocidad', label: t('ofc_velocity'), icon: '⏱️' },
             ].map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key)}
@@ -279,6 +281,16 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
                 {t('ofc_comm_desc')}
               </p>
               <CommissionAnalyticsTab profiles={profiles} />
+            </div>
+          ) : activeTab === 'analytics' ? (
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
+              <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <span>📊</span> {t('ofc_wa_title')}
+              </h3>
+              <p className="text-xs text-slate-400 mb-6">
+                {t('ofc_wa_desc')}
+              </p>
+              <WebsiteAnalyticsTab properties={initialProperties} developments={initialDevelopments} />
             </div>
           ) : activeTab === 'velocidad' ? (
             <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">

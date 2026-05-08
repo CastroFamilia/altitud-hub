@@ -45,6 +45,18 @@ export default async function OficinaPage() {
     .select('*, property_inquiries(lead_name)')
     .order('due_date', { ascending: true });
 
+  // Fetch properties for analytics (name + listing titles for display)
+  const { data: properties } = await supabase
+    .from('properties')
+    .select('id, name, listing_title_es, listing_title_en')
+    .order('name');
+
+  // Fetch developments for analytics
+  const { data: developments } = await supabase
+    .from('developments')
+    .select('id, name')
+    .order('name');
+
   return (
     <OficinaClient 
       initialProfiles={profiles || []} 
@@ -54,6 +66,8 @@ export default async function OficinaPage() {
       initialLeadSources={leadSources || []}
       initialCommunications={communications || []}
       initialFollowUps={followUps || []}
+      initialProperties={properties || []}
+      initialDevelopments={developments || []}
     />
   );
 }
