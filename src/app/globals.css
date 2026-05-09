@@ -115,3 +115,18 @@ body {
 .table-responsive { overflow: visible !important; }
 th, td { position: relative; }
 .z-elevated { z-index: 50 !important; }
+
+/* ── Scrollbar Hide (for horizontal tab bars) ── */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ── Print Styles (Report PDF) ── */
+@media print {
+  body { background: white !important; color: black !important; overflow: visible !important; }
+  .no-print { display: none !important; }
+  .report-page { font-size: 11pt; }
+  .page-break-before { page-break-before: always; }
+  .page-break-after { page-break-after: always; }
+  section { page-break-inside: avoid; }
+  @page { margin: 0.75in; size: letter; }
+}

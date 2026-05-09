@@ -5,8 +5,9 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { useApp } from '@/lib/context';
 import AgentCommissionsPanel from '@/components/negocio/AgentCommissionsPanel';
+import AgentReferralsPanel from '@/components/negocio/AgentReferralsPanel';
 
-export default function NegocioClient({ initialReservations = [], initialContacts = [], initialCommissions = [], initialTiers = [] }) {
+export default function NegocioClient({ initialReservations = [], initialContacts = [], initialCommissions = [], initialTiers = [], initialReferrals = [] }) {
   const { user, profile } = useAuth();
   const { t } = useApp();
   
@@ -330,6 +331,7 @@ export default function NegocioClient({ initialReservations = [], initialContact
           {[
             { key: 'reservas', label: t('neg_tab_reservas'), icon: '📋' },
             { key: 'comisiones', label: t('neg_tab_comisiones'), icon: '💰' },
+            { key: 'referidos', label: t('ref_tab'), icon: '🔗' },
           ].map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
               className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${activeTab === tab.key ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' : 'text-slate-500 hover:text-slate-700 dark:hover:text-white'}`}>
@@ -338,7 +340,9 @@ export default function NegocioClient({ initialReservations = [], initialContact
           ))}
         </div>
 
-        {activeTab === 'comisiones' ? (
+        {activeTab === 'referidos' ? (
+          <AgentReferralsPanel initialReferrals={initialReferrals} />
+        ) : activeTab === 'comisiones' ? (
           <AgentCommissionsPanel initialCommissions={initialCommissions} initialTiers={initialTiers} />
         ) : (
         <>

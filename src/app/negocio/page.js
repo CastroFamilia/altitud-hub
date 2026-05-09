@@ -10,6 +10,7 @@ export default async function NegocioPage() {
   let initialContacts = [];
   let initialCommissions = [];
   let initialTiers = [];
+  let initialReferrals = [];
 
   if (user) {
     // Get profile to find profile_id
@@ -36,6 +37,15 @@ export default async function NegocioPage() {
         .order('closing_date', { ascending: false });
       
       if (commissions) initialCommissions = commissions;
+
+      // Pre-fetch agent referrals
+      const { data: referrals } = await supabase
+        .from('agent_referrals')
+        .select('*, referring_profile:profiles!agent_referrals_referring_agent_id_fkey(full_name, avatar_url, office), receiving_profile:profiles!agent_referrals_receiving_agent_id_fkey(full_name, avatar_url, office)')
+        .or(`referring_agent_id.eq.${profile.id},receiving_agent_id.eq.${profile.id}`)
+        .order('created_at', { ascending: false });
+      
+      if (referrals) initialReferrals = referrals;
     }
 
     const { data: contacts } = await supabase
@@ -61,6 +71,7 @@ export default async function NegocioPage() {
       initialContacts={initialContacts}
       initialCommissions={initialCommissions}
       initialTiers={initialTiers}
+      initialReferrals={initialReferrals}
     />
   );
 }

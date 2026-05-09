@@ -1,17 +1,22 @@
 "use client";
 
 import { useAuth } from '@/lib/auth-context';
+import { usePathname } from 'next/navigation';
 import LoginPage from '@/app/login/page';
 
 /**
  * AuthGate — Shows the login page when not authenticated,
  * or renders children (sidebar + main) when authenticated.
  * 
- * This is the client-side complement to the middleware.
- * The middleware handles server-side redirects and API protection.
- * AuthGate handles the client-side UI gating (e.g., initial load, SPA navigation).
+ * Public routes (/d/, /reportes/, /login) bypass the gate entirely.
  */
 export default function AuthGate({ children }) {
+  const pathname = usePathname();
+  const isPublicRoute = pathname?.startsWith('/d/') || pathname?.startsWith('/reportes/') || pathname === '/login';
+
+  // Public routes bypass auth entirely
+  if (isPublicRoute) return <>{children}</>;
+
   const { loading, isAuthenticated, error } = useAuth();
 
   // Show loading spinner while checking auth state

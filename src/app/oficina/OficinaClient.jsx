@@ -11,6 +11,7 @@ import LeadManagementTab from '@/components/oficina/LeadManagementTab';
 import AgentDataImportTab from '@/components/oficina/AgentDataImportTab';
 import CommissionAnalyticsTab from '@/components/oficina/CommissionAnalyticsTab';
 import WebsiteAnalyticsTab from '@/components/oficina/WebsiteAnalyticsTab';
+import ReferralManagementTab from '@/components/oficina/ReferralManagementTab';
 
 /* ═══════════════════════════════════════
    OFFICE PANEL — Broker Admin Dashboard
@@ -42,9 +43,9 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
   });
   const [inviting, setInviting] = useState(false);
 
-  // Redirect non-brokers (BYPASSED FOR PREVIEW)
+  // Redirect non-brokers to dashboard
   useEffect(() => {
-    if (profile && false /* !isBroker */) {
+    if (profile && !isBroker) {
       router.push('/');
     }
   }, [profile, isBroker, router]);
@@ -56,25 +57,12 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
       // Fetch profiles
       const profilesRes = await fetch('/api/profile?all=true');
       const profilesData = await profilesRes.json();
-      let loadedProfiles = profilesData.profiles || [];
-      
-      // MOCK DATA FOR PREVIEW IF EMPTY
-      if (loadedProfiles.length === 0) {
-        loadedProfiles = [
-          { id: 'mock1', full_name: 'Alejandra Castro', role: 'broker', email: 'acastro@remax-altitud.cr', office: 'altitud', status: 'active' },
-          { id: 'mock2', full_name: 'César', role: 'broker', email: 'cesar@remax-altitud.cr', office: 'altitud', status: 'invited' },
-          { id: 'mock3', full_name: 'Agente de Prueba', role: 'agent', email: 'prueba@remax.cr', office: 'altitud', status: 'active', teams: { name: 'Equipo Principal' } }
-        ];
-      }
+      const loadedProfiles = profilesData.profiles || [];
       setProfiles(loadedProfiles);
 
       // Fetch teams
       const { data: teamsData } = await supabase.from('teams').select('*');
-      let loadedTeams = teamsData || [];
-      if (loadedTeams.length === 0) {
-        loadedTeams = [{ id: 'team1', name: 'Equipo Principal', leader_id: 'mock2', office: 'altitud' }];
-      }
-      setTeams(loadedTeams);
+      setTeams(teamsData || []);
 
       // Fetch API agents
       const agentsRes = await fetch(`/api/agents-feed?office=${selectedOffice}`);
@@ -206,8 +194,8 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
   // Filter API agents not yet invited
   const pendingAgents = apiAgents.filter(a => !registeredIds.has(a.id) && !registeredEmails.has(a.email?.toLowerCase()));
 
-  // BYPASSED FOR PREVIEW
-  if (false /* !isBroker */) {
+  // Block non-broker access while redirecting
+  if (!isBroker) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full"></div>
@@ -255,7 +243,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
           </div>
 
           {/* ── Tab Navigation ── */}
-          <div className="flex bg-white dark:bg-slate-800 rounded-2xl p-1 shadow-sm border border-slate-200 dark:border-slate-700 w-fit mb-6">
+          <div className="flex bg-white dark:bg-slate-800 rounded-2xl p-1 shadow-sm border border-slate-200 dark:border-slate-700 max-w-full overflow-x-auto mb-6 scrollbar-hide">
             {[
               { key: 'equipo', label: t('ofc_team'), icon: '👥' },
               { key: 'propiedades', label: t('ofc_properties'), icon: '🏠' },
@@ -263,16 +251,27 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
               { key: 'importar', label: lang === 'en' ? 'Import' : 'Importar', icon: '📥' },
               { key: 'comisiones', label: t('neg_tab_comisiones'), icon: '💰' },
               { key: 'analytics', label: t('ofc_wa_title'), icon: '📊' },
+              { key: 'referidos', label: t('ref_tab'), icon: '🔗' },
               { key: 'velocidad', label: t('ofc_velocity'), icon: '⏱️' },
             ].map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                className={`px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === tab.key ? 'bg-nexus-blue text-white shadow-lg shadow-blue-500/20' : 'text-slate-500 hover:text-slate-700 dark:hover:text-white'}`}>
+                className={`px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${activeTab === tab.key ? 'bg-nexus-blue text-white shadow-lg shadow-blue-500/20' : 'text-slate-500 hover:text-slate-700 dark:hover:text-white'}`}>
                 <span>{tab.icon}</span> {tab.label}
               </button>
             ))}
           </div>
 
-          {activeTab === 'comisiones' ? (
+          {activeTab === 'referidos' ? (
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
+              <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <span>🔗</span> {t('ref_title')}
+              </h3>
+              <p className="text-xs text-slate-400 mb-6">
+                {t('ref_desc')}
+              </p>
+              <ReferralManagementTab profiles={profiles} />
+            </div>
+          ) : activeTab === 'comisiones' ? (
             <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
               <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <span>💰</span> {t('ofc_comm_title')}

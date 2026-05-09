@@ -20,6 +20,7 @@ export async function middleware(request) {
     '/login',
     '/auth/callback',
     '/d/',             // Public development landing pages
+    '/reportes/',      // Public shareable reports
     '/api/public',     // Public property feeds
     '/api/health',     // Health check endpoint
     '/api/invite',     // Invitation acceptance
