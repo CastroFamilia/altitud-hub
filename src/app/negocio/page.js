@@ -11,6 +11,8 @@ export default async function NegocioPage() {
   let initialCommissions = [];
   let initialTiers = [];
   let initialReferrals = [];
+  let initialEvents = [];
+  let initialAttendance = [];
 
   if (user) {
     // Get profile to find profile_id
@@ -62,6 +64,17 @@ export default async function NegocioPage() {
       } catch (e) {
         console.error('NegocioPage: Error fetching referrals:', e?.message);
       }
+
+      // Pre-fetch events and attendance
+      try {
+        const { data: events } = await supabase.from('office_events').select('*').order('event_date', { ascending: false });
+        if (events) initialEvents = events;
+        
+        const { data: attendance } = await supabase.from('event_attendance').select('*').eq('profile_id', profile.id);
+        if (attendance) initialAttendance = attendance;
+      } catch (e) {
+        console.error('NegocioPage: Error fetching events/attendance:', e?.message);
+      }
     }
 
     // Fetch contacts
@@ -95,6 +108,8 @@ export default async function NegocioPage() {
       initialCommissions={initialCommissions}
       initialTiers={initialTiers}
       initialReferrals={initialReferrals}
+      initialEvents={initialEvents}
+      initialAttendance={initialAttendance}
     />
   );
 }

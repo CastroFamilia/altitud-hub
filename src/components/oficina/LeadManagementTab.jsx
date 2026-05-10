@@ -194,7 +194,7 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
           {filtered.map(lead => {
             const agent = agentMap[lead.assigned_agent_id];
             const isOpen = expanded === lead.id;
-            const propTitle = lead.properties ? (es ? lead.properties.listing_title_es : lead.properties.listing_title_en) || lead.properties.name : null;
+            const propTitle = lead.properties ? (lang === 'es' ? lead.properties.listing_title_es : lead.properties.listing_title_en) || lead.properties.name : null;
             return (
               <div key={lead.id} className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden hover:shadow-md transition-all">
                 <div className="flex items-center gap-3 p-3 cursor-pointer" onClick={() => setExpanded(isOpen ? null : lead.id)}>
@@ -221,8 +221,6 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
                   {/* Time */}
                   <span className="text-[10px] text-slate-400 font-medium flex-shrink-0 w-8 text-right">{timeAgo(lead.created_at)}</span>
                   <svg className={`w-4 h-4 text-slate-400 transition-transform flex-shrink-0 ${isOpen?'rotate-180':''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-                </div>
-
                 </div>
               </div>
             );

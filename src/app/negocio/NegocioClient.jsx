@@ -7,7 +7,7 @@ import { useApp } from '@/lib/context';
 import AgentCommissionsPanel from '@/components/negocio/AgentCommissionsPanel';
 import AgentReferralsPanel from '@/components/negocio/AgentReferralsPanel';
 
-export default function NegocioClient({ initialReservations = [], initialContacts = [], initialCommissions = [], initialTiers = [], initialReferrals = [] }) {
+export default function NegocioClient({ initialReservations = [], initialContacts = [], initialCommissions = [], initialTiers = [], initialReferrals = [], initialEvents = [], initialAttendance = [] }) {
   const { user, profile } = useAuth();
   const { t } = useApp();
   
@@ -142,6 +142,18 @@ export default function NegocioClient({ initialReservations = [], initialContact
     }
     return acc + Number(agentCom);
   }, 0);
+
+  // Calculate Attendance Percentage
+  const attendanceRate = (() => {
+    let totalCounted = 0;
+    let totalPresent = 0;
+    initialAttendance.forEach(att => {
+      if (att.status === 'no_obligatoria') return;
+      totalCounted++;
+      if (att.status === 'presente') totalPresent++;
+    });
+    return totalCounted === 0 ? 100 : Math.round((totalPresent / totalCounted) * 100);
+  })();
 
   async function handleSaveReservation(e) {
     e.preventDefault();
@@ -369,6 +381,14 @@ export default function NegocioClient({ initialReservations = [], initialContact
               ${expectedCommission.toLocaleString()}
             </h3>
             <p className="text-xs text-slate-500 mt-2">{t('neg_estimated_splits')}</p>
+          </div>
+          <div className="bg-white dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{t('ofc_hr_attendance_rate') || 'Tasa de Asistencia'}</p>
+            <h3 className={`text-3xl font-bold ${attendanceRate >= 80 ? 'text-emerald-600' : attendanceRate >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
+              {attendanceRate}%
+            </h3>
+            <p className="text-xs text-slate-500 mt-2">Eventos de Oficina</p>
           </div>
         </div>
 

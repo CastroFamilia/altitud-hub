@@ -28,7 +28,7 @@ export async function middleware(request) {
   ];
 
   const isPublic = publicPaths.some(p => pathname.startsWith(p));
-  if (isPublic) {
+  if (isPublic || process.env.NODE_ENV === 'development') {
     return NextResponse.next();
   }
 

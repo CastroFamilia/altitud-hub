@@ -33,6 +33,7 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
   const [loading, setLoading] = useState(true);
   const [filterAgent, setFilterAgent] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [timeframe, setTimeframe] = useState('ytd');
   const [tierModal, setTierModal] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -61,25 +62,69 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
   }, [supabase]);
 
   // ── Aggregates ──
-  const now = new Date();
-  const yearStart = `${now.getFullYear()}-01-01`;
-  const ytd = commissions.filter(c => c.closing_date >= yearStart);
+  const dateRange = useMemo(() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = d.getMonth();
+    
+    switch (timeframe) {
+      case 'this_month': {
+        const start = new Date(y, m, 1).toISOString().slice(0,10);
+        const end = new Date(y, m + 1, 0).toISOString().slice(0,10);
+        return { start, end };
+      }
+      case 'last_month': {
+        const start = new Date(y, m - 1, 1).toISOString().slice(0,10);
+        const end = new Date(y, m, 0).toISOString().slice(0,10);
+        return { start, end };
+      }
+      case 'next_month': {
+        const start = new Date(y, m + 1, 1).toISOString().slice(0,10);
+        const end = new Date(y, m + 2, 0).toISOString().slice(0,10);
+        return { start, end };
+      }
+      case 'all': {
+        return { start: '1900-01-01', end: '2100-12-31' };
+      }
+      case 'ytd':
+      default: {
+        const start = `${y}-01-01`;
+        const end = new Date(y, 11, 31).toISOString().slice(0,10);
+        return { start, end };
+      }
+    }
+  }, [timeframe]);
 
-  const totalGross = ytd.reduce((s, c) => s + (Number(c.gross_commission) || 0), 0);
-  const officeShare = ytd.reduce((s, c) => s + (Number(c.office_amount) || 0), 0);
-  const agentShare = ytd.reduce((s, c) => s + (Number(c.agent_amount) || 0), 0);
-  const rccaTotal = ytd.reduce((s, c) => s + (Number(c.rcca_fee_amount) || 0), 0);
+  const getTimeframeLabel = (tf) => {
+    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    const m = new Date().getMonth();
+    if (tf === 'this_month') return monthNames[m];
+    if (tf === 'last_month') return monthNames[(m - 1 + 12) % 12];
+    if (tf === 'next_month') return monthNames[(m + 1) % 12];
+    if (tf === 'ytd') return 'YTD - Año a la Fecha';
+    if (tf === 'all') return 'Total';
+    return tf;
+  };
+
+  const activeData = useMemo(() => {
+    return commissions.filter(c => c.closing_date >= dateRange.start && c.closing_date <= dateRange.end);
+  }, [commissions, dateRange]);
+
+  const totalGross = activeData.reduce((s, c) => s + (Number(c.gross_commission) || 0), 0);
+  const officeShare = activeData.reduce((s, c) => s + (Number(c.office_amount) || 0), 0);
+  const agentShare = activeData.reduce((s, c) => s + (Number(c.agent_amount) || 0), 0);
+  const rccaTotal = activeData.reduce((s, c) => s + (Number(c.rcca_fee_amount) || 0), 0);
 
   // ── Agent Leaderboard ──
   const leaderboard = useMemo(() => {
     const map = {};
-    ytd.forEach(c => {
+    activeData.forEach(c => {
       if (!map[c.agent_id]) map[c.agent_id] = { id: c.agent_id, name: c.profiles?.full_name || '—', avatar: c.profiles?.avatar_url, tierId: c.profiles?.commission_tier_id, earned: 0, closings: 0 };
       map[c.agent_id].earned += Number(c.agent_amount) || 0;
       map[c.agent_id].closings += 1;
     });
     return Object.values(map).sort((a, b) => b.earned - a.earned);
-  }, [ytd]);
+  }, [activeData]);
 
   // ── Tier Distribution ──
   const tierDist = useMemo(() => {
@@ -134,6 +179,17 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
 
   return (
     <div className="space-y-8">
+    
+      {/* ── Timeframe Filter ── */}
+      <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-2">Periodo</span>
+        <select value={timeframe} onChange={e => setTimeframe(e.target.value)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm focus:ring-2 focus:ring-nexus-blue outline-none transition-all">
+          <option value="this_month">{getTimeframeLabel('this_month')}</option>
+          <option value="last_month">{getTimeframeLabel('last_month')}</option>
+          <option value="ytd">{getTimeframeLabel('ytd')}</option>
+          <option value="all">{getTimeframeLabel('all')}</option>
+        </select>
+      </div>
 
       {/* ── Revenue Summary ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -1,14 +1,33 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { useApp } from '@/lib/context';
 
-export default function OlympiaCoach({ isOpen, onClose }) {
-  const { t } = useApp();
+export default function OlympiaCoach() {
+  const { t, lang } = useApp();
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+
+  let currentModule = 'agent';
+  if (pathname?.includes('/oficina')) currentModule = 'office';
+  else if (pathname?.includes('/team')) currentModule = 'team';
+
+  const getInitialMessage = () => {
+    if (lang === 'en') {
+      if (currentModule === 'office') return 'Hello! I am Olympia, your Altitud Hub expert and Office Manager advisor. How can I help you today? You can ask me how to use the hub, check your office metrics, or get ideas for recruiting and operations.';
+      if (currentModule === 'team') return 'Hello! I am Olympia, your Altitud Hub expert and Team Leader advisor. How can I help you today? You can ask me how to use the hub, review your team metrics, or get ideas for coaching your agents.';
+      return 'Hello! I am Olympia, your coach and Altitud Hub expert. How can I help you today? You can ask me how to use the hub, check your metrics, or ask for prospecting ideas.';
+    } else {
+      if (currentModule === 'office') return '¡Hola! Soy Olympia, tu experta en el Altitud Hub y asesora de la Oficina. ¿En qué te puedo ayudar hoy? Puedes preguntarme cómo usar el hub, revisar las métricas de la oficina, o pedirme ideas de reclutamiento y operaciones.';
+      if (currentModule === 'team') return '¡Hola! Soy Olympia, tu experta en el Altitud Hub y asesora de Líder de Equipo. ¿En qué te puedo ayudar hoy? Puedes preguntarme cómo usar el hub, revisar las métricas de tu equipo, o pedirme ideas para el coaching de tus agentes.';
+      return '¡Hola! Soy Olympia, tu coach y experta en el Altitud Hub. ¿En qué te puedo ayudar hoy? Puedes preguntarme cómo usar el hub, revisar tus métricas, o pedirme ideas de prospección.';
+    }
+  };
 
   // Load history
   useEffect(() => {
@@ -24,7 +43,7 @@ export default function OlympiaCoach({ isOpen, onClose }) {
 
         const initial = [{
           role: 'assistant',
-          content: '¡Hola! Soy Olympia, tu coach de RE/MAX Altitud. ¿En qué te puedo ayudar hoy con tu negocio? Si eres nuev@, te puedo dar algunas tareas de Onboarding, como revisar si ya creaste tu cuenta en el Registro de la Propiedad.',
+          content: getInitialMessage(),
         }];
 
         let loadedMessages = null;
@@ -99,7 +118,7 @@ export default function OlympiaCoach({ isOpen, onClose }) {
     if (confirm('¿Estás seguro de que quieres borrar el historial del chat?')) {
       const initial = [{
         role: 'assistant',
-        content: '¡Hola! Soy Olympia, tu coach de RE/MAX Altitud. ¿En qué te puedo ayudar hoy con tu negocio? Si eres nuev@, te puedo dar algunas tareas de Onboarding, como revisar si ya creaste tu cuenta en el Registro de la Propiedad.',
+        content: getInitialMessage(),
       }];
       setMessages(initial);
       localStorage.setItem('olympia_coach_history', JSON.stringify(initial));
@@ -145,7 +164,11 @@ export default function OlympiaCoach({ isOpen, onClose }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: newMessages,
-          context: agentContext,
+          context: {
+            ...agentContext,
+            lang: lang || 'es',
+            module: currentModule,
+          },
         })
       });
 
@@ -178,8 +201,19 @@ export default function OlympiaCoach({ isOpen, onClose }) {
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity"
-          onClick={onClose}
+          onClick={() => setIsOpen(false)}
         ></div>
+      )}
+
+      {/* Bubble Button */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-6 right-6 z-40 w-16 h-16 rounded-full shadow-2xl hover:scale-105 transition-transform flex items-center justify-center bg-brand-500 overflow-hidden ring-4 ring-white dark:ring-dark-bg"
+          title="Olympia - AI Hub Expert"
+        >
+          <img src="/assets/olympia-avatar.png" alt="Olympia AI" className="w-full h-full object-cover" />
+        </button>
       )}
 
       {/* Slide-over Panel */}
@@ -208,7 +242,7 @@ export default function OlympiaCoach({ isOpen, onClose }) {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
             </button>
             <button 
-              onClick={onClose}
+              onClick={() => setIsOpen(false)}
               className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -250,7 +284,7 @@ export default function OlympiaCoach({ isOpen, onClose }) {
               type="text" 
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Pregúntale a Olympia..." 
+              placeholder={lang === 'en' ? 'Ask Olympia...' : 'Pregúntale a Olympia...'} 
               className="w-full bg-gray-100 dark:bg-dark-bg border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-dark-card focus:ring-0 rounded-full pl-4 pr-12 py-3 text-sm text-gray-900 dark:text-white transition-colors"
               disabled={isLoading}
             />

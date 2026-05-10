@@ -57,6 +57,17 @@ export default async function OficinaPage() {
     .select('id, name')
     .order('name');
 
+  // --- Office Finance Data ---
+  const { data: expenses } = await supabase.from('office_expenses').select('*');
+  const { data: categories } = await supabase.from('office_expense_categories').select('*').eq('active', true).order('sort_order');
+  const { data: funds } = await supabase.from('petty_cash_funds').select('*').eq('is_active', true);
+  const { data: transactions } = await supabase.from('petty_cash_transactions').select('*').order('created_at', { ascending: false });
+  const { data: salaries } = await supabase.from('office_salary_config').select('*').eq('is_active', true);
+
+  // --- Office Events & Attendance ---
+  const { data: officeEvents } = await supabase.from('office_events').select('*').order('event_date', { ascending: false });
+  const { data: eventAttendance } = await supabase.from('event_attendance').select('*');
+
   return (
     <OficinaClient 
       initialProfiles={profiles || []} 
@@ -68,6 +79,13 @@ export default async function OficinaPage() {
       initialFollowUps={followUps || []}
       initialProperties={properties || []}
       initialDevelopments={developments || []}
+      initialExpenses={expenses || []}
+      initialCategories={categories || []}
+      initialFunds={funds || []}
+      initialTxs={transactions || []}
+      initialSalaries={salaries || []}
+      initialEvents={officeEvents || []}
+      initialAttendance={eventAttendance || []}
     />
   );
 }

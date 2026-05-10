@@ -6,7 +6,6 @@ import OlympiaCoach from '@/components/olympia/OlympiaCoach';
 
 export default function TopNav({ titleKey, subtitleKey, title, subtitle }) {
   const { t, lang, toggleLang, toggleTheme } = useApp();
-  const [isOlympiaOpen, setIsOlympiaOpen] = useState(false);
 
   const displayTitle    = titleKey    ? t(titleKey)    : title;
   const displaySubtitle = subtitleKey ? t(subtitleKey) : subtitle;
@@ -28,9 +27,8 @@ export default function TopNav({ titleKey, subtitleKey, title, subtitle }) {
 
           {/* Notifications */}
           <button 
-            onClick={() => setIsOlympiaOpen(true)}
             className="relative w-8 h-8 md:w-9 md:h-9 rounded-full bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-400 transition-colors shadow-sm" 
-            title="ALTITUD AI Mentor"
+            title="Notificaciones"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
             <span className="absolute top-0 right-0 flex h-2.5 w-2.5">
@@ -51,7 +49,7 @@ export default function TopNav({ titleKey, subtitleKey, title, subtitle }) {
           </button>
         </div>
       </header>
-      <OlympiaCoach isOpen={isOlympiaOpen} onClose={() => setIsOlympiaOpen(false)} />
+      <OlympiaCoach />
     </>
   );
 }

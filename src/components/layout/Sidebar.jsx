@@ -1,15 +1,17 @@
 "use client";
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useState, Suspense } from 'react';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
 
-export default function Sidebar() {
+function SidebarContent() {
   const { t } = useApp();
   const { profile, isBroker, isTeamLeader, signOut } = useAuth();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'dashboard';
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -52,44 +54,68 @@ export default function Sidebar() {
             /* ── ADMIN NAVIGATION ── */
             <>
               <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3">Gestión General</div>
-              {(true) && (
-                <Link href="/oficina" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${pathname === '/oficina' ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
-                  <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                  <span className="nexus-header text-[11px] leading-none">Panel de Oficina</span>
-                </Link>
-              )}
 
-              {(true) && (
-                <Link href="/oficina/estado-cuenta" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${pathname === '/oficina/estado-cuenta' ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
-                  <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                  <span className="nexus-header text-[11px] leading-none">Finanzas Oficina</span>
-                </Link>
-              )}
+              <Link href="/oficina?tab=dashboard" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${(pathname === '/oficina' && activeTab === 'dashboard') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                <span className="mr-3 text-lg leading-none">🏢</span>
+                <span className="nexus-header text-[11px] leading-none">Dashboard</span>
+              </Link>
+              
+              <Link href="/oficina?tab=equipo" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${(pathname === '/oficina' && activeTab === 'equipo') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                <span className="mr-3 text-lg leading-none">👥</span>
+                <span className="nexus-header text-[11px] leading-none">{t('ofc_team') || 'Equipo'}</span>
+              </Link>
+
+              <Link href="/oficina?tab=propiedades" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${(pathname === '/oficina' && activeTab === 'propiedades') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                <span className="mr-3 text-lg leading-none">🏠</span>
+                <span className="nexus-header text-[11px] leading-none">{t('ofc_properties') || 'Propiedades'}</span>
+              </Link>
+
+              <Link href="/oficina?tab=leads" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${(pathname === '/oficina' && activeTab === 'leads') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                <span className="mr-3 text-lg leading-none">📩</span>
+                <span className="nexus-header text-[11px] leading-none">Leads</span>
+              </Link>
+
+              <Link href="/oficina?tab=importar" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${(pathname === '/oficina' && activeTab === 'importar') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                <span className="mr-3 text-lg leading-none">📥</span>
+                <span className="nexus-header text-[11px] leading-none">Importar</span>
+              </Link>
+
+              <Link href="/oficina?tab=finanzas" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${(pathname === '/oficina' && activeTab === 'finanzas') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                <span className="mr-3 text-lg leading-none">💸</span>
+                <span className="nexus-header text-[11px] leading-none">{t('ofc_tab_finance') || 'Finanzas'}</span>
+              </Link>
+
+              <Link href="/oficina?tab=comisiones" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${(pathname === '/oficina' && activeTab === 'comisiones') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                <span className="mr-3 text-lg leading-none">💰</span>
+                <span className="nexus-header text-[11px] leading-none">{t('neg_tab_comisiones') || 'Comisiones'}</span>
+              </Link>
+
+              <Link href="/oficina?tab=analytics" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${(pathname === '/oficina' && activeTab === 'analytics') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                <span className="mr-3 text-lg leading-none">📊</span>
+                <span className="nexus-header text-[11px] leading-none">{t('ofc_wa_title') || 'Analíticas Web'}</span>
+              </Link>
+
+              <Link href="/oficina?tab=referidos" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${(pathname === '/oficina' && activeTab === 'referidos') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                <span className="mr-3 text-lg leading-none">🔗</span>
+                <span className="nexus-header text-[11px] leading-none">{t('ref_tab') || 'Referidos'}</span>
+              </Link>
+
+              <Link href="/oficina?tab=velocidad" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${(pathname === '/oficina' && activeTab === 'velocidad') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                <span className="mr-3 text-lg leading-none">⏱️</span>
+                <span className="nexus-header text-[11px] leading-none">{t('ofc_velocity') || 'Velocidad'}</span>
+              </Link>
+
+              <Link href="/oficina?tab=eventos" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${(pathname === '/oficina' && activeTab === 'eventos') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                <span className="mr-3 text-lg leading-none">📅</span>
+                <span className="nexus-header text-[11px] leading-none">{t('ofc_hr_events_title') || 'Asistencia eventos'}</span>
+              </Link>
 
               <Link href="/equipo" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${pathname.startsWith('/equipo') ? 'active bg-nexus-blue/10 text-nexus-blue shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>
                 <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 <span className="nexus-header text-[11px] leading-none">Equipos y OKRs</span>
               </Link>
 
-              <div className="mt-8 mb-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Módulos Administrativos</div>
-
-              <a href="#" className="nav-item flex items-center px-3 py-2.5 rounded-lg text-slate-500 transition-colors pointer-events-none opacity-50">
-                <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                <span className="font-medium text-slate-300">Métricas Globales</span>
-                <span className="ml-auto text-[9px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-500">{t('nav_soon')}</span>
-              </a>
-
-              <a href="#" className="nav-item flex items-center px-3 py-2.5 rounded-lg text-slate-500 transition-colors pointer-events-none opacity-50">
-                <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                <span className="font-medium text-slate-300">Reclutamiento</span>
-                <span className="ml-auto text-[9px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-500">{t('nav_soon')}</span>
-              </a>
-
-              <a href="#" className="nav-item flex items-center px-3 py-2.5 rounded-lg text-slate-500 transition-colors pointer-events-none opacity-50">
-                <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span className="font-medium text-slate-300">Gastos Oficina</span>
-                <span className="ml-auto text-[9px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-500">{t('nav_soon')}</span>
-              </a>
+              <div className="mt-8 mb-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Soporte</div>
 
               <Link href="/oficina/soporte" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-lg transition-colors ${pathname.startsWith('/oficina/soporte') ? 'bg-white/10 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>
                 <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -269,5 +295,13 @@ export default function Sidebar() {
         </div>
       )}
     </>
+  );
+}
+
+export default function Sidebar() {
+  return (
+    <Suspense fallback={<aside className="hidden md:flex w-64 flex-shrink-0 border-r border-gray-200 dark:border-dark-border glass-panel"></aside>}>
+      <SidebarContent />
+    </Suspense>
   );
 }

@@ -41,7 +41,7 @@ const INITIAL_FORM = {
   listing_side_comm: 3, selling_side_comm: 3,
   public_remarks_es: '', public_remarks_en: '',
   private_remarks_es: '', private_remarks_en: '',
-  video_link: '',
+  video_link: '', drive_photos_folder_url: '',
   pool_private: false, garage: false, garage_spaces: 0,
   cooling: false, has_view: false, gated_community: false,
   furnished: false, maid_room: false, property_new: false,
@@ -64,14 +64,55 @@ function NuevaPropiedadContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get('edit');
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { t, lang } = useApp();
   const [loading, setLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(!!editId);
   const [form, setForm] = useState(INITIAL_FORM);
   const [step, setStep] = useState(0); // 0=basics, 1=details, 2=marketing
+  const [acmReports, setAcmReports] = useState([]);
+  const [selectedAcmId, setSelectedAcmId] = useState('');
 
   const set = (key, val) => setForm(p => ({ ...p, [key]: val }));
+
+  useEffect(() => {
+    const fetchAcm = async () => {
+      const { data } = await supabase.from('acm_reports').select('*').order('created_at', { ascending: false }).limit(20);
+      if (data) setAcmReports(data);
+    };
+    fetchAcm();
+  }, []);
+
+  useEffect(() => {
+    if (profile?.office && !editId) {
+      const officeCode = profile.office === 'cero' ? 'R0700151' : 'R0700130';
+      set('office_code', officeCode);
+    }
+  }, [profile?.office, editId]);
+
+  const handleSelectAcm = (e) => {
+    const acmId = e.target.value;
+    setSelectedAcmId(acmId);
+    if (!acmId) return;
+    const report = acmReports.find(r => r.id === acmId);
+    if (report) {
+      setForm(prev => ({
+        ...prev,
+        owner_name: report.client_name || prev.owner_name,
+        owner_phones: report.client_phone || prev.owner_phones,
+        owner_email: report.client_email || prev.owner_email,
+        unparsed_address: report.property_address || prev.unparsed_address,
+        name: report.property_address || prev.name,
+        property_type_id: report.property_type === 'house' ? 1 : report.property_type === 'commercial' ? 5 : report.property_type === 'land' ? 10 : prev.property_type_id,
+        lot_size_area: report.indicators?.tech?.m2_lot || prev.lot_size_area,
+        construction_size: report.indicators?.tech?.m2_const || prev.construction_size,
+        bedrooms_total: report.indicators?.tech?.bedrooms || prev.bedrooms_total,
+        bathrooms_full: report.indicators?.tech?.bathrooms || prev.bathrooms_full,
+        year_built: report.indicators?.tech?.year_built || prev.year_built,
+        garage_spaces: report.indicators?.tech?.parking || prev.garage_spaces,
+      }));
+    }
+  };
   const setNum = (key, val) => set(key, val === '' ? '' : Number(val));
 
   // Load existing property for edit mode
@@ -104,14 +145,14 @@ function NuevaPropiedadContent() {
     loadProperty();
   }, [editId, router]);
 
-  const handleSubmit = async (asDraft) => {
+  const handleSubmit = async (statusOverride = null) => {
     setLoading(true);
     try {
       const payload = {
         ...form,
         agent_id: user?.id,
-        status: asDraft ? 'draft' : 'pending_approval',
-        submitted_at: asDraft ? null : new Date().toISOString(),
+        status: statusOverride || 'pending_approval',
+        submitted_at: (statusOverride === 'draft' || statusOverride === 'paused' || statusOverride === 'cancelled') ? null : new Date().toISOString(),
         latitude: form.latitude ? Number(form.latitude) : null,
         longitude: form.longitude ? Number(form.longitude) : null,
         lot_size_area: form.lot_size_area ? Number(form.lot_size_area) : null,
@@ -127,7 +168,7 @@ function NuevaPropiedadContent() {
         if (error) throw error;
         resultId = editId;
         // Auto-update milestones on status change
-        if (!asDraft) {
+        if (statusOverride !== 'draft' && statusOverride !== 'paused' && statusOverride !== 'cancelled') {
           await supabase.from('listing_milestones').upsert({
             property_id: editId,
             agent_id: user?.id,
@@ -152,7 +193,7 @@ function NuevaPropiedadContent() {
           agent_id: user?.id,
           listing_created_at: new Date().toISOString(),
         };
-        if (!asDraft) milestonePayload.submitted_at = new Date().toISOString();
+        if (statusOverride !== 'draft' && statusOverride !== 'paused' && statusOverride !== 'cancelled') milestonePayload.submitted_at = new Date().toISOString();
         if (payload.listing_agreement) milestonePayload.authorization_signed_at = new Date().toISOString();
         await supabase.from('listing_milestones').insert([milestonePayload]);
 
@@ -224,6 +265,16 @@ function NuevaPropiedadContent() {
             {/* ── STEP 0: Basics & Owner ── */}
             {step === 0 && (
               <>
+                <div className="mb-8 p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 rounded-xl">
+                  <label className={labelCls}>⚡ {lang === 'en' ? 'Import from Pre-Listing / ACM Report' : 'Importar de Carpeta Pre-Listing / Reporte ACM'}</label>
+                  <select value={selectedAcmId} onChange={handleSelectAcm} className={inputCls}>
+                    <option value="">{lang === 'en' ? 'Select a report to auto-fill...' : 'Selecciona un reporte para auto-completar...'}</option>
+                    {acmReports.map(r => (
+                      <option key={r.id} value={r.id}>{r.client_name} - {r.property_address} ({new Date(r.created_at).toLocaleDateString()})</option>
+                    ))}
+                  </select>
+                </div>
+
                 <SectionTitle icon="🏠" title={lang === 'en' ? 'Property Basics' : 'Datos Básicos'} subtitle={lang === 'en' ? 'Type, title, and classification' : 'Tipo, título y clasificación'} />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -254,7 +305,7 @@ function NuevaPropiedadContent() {
                   </div>
                   <div>
                     <label className={labelCls}>{lang === 'en' ? 'Office' : 'Oficina'}</label>
-                    <select value={form.office_code} onChange={e => set('office_code', e.target.value)} className={inputCls}>
+                    <select value={form.office_code} onChange={e => set('office_code', e.target.value)} className={`${inputCls} opacity-70 cursor-not-allowed`} disabled>
                       <option value="">—</option>
                       <option value="R0700130">RE/MAX Altitud</option>
                       <option value="R0700151">Altitud Cero</option>
@@ -395,6 +446,12 @@ function NuevaPropiedadContent() {
                 </div>
 
                 <SectionTitle icon="📢" title={lang === 'en' ? 'Public Description' : 'Descripción Pública'} subtitle={lang === 'en' ? 'Visible on RECONNECT and portals' : 'Visible en RECONNECT y portales'} />
+                <div className="mb-3 text-right">
+                  <a href="https://gemini.google.com/gem/1AEmVQwvskiJS32T5KX9A4VoVZWqfhW-V?usp=sharing" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-500 bg-brand-50 dark:bg-brand-500/10 px-3 py-1.5 rounded-lg transition-colors">
+                    ✨ {lang === 'en' ? 'Write with Gemini AI' : 'Escribir con Gemini AI'}
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                  </a>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className={labelCls}>{lang === 'en' ? 'Description (Spanish)' : 'Descripción (Español)'}</label>
@@ -407,16 +464,22 @@ function NuevaPropiedadContent() {
                 </div>
 
                 <SectionTitle icon="🎬" title={lang === 'en' ? 'Video & Media' : 'Video y Medios'} />
-                <div>
-                  <label className={labelCls}>{lang === 'en' ? 'Video Link (YouTube)' : 'Link de Video (YouTube)'}</label>
-                  <input value={form.video_link} onChange={e => set('video_link', e.target.value)} className={inputCls} placeholder="https://youtube.com/watch?v=..." />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>{lang === 'en' ? 'Video Link (YouTube)' : 'Link de Video (YouTube)'}</label>
+                    <input value={form.video_link} onChange={e => set('video_link', e.target.value)} className={inputCls} placeholder="https://youtube.com/watch?v=..." />
+                  </div>
+                  <div>
+                    <label className={labelCls}>{lang === 'en' ? 'Google Drive Link (Photos)' : 'Link de Google Drive (Fotos)'}</label>
+                    <input value={form.drive_photos_folder_url} onChange={e => set('drive_photos_folder_url', e.target.value)} className={inputCls} placeholder="https://drive.google.com/drive/folders/..." />
+                  </div>
                 </div>
 
                 {/* Photo section placeholder */}
                 <SectionTitle icon="📸" title={lang === 'en' ? 'Photos' : 'Fotos'} subtitle={lang === 'en' ? 'Photos will be managed via Google Drive after saving' : 'Las fotos se gestionarán vía Google Drive después de guardar'} />
                 <div className="border-2 border-dashed border-gray-300 dark:border-dark-border rounded-2xl p-8 text-center">
                   <svg className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{lang === 'en' ? 'Save as draft first, then create a photo folder for your photographer' : 'Guarda como borrador primero, luego crea una carpeta de fotos para tu fotógrafo'}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{lang === 'en' ? 'Paste your Drive folder link above. Once submitted, the system can sync them.' : 'Pega el enlace de la carpeta de Drive arriba. Una vez enviada, el sistema podrá sincronizarlas.'}</p>
                 </div>
               </>
             )}
@@ -437,10 +500,18 @@ function NuevaPropiedadContent() {
                   </button>
                 ) : (
                   <>
-                    <button onClick={() => handleSubmit(true)} disabled={loading} className="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-panel hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-sm font-medium text-gray-700 dark:text-white disabled:opacity-50">
-                      {loading ? '...' : (editId ? (lang === 'en' ? 'Save Changes' : 'Guardar Cambios') : (lang === 'en' ? 'Save Draft' : 'Guardar Borrador'))}
-                    </button>
-                    <button onClick={() => handleSubmit(false)} disabled={loading} className="px-6 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold shadow-md shadow-brand-500/20 transition-all disabled:opacity-50">
+                    <div className="flex gap-2">
+                      <button onClick={() => handleSubmit('draft')} disabled={loading} className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-panel hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-sm font-medium text-gray-700 dark:text-white disabled:opacity-50">
+                        {loading ? '...' : (lang === 'en' ? 'Draft' : 'Borrador')}
+                      </button>
+                      <button onClick={() => handleSubmit('paused')} disabled={loading} className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-panel hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-sm font-medium text-amber-600 dark:text-amber-500 disabled:opacity-50">
+                        {loading ? '...' : (lang === 'en' ? 'Pause' : 'Pausar')}
+                      </button>
+                      <button onClick={() => handleSubmit('cancelled')} disabled={loading} className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-panel hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-sm font-medium text-red-600 dark:text-red-500 disabled:opacity-50">
+                        {loading ? '...' : (lang === 'en' ? 'Cancel' : 'Cancelar')}
+                      </button>
+                    </div>
+                    <button onClick={() => handleSubmit('pending_approval')} disabled={loading} className="px-6 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold shadow-md shadow-brand-500/20 transition-all disabled:opacity-50">
                       {loading ? '...' : (lang === 'en' ? 'Submit for Approval' : 'Enviar para Aprobación')}
                     </button>
                   </>

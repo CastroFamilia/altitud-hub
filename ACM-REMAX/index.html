@@ -1804,6 +1804,9 @@
                 <button class="btn btn-lg" onclick="saveCMA()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;">
                     <i class="fas fa-cloud-upload-alt"></i> Guardar en la Nube
                 </button>
+                <button class="btn btn-lg" id="btn-save-listing" onclick="saveAsListing()" style="background:linear-gradient(135deg,#4f46e5,#4338ca);color:#fff;">
+                    <i class="fab fa-google-drive"></i> Guardar como Listing
+                </button>
             </div>
         </div>
 
@@ -2106,6 +2109,99 @@
         } else {
             showToast('CMA guardado exitosamente ✓', 'success');
             STATE.reportId = data.id;
+        }
+    }
+
+    // Save as Listing (Drive + Properties Table)
+    async function saveAsListing() {
+        if (!sbClient) { showToast('Supabase no configurado', 'error'); return; }
+        if (!currentUser) { showToast('Debes iniciar sesión para usar esta función', 'error'); return; }
+        
+        const btn = document.getElementById('btn-save-listing');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        btn.disabled = true;
+
+        try {
+            const propName = document.getElementById('prop-name')?.value || 'Sin Título';
+            const propTypeMap = {
+                'casa': 'Casa', 'lote': 'Lote', 'condo': 'Apartamento',
+                'apartamento': 'Apartamento', 'comercial': 'Comercial',
+                'negocio': 'Comercial', 'galpon': 'Comercial', 'local': 'Comercial',
+                'finca': 'Lote', 'hotel': 'Comercial'
+            };
+            const propTypeRaw = STATE.propertyType || 'casa';
+            const propertyType = propTypeMap[propTypeRaw] || 'Casa';
+            
+            const listPrice = parseFloat(document.getElementById('prop-listing-price')?.value) || 0;
+            const address = document.getElementById('prop-address')?.value || '';
+            const ownerName = document.getElementById('client-name')?.value || '';
+            const agentName = STATE.agent?.name || 'Agente';
+            const agentEmail = STATE.agent?.email || currentUser.email;
+
+            showToast('Generando reporte PDF...', 'info');
+            const showMap = document.getElementById('pdf-opt-map')?.checked;
+            const mapDataUrl = showMap ? await captureMapImage() : null;
+            const printContent = buildPrintableHTML(mapDataUrl);
+            
+            const opt = {
+                margin: [6, 6, 8, 6],
+                filename: `ACM_${propName}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'], before: '.pdf-page-break' }
+            };
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = printContent;
+            tempDiv.style.width = '794px';
+            document.body.appendChild(tempDiv);
+
+            const pdfBase64 = await html2pdf().set(opt).from(tempDiv).output('datauristring');
+            document.body.removeChild(tempDiv);
+
+            showToast('Subiendo archivo a Google Drive...', 'info');
+            const res = await fetch('/api/drive/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    agentName,
+                    agentEmail,
+                    propertyName: propName,
+                    pdfBase64,
+                    fileName: `ACM_${propName}.pdf`
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Error subiendo a Drive');
+
+            showToast('Guardando listing en Altitud Hub...', 'info');
+            const { error: dbError } = await sbClient.from('properties').insert({
+                agent_id: currentUser.id,
+                name: propName,
+                property_type: propertyType,
+                list_price: listPrice,
+                unparsed_address: address,
+                owner_name: ownerName,
+                status: 'acm',
+                drive_folder_id: data.folderId,
+                drive_folder_url: data.folderUrl
+            });
+
+            if (dbError) throw dbError;
+
+            // Also save to acm_reports
+            await saveCMA();
+
+            showToast('¡Listing y Drive creados exitosamente!', 'success');
+        } catch (err) {
+            console.error(err);
+            showToast('Error: ' + err.message, 'error');
+        } finally {
+            btn.innerHTML = origText;
+            btn.disabled = false;
         }
     }
 

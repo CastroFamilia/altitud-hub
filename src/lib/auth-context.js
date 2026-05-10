@@ -141,7 +141,32 @@ export function AuthProvider({ children }) {
   const isBroker = role === 'broker';
   const isTeamLeader = role === 'team_leader';
   const isAgent = role === 'agent';
+  const isOfficeAssistant = role === 'office_assistant';
   const isAuthenticated = !!user && !!profile;
+
+  // Dev bypass for local testing without login
+  if (process.env.NODE_ENV === 'development') {
+    return (
+      <AuthContext.Provider value={{
+        supabase,
+        user: { id: '00000000-0000-0000-0000-000000000000', email: 'dev@remax-altitud.cr' },
+        profile: { id: '00000000-0000-0000-0000-000000000000', full_name: 'Dev Admin', role: 'broker', office: 'altitud', email: 'dev@remax-altitud.cr' },
+        role: 'broker',
+        loading: false,
+        error: null,
+        signIn: () => {},
+        signOut: () => {},
+        isBroker: true,
+        isTeamLeader: false,
+        isAgent: false,
+        isOfficeAssistant: false,
+        isAuthenticated: true,
+        fetchProfile: () => {},
+      }}>
+        {children}
+      </AuthContext.Provider>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{
@@ -156,6 +181,7 @@ export function AuthProvider({ children }) {
       isBroker,
       isTeamLeader,
       isAgent,
+      isOfficeAssistant,
       isAuthenticated,
       fetchProfile,
     }}>

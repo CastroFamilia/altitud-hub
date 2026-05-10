@@ -62,7 +62,7 @@ export default function PropiedadesPage() {
 
         setProperties(enriched);
       } catch (err) {
-        console.error('Error fetching properties:', err);
+        console.error('Error fetching properties:', err?.message || err);
       } finally {
         setLoading(false);
       }
