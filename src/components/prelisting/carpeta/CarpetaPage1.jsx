@@ -11,7 +11,7 @@ export default function CarpetaPage1({ cfg, agentName, agentPhone, agentEmail, a
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <img src="/assets/logo-altitud.png" alt="Logo" style={{ height: 20, marginBottom: 16, filter: 'brightness(10)' }} />
-            <h2 style={{ fontSize: 30, fontWeight: 900, color: 'white', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, fontWeight: 700, color: 'white', letterSpacing: '0.02em', lineHeight: 1.1, textTransform: 'uppercase' }}>
               {t.p1_title1}<br/>{t.p1_title2}
             </h2>
           </div>
@@ -35,14 +35,14 @@ export default function CarpetaPage1({ cfg, agentName, agentPhone, agentEmail, a
         <div style={{ display: 'flex', gap: 32, marginBottom: 24 }}>
           <div style={{ flex: 1 }}>
             <div style={{ width: 40, height: 3, background: '#DC1431', marginBottom: 12 }} />
-            <h3 style={{ fontSize: 18, fontWeight: 900, color: '#1a1a2e', letterSpacing: '-0.02em', marginBottom: 4 }}>{t.p1_crSub}</h3>
+            <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 600, color: '#1a1a2e', letterSpacing: '0.01em', marginBottom: 4 }}>{t.p1_crSub}</h3>
             <p style={{ fontSize: 9, color: '#DC1431', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 8 }}>{t.p1_crTitle}</p>
             <p style={{ fontSize: 10.5, lineHeight: 1.8, color: '#64748b' }} dangerouslySetInnerHTML={{ __html: t.p1_crDesc }} />
           </div>
           <div style={{ width: 1, background: '#e5e7eb', flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
             <div style={{ width: 40, height: 3, background: cfg.accent, marginBottom: 12 }} />
-            <h3 style={{ fontSize: 18, fontWeight: 900, color: '#1a1a2e', letterSpacing: '-0.02em', marginBottom: 4 }}>{cfg.name}</h3>
+            <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 600, color: '#1a1a2e', letterSpacing: '0.01em', marginBottom: 4 }}>{cfg.name}</h3>
             <p style={{ fontSize: 9, color: cfg.accent, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 8 }}>{cfg.zone}</p>
             <p style={{ fontSize: 10.5, lineHeight: 1.8, color: '#64748b' }} dangerouslySetInnerHTML={{ __html: t.p1_officeDesc.replace('{{count}}', cfg.agentCount).replace('{{listings}}', cfg.listingCount) }} />
           </div>
@@ -58,7 +58,7 @@ export default function CarpetaPage1({ cfg, agentName, agentPhone, agentEmail, a
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 9, color: '#DC1431', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 4 }}>{t.p1_yourAdvisor}</p>
-            <h3 style={{ fontSize: 22, fontWeight: 900, color: '#1a1a2e', letterSpacing: '-0.03em' }}>{agentName}</h3>
+            <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 600, color: '#1a1a2e', letterSpacing: '0.01em' }}>{agentName}</h3>
             <p style={{ fontSize: 10.5, lineHeight: 1.75, color: '#64748b', marginTop: 6 }}>{t.p1_agentDesc}</p>
             <div style={{ display: 'flex', gap: 24, marginTop: 10 }}>
               <span style={{ fontSize: 10, color: '#1a1a2e', fontWeight: 600 }}>📞 {agentPhone}</span>

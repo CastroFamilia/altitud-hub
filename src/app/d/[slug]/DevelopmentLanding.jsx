@@ -1,6 +1,22 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+
+const trackEvent = async (devId, propId, type, meta = {}) => {
+  if (!devId) return;
+  try {
+    await supabase.from('page_events').insert({
+      development_id: devId,
+      property_id: propId || null,
+      event_type: type,
+      event_meta: meta,
+      referrer: typeof document !== 'undefined' ? document.referrer : null,
+    });
+  } catch (err) {
+    console.error('Tracking error:', err);
+  }
+};
 
 /* ═══════════════════════════════════════════════════════════════
    DEVELOPMENT LANDING PAGE — Premium Public Renderer
@@ -29,6 +45,7 @@ function LeadForm({ development, content }) {
           ...form,
         }),
       });
+      await trackEvent(development.id, null, 'lead_submit', { name: form.name, email: form.email });
       setSent(true);
     } catch { /* silent */ } finally {
       setSending(false);
@@ -64,11 +81,20 @@ function LeadForm({ development, content }) {
 }
 
 // ── FAQ Accordion ─────────────────────────────────────────────
-function FAQItem({ q, a }) {
+function FAQItem({ q, a, devId }) {
   const [open, setOpen] = useState(false);
+
+  const handleToggle = () => {
+    const newState = !open;
+    setOpen(newState);
+    if (newState) {
+      trackEvent(devId, null, 'faq_expand', { question: q });
+    }
+  };
+
   return (
     <div className="border-b border-gray-200/10 last:border-0">
-      <button onClick={() => setOpen(!open)}
+      <button onClick={handleToggle}
         className="w-full flex items-center justify-between py-5 text-left group">
         <span className="text-lg font-semibold text-white group-hover:text-emerald-400 transition-colors pr-4">{q}</span>
         <svg className={`w-5 h-5 text-emerald-400 shrink-0 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +217,7 @@ const Blocks = {
           <p className="text-gray-400 text-center mb-10">{available.length} {dev.unit_label?.toLowerCase()} available</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {available.map(prop => (
-              <div key={prop.id} className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden hover:border-emerald-500/30 transition-all group">
+              <div key={prop.id} onClick={() => trackEvent(dev.id, prop.id, 'listing_click')} className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden hover:border-emerald-500/30 transition-all group cursor-pointer">
                 {prop.main_image_url && (
                   <div className="aspect-[16/10] overflow-hidden">
                     <img src={prop.main_image_url} alt={prop.title_es || prop.title_en}
@@ -231,7 +257,7 @@ const Blocks = {
     </section>
   ),
 
-  faq: ({ content }) => {
+  faq: ({ content, dev }) => {
     const items = content?.items || [];
     if (items.length === 0) return null;
     return (
@@ -240,7 +266,7 @@ const Blocks = {
           <h2 className="text-3xl font-bold text-white mb-10 text-center">{content?.title || 'FAQ'}</h2>
           <div className="bg-white/5 rounded-2xl border border-white/10 divide-y divide-white/5 px-6">
             {items.map((item, i) => (
-              <FAQItem key={i} q={item.q || item.question} a={item.a || item.answer} />
+              <FAQItem key={i} q={item.q || item.question} a={item.a || item.answer} devId={dev.id} />
             ))}
           </div>
         </div>
@@ -262,7 +288,7 @@ const Blocks = {
     </section>
   ),
 
-  agent: ({ content, agent }) => {
+  agent: ({ content, agent, dev }) => {
     if (!agent) return null;
     const waLink = agent.phone
       ? `https://wa.me/${agent.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in learning more about this development.`)}`
@@ -286,6 +312,7 @@ const Blocks = {
           <div className="flex items-center justify-center gap-3">
             {waLink && (
               <a href={waLink} target="_blank" rel="noopener noreferrer"
+                onClick={() => trackEvent(dev?.id, null, 'whatsapp_click')}
                 className="px-6 py-3 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold shadow-lg shadow-[#25D366]/20 transition-all active:scale-95 flex items-center gap-2">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.933 11.933 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.387 0-4.594-.77-6.396-2.076l-.446-.334-2.635.884.884-2.635-.334-.446A9.95 9.95 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
                 WhatsApp
@@ -303,7 +330,7 @@ const Blocks = {
     );
   },
 
-  social: ({ content }) => {
+  social: ({ content, dev }) => {
     const links = content?.links || [];
     if (links.length === 0) return null;
     return (
@@ -311,6 +338,7 @@ const Blocks = {
         <div className="flex items-center justify-center gap-4">
           {links.map((link, i) => (
             <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"
+              onClick={() => trackEvent(dev?.id, null, 'social_click', { url: link.url })}
               className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-emerald-400 hover:border-emerald-500/30 transition-all">
               <span className="text-lg">{link.icon || '🔗'}</span>
             </a>
@@ -344,6 +372,10 @@ const Blocks = {
 export default function DevelopmentLanding({ development, properties, agent }) {
   const sections = development.sections || [];
 
+  useEffect(() => {
+    trackEvent(development?.id, null, 'page_view');
+  }, [development?.id]);
+
   return (
     <div className="min-h-screen bg-[#0a0f1a] text-white">
 
@@ -369,7 +401,7 @@ export default function DevelopmentLanding({ development, properties, agent }) {
           <section className="py-20 px-6 text-center">
             <p className="text-gray-400 text-lg">This development page is being prepared. Check back soon.</p>
           </section>
-          {agent && Blocks.agent({ content: {}, agent })}
+          {agent && Blocks.agent({ content: {}, agent, dev: development })}
         </>
       )}
 

@@ -293,7 +293,7 @@ export default function CarpetaPrelisting() {
       </div>
 
       <div ref={printRef} className="carpeta-container" style={{ paddingTop:56,background:'#f0f0f0' }}>
-        <CarpetaCover cfg={cfg} agentName={agentName} t={t} />
+        <CarpetaCover cfg={cfg} agentName={agentName} agentPhoto={agentPhoto} t={t} />
         <CarpetaPage1 cfg={cfg} agentName={agentName} agentPhone={agentPhone} agentEmail={agentEmail} agentPhoto={agentPhoto} t={t} />
         <CarpetaPage2 cfg={cfg} t={t} />
         <CarpetaPage2b cfg={cfg} t={t} />

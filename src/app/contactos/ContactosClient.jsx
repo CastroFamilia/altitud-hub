@@ -250,8 +250,8 @@ export default function ContactosClient({ initialContacts = [] }) {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {/* Placeholder for future Activity Module */}
-                        <div className="text-sm text-gray-900 dark:text-white">Hace 2 días</div>
-                        <div className="text-xs text-gray-500">Vía WhatsApp</div>
+                        <div className="text-sm text-gray-900 dark:text-white">{t('contact_act_time_placeholder')}</div>
+                        <div className="text-xs text-gray-500">{t('contact_act_via_placeholder')}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Link 

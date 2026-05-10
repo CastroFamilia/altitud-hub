@@ -1,74 +1,88 @@
-export default function CarpetaCover({ cfg, agentName, t }) {
-  // Fallback for when t is not provided (direct PDF rendering, etc.)
+export default function CarpetaCover({ cfg, agentName, agentPhoto, t }) {
+  // Fallback for when t is not provided
   const tr = t || ((key) => {
-    const fallback = { pre_carpeta_title: 'Carpeta de Presentación', pre_carpeta_prepared: 'Preparado por' };
+    const fallback = { pre_carpeta_title: 'STRATEGIC ASSET VALUATION' };
     return fallback[key] || key;
   });
 
   return (
-    <div className="carpeta-page" style={{ padding: 0, display: 'flex', flexDirection: 'column' }}>
+    <div className="carpeta-page" style={{ padding: 0, display: 'flex', flexDirection: 'column', position: 'relative', fontFamily: "'Inter', sans-serif" }}>
+      {/* Import Playfair Display for the premium serif look */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+      `}} />
+
       {/* Full-bleed hero image */}
-      <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
+      <div style={{ position: 'absolute', inset: 0 }}>
         <img
           src={cfg.coverImage}
           alt={cfg.location}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
-        {/* Dark gradient overlay */}
+        {/* Dark gradient overlay to ensure text readability */}
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.02) 40%, rgba(0,0,0,0.6) 75%, rgba(0,0,0,0.92) 100%)'
+          background: 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.85) 100%)'
         }} />
+      </div>
 
-        {/* Top bar accent */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 5, background: `linear-gradient(90deg, ${cfg.accent}, #DC1431)` }} />
+      {/* Main Content Container - Centered */}
+      <div style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '0 60px' }}>
+        
+        {/* Title */}
+        <h1 style={{ 
+          fontFamily: "'Playfair Display', serif", 
+          fontSize: 48, 
+          fontWeight: 600, 
+          color: 'white', 
+          letterSpacing: '0.05em', 
+          textTransform: 'uppercase', 
+          marginBottom: 20,
+          textShadow: '0 4px 20px rgba(0,0,0,0.5)'
+        }}>
+          {tr('presentation') || 'Strategic Asset Valuation'}
+        </h1>
+        
+        {/* Elegant thin dividing line */}
+        <div style={{ width: '60%', height: 1, background: 'rgba(255,255,255,0.4)', marginBottom: 20 }} />
+        
+        {/* Subtitle / Location */}
+        <h2 style={{ 
+          fontFamily: "'Playfair Display', serif", 
+          fontSize: 28, 
+          fontWeight: 400, 
+          color: 'rgba(255,255,255,0.9)', 
+          letterSpacing: '0.02em', 
+          marginBottom: 60
+        }}>
+          {cfg.location}
+        </h2>
 
-        {/* Logo top-left */}
-        <div style={{ position: 'absolute', top: 24, left: 28, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 10, padding: '6px 12px', backdropFilter: 'blur(10px)' }}>
-            <img src="/assets/logo-altitud.png" alt="Logo" style={{ height: 28 }} />
-          </div>
-        </div>
-
-        {/* Content at bottom */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 36px 36px' }}>
-          {/* Office name */}
-          <h1 style={{ fontSize: 42, fontWeight: 900, color: 'white', letterSpacing: '-0.03em', lineHeight: 1.05, marginBottom: 4, textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
-            {cfg.name}
-          </h1>
+        {/* Agent Info & Presentation Info */}
+        <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          {agentPhoto && (
+            <div style={{ width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.8)', marginBottom: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+              <img src={agentPhoto} alt={agentName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+          )}
           
-          {/* Location */}
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)', fontWeight: 500, letterSpacing: '0.02em', marginBottom: 20 }}>
-            {cfg.location}
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: 400, letterSpacing: '0.05em', marginBottom: 8, textTransform: 'uppercase' }}>
+            Presented By
           </p>
-
-          {/* Separator */}
-          <div style={{ width: 60, height: 3, background: `linear-gradient(90deg, ${cfg.accent}, #DC1431)`, borderRadius: 2, marginBottom: 16 }} />
-
-          {/* Title */}
-          <h2 style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>
-            {tr('pre_carpeta_title')}
-          </h2>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 500 }}>
-            {tr('pre_carpeta_prepared')} <strong style={{ color: 'rgba(255,255,255,0.7)' }}>{agentName}</strong>
+          <p style={{ fontSize: 16, color: 'white', fontWeight: 600, letterSpacing: '0.02em', marginBottom: 4 }}>
+            {agentName}
+          </p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 400 }}>
+            {cfg.name} | {cfg.zone}
           </p>
         </div>
       </div>
 
-      {/* Bottom strip */}
-      <div style={{ 
-        height: 48, flexShrink: 0, 
-        background: cfg.accent,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 36px'
-      }}>
-        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-          www.remax-altitud.cr
-        </span>
-        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-          {cfg.zone}
-        </span>
+      {/* Logo at the very bottom */}
+      <div style={{ position: 'absolute', bottom: 40, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
+        <img src="/assets/logo-altitud.png" alt="Logo" style={{ height: 40, filter: 'brightness(0) invert(1)', opacity: 0.9 }} />
       </div>
+
     </div>
   );
 }

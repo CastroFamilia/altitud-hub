@@ -1153,18 +1153,18 @@
                     <h2 data-i18n="select_transaction_title" style="font-size:22px;">¿Venta o Alquiler?</h2>
                     <p data-i18n="select_transaction_sub">Selecciona el tipo de operación para este análisis</p>
                 </div>
-                <div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;">
-                    <div class="type-card selected" style="min-width:220px;min-height:160px;" data-transaction="sale" onclick="selectTransactionType('sale')">
+                <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+                    <div class="type-card selected" style="flex:1;min-width:140px;padding:16px 12px;" data-transaction="sale" onclick="selectTransactionType('sale')">
                         <div class="check-badge"><i class="fas fa-check"></i></div>
-                        <span class="type-icon" style="font-size:44px;">💰</span>
-                        <div class="type-name" data-i18n="tx_sale">Venta</div>
-                        <div class="type-desc" data-i18n="tx_sale_desc">Valor de compra-venta</div>
+                        <span class="type-icon" style="font-size:32px;">💰</span>
+                        <div class="type-name" data-i18n="tx_sale" style="font-size:16px;margin-bottom:4px;">Venta</div>
+                        <div class="type-desc" data-i18n="tx_sale_desc" style="font-size:11px;line-height:1.2;">Valor de compra-venta</div>
                     </div>
-                    <div class="type-card" style="min-width:220px;min-height:160px;" data-transaction="rental" onclick="selectTransactionType('rental')">
+                    <div class="type-card" style="flex:1;min-width:140px;padding:16px 12px;" data-transaction="rental" onclick="selectTransactionType('rental')">
                         <div class="check-badge"><i class="fas fa-check"></i></div>
-                        <span class="type-icon" style="font-size:44px;">🔑</span>
-                        <div class="type-name" data-i18n="tx_rental">Alquiler</div>
-                        <div class="type-desc" data-i18n="tx_rental_desc">Renta mensual</div>
+                        <span class="type-icon" style="font-size:32px;">🔑</span>
+                        <div class="type-name" data-i18n="tx_rental" style="font-size:16px;margin-bottom:4px;">Alquiler</div>
+                        <div class="type-desc" data-i18n="tx_rental_desc" style="font-size:11px;line-height:1.2;">Renta mensual</div>
                     </div>
                 </div>
             </div>
@@ -1175,24 +1175,24 @@
                     <h2 data-i18n="select_method_title" style="font-size:22px;">¿Método de Valoración?</h2>
                     <p data-i18n="select_method_sub">Selecciona cómo deseas calcular el valor sugerido</p>
                 </div>
-                <div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;">
-                    <div class="type-card" style="min-width:220px;min-height:160px;" data-method="competencies" onclick="selectAnalysisMethod('competencies')">
+                <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+                    <div class="type-card" style="flex:1;min-width:100px;padding:16px 8px;" data-method="competencies" onclick="selectAnalysisMethod('competencies')">
                         <div class="check-badge"><i class="fas fa-check"></i></div>
-                        <span class="type-icon" style="font-size:44px;">📊</span>
-                        <div class="type-name" data-i18n="method_comps">Competencias</div>
-                        <div class="type-desc" data-i18n="method_comps_desc">Análisis comparativo de mercado</div>
+                        <span class="type-icon" style="font-size:28px;">📊</span>
+                        <div class="type-name" data-i18n="method_comps" style="font-size:14px;margin-bottom:4px;">Competencias</div>
+                        <div class="type-desc" data-i18n="method_comps_desc" style="font-size:10px;line-height:1.2;">Comparativo de mercado</div>
                     </div>
-                    <div class="type-card" style="min-width:220px;min-height:160px;" data-method="replacement" onclick="selectAnalysisMethod('replacement')">
+                    <div class="type-card" style="flex:1;min-width:100px;padding:16px 8px;" data-method="replacement" onclick="selectAnalysisMethod('replacement')">
                         <div class="check-badge"><i class="fas fa-check"></i></div>
-                        <span class="type-icon" style="font-size:44px;">🏗️</span>
-                        <div class="type-name" data-i18n="method_repl">Reposición</div>
-                        <div class="type-desc" data-i18n="method_repl_desc">Terreno + Construcción - Depreciación</div>
+                        <span class="type-icon" style="font-size:28px;">🏗️</span>
+                        <div class="type-name" data-i18n="method_repl" style="font-size:14px;margin-bottom:4px;">Reposición</div>
+                        <div class="type-desc" data-i18n="method_repl_desc" style="font-size:10px;line-height:1.2;">Lote + Construcción</div>
                     </div>
-                    <div class="type-card selected" style="min-width:220px;min-height:160px;" data-method="both" onclick="selectAnalysisMethod('both')">
+                    <div class="type-card selected" style="flex:1;min-width:100px;padding:16px 8px;" data-method="both" onclick="selectAnalysisMethod('both')">
                         <div class="check-badge"><i class="fas fa-check"></i></div>
-                        <span class="type-icon" style="font-size:44px;">⚖️</span>
-                        <div class="type-name" data-i18n="method_both">Ambos</div>
-                        <div class="type-desc" data-i18n="method_both_desc">Incluir ambos métodos en el reporte</div>
+                        <span class="type-icon" style="font-size:28px;">⚖️</span>
+                        <div class="type-name" data-i18n="method_both" style="font-size:14px;margin-bottom:4px;">Ambos</div>
+                        <div class="type-desc" data-i18n="method_both_desc" style="font-size:10px;line-height:1.2;">Incluir ambos</div>
                     </div>
                 </div>
             </div>
@@ -1521,6 +1521,18 @@
                         <div class="form-grid">
 
                             <div class="form-group">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" class="form-input" id="comp-name-1" placeholder="Nombre de la propiedad">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Estatus</label>
+                                <select class="form-input" id="comp-status-1">
+                                    <option value="Activa">Activa (Listada)</option>
+                                    <option value="Vendida">Vendida (SOLD)</option>
+                                    <option value="Bajo Contrato">Bajo Contrato</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
                                 <label class="form-label">Barrio</label>
                                 <input type="text" class="form-input" id="comp-barrio-1" placeholder="Barrio o zona">
                             </div>
@@ -1577,6 +1589,18 @@
                         </div>
                         <div class="form-grid">
 
+                            <div class="form-group">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" class="form-input" id="comp-name-2" placeholder="Nombre de la propiedad">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Estatus</label>
+                                <select class="form-input" id="comp-status-2">
+                                    <option value="Activa">Activa (Listada)</option>
+                                    <option value="Vendida">Vendida (SOLD)</option>
+                                    <option value="Bajo Contrato">Bajo Contrato</option>
+                                </select>
+                            </div>
                             <div class="form-group">
                                 <label class="form-label">Barrio</label>
                                 <input type="text" class="form-input" id="comp-barrio-2" placeholder="Barrio o zona">
@@ -3114,6 +3138,18 @@
                 <div class="form-grid">
 
                     <div class="form-group">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-input" id="comp-name-${index}" placeholder="Nombre de la propiedad">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Estatus</label>
+                        <select class="form-input" id="comp-status-${index}">
+                            <option value="Activa">Activa (Listada)</option>
+                            <option value="Vendida">Vendida (SOLD)</option>
+                            <option value="Bajo Contrato">Bajo Contrato</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">Barrio</label>
                         <input type="text" class="form-input" id="comp-barrio-${index}" placeholder="Barrio o zona">
                     </div>
@@ -3535,6 +3571,31 @@
             html += '</tr>';
         }
 
+        const propName = getVal('prop-name') || '-';
+        html += `<tr style="background:var(--bg-hover);">
+            <td><strong>Nombre de la Propiedad</strong></td>
+            <td class="prop-col editable-cell" ondblclick="editSummaryCell(this,'prop','name','text')" title="Doble clic para editar">${propName}</td>`;
+        compsData.forEach((comp, ci) => {
+            html += `<td class="editable-cell" ondblclick="editSummaryCell(this,'comp${ci+1}','name','text')" title="Doble clic para editar">${comp.name || '-'}</td>`;
+        });
+        html += '</tr>';
+
+        html += `<tr>
+            <td><strong>Estatus</strong></td>
+            <td class="prop-col editable-cell" ondblclick="editSummaryCell(this,'prop','status','text')" title="Doble clic para editar">-</td>`;
+        compsData.forEach((comp, ci) => {
+            html += `<td class="editable-cell" ondblclick="editSummaryCell(this,'comp${ci+1}','status','select')" title="Doble clic para editar">${comp.status || '-'}</td>`;
+        });
+        html += '</tr>';
+
+        html += `<tr>
+            <td><strong>Tiempo Publicado</strong></td>
+            <td class="prop-col editable-cell" ondblclick="editSummaryCell(this,'prop','time','text')" title="Doble clic para editar">-</td>`;
+        compsData.forEach((comp, ci) => {
+            html += `<td class="editable-cell" ondblclick="editSummaryCell(this,'comp${ci+1}','time','text')" title="Doble clic para editar">${comp.time || '-'}</td>`;
+        });
+        html += '</tr>';
+
         // Indicator rows (editable on double-click)
         indicators.forEach(ind => {
             const propVal = propData[ind.key];
@@ -3682,6 +3743,8 @@
     function collectCompData(index) {
         const comp = {
             address: getVal(`comp-address-${index}`),
+            name: getVal(`comp-name-${index}`),
+            status: getVal(`comp-status-${index}`),
             barrio: getVal(`comp-barrio-${index}`),
             price: getVal(`comp-price-${index}`),
             source: getVal(`comp-source-${index}`),
@@ -4336,8 +4399,28 @@
         const totalCols = 2 + compsData.length;
 
         let indicatorRows = '';
-        indicators.forEach((ind, idx) => {
+        
+        // Custom fields Name, Status, Time
+        const customRows = [
+            { label: 'Nombre de la Propiedad', propVal: propName, compKey: 'name' },
+            { label: 'Estatus', propVal: '-', compKey: 'status' },
+            { label: 'Tiempo Publicado', propVal: '-', compKey: 'time' }
+        ];
+        
+        customRows.forEach((cr, idx) => {
             const bg = idx % 2 === 0 ? '#f8fafc' : '#ffffff';
+            const cellStyle = `padding:6px 10px;border-bottom:1px solid #edf0f4;font-size:10px;`;
+            indicatorRows += `<tr style="background:${bg};">
+                <td style="${cellStyle}font-weight:600;color:#374151;white-space:nowrap;"><span style="display:inline-block;width:4px;height:4px;background:${remaxBlue};border-radius:50%;margin-right:6px;vertical-align:middle;"></span>${cr.label}</td>
+                <td style="${cellStyle}text-align:center;background:rgba(0,61,165,0.04);font-weight:700;color:#1f2937;">${cr.propVal || '-'}</td>`;
+            compsData.forEach(comp => {
+                indicatorRows += `<td style="${cellStyle}text-align:center;color:#4b5563;">${comp[cr.compKey] || '-'}</td>`;
+            });
+            indicatorRows += '</tr>';
+        });
+
+        indicators.forEach((ind, idx) => {
+            const bg = (idx + customRows.length) % 2 === 0 ? '#f8fafc' : '#ffffff';
             const cellStyle = `padding:6px 10px;border-bottom:1px solid #edf0f4;font-size:10px;`;
             indicatorRows += `<tr style="background:${bg};">
                 <td style="${cellStyle}font-weight:600;color:#374151;white-space:nowrap;"><span style="display:inline-block;width:4px;height:4px;background:${remaxBlue};border-radius:50%;margin-right:6px;vertical-align:middle;"></span>${ind.label}</td>

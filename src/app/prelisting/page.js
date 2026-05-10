@@ -354,7 +354,7 @@ export default function PrelistingDashboard() {
                           className={`appearance-none cursor-pointer pl-4 pr-10 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider border-none focus:ring-2 focus:ring-brand-500/50 transition-all ${STATUS_STYLES[item.status] || 'bg-gray-100 text-gray-700'}`}
                         >
                           {TABS.filter(t => t.id !== 'all').map(opt => (
-                            <option key={opt.id} value={opt.id} className="bg-white dark:bg-dark-panel text-gray-900 dark:text-white font-sans uppercase font-bold text-[10px]">{opt.label}</option>
+                            <option key={opt.id} value={opt.id} className="bg-white dark:bg-dark-panel text-gray-900 dark:text-white font-sans uppercase font-bold text-[10px]">{t(opt.labelKey)}</option>
                           ))}
                         </select>
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
