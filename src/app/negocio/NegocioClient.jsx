@@ -14,6 +14,7 @@ export default function NegocioClient({ initialReservations = [], initialContact
   const [reservations, setReservations] = useState(initialReservations);
   const [contacts, setContacts] = useState(initialContacts);
   const [loading, setLoading] = useState(false);
+  const [serverDataLoaded] = useState(() => true); // Server component already fetched data
   
   // Modals/Drawers
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -54,13 +55,18 @@ export default function NegocioClient({ initialReservations = [], initialContact
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [activeTab, setActiveTab] = useState('reservas');
 
-  // Re-fetch only when profile changes (initial data comes from server)
+  // Only re-fetch if the server component didn't provide any data
+  // (e.g. user navigated client-side without a full page load)
+  // The server component always pre-fetches, so we skip redundant client-side fetches
+  // that may fail due to auth/table issues in production
   useEffect(() => {
-    if (profile?.id && initialReservations.length === 0) {
+    // Don't re-fetch if data was already loaded server-side
+    if (serverDataLoaded) return;
+    if (profile?.id) {
       fetchReservations();
       fetchContacts();
     }
-  }, [profile?.id]);
+  }, [profile?.id, serverDataLoaded]);
 
   async function fetchContacts() {
     try {
