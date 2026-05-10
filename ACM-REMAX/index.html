@@ -1389,7 +1389,8 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label">Nombre del Cliente</label>
-                        <input type="text" class="form-input" id="client-name" placeholder="Nombre completo">
+                        <input type="text" class="form-input" id="client-name" list="contacts-list" placeholder="Nombre completo" autocomplete="off" oninput="handleContactSelect(this.value)">
+                        <datalist id="contacts-list"></datalist>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Teléfono</label>
@@ -2031,6 +2032,7 @@
             }
             currentUser = session.user;
             updateAuthUI();
+            loadContacts();
         }
         // Listen for changes
         sbClient.auth.onAuthStateChange((event, session) => {
@@ -2040,10 +2042,67 @@
                 currentUser = null;
             } else {
                 currentUser = session?.user || null;
+                if (currentUser) loadContacts();
             }
             updateAuthUI();
         });
         return currentUser;
+    }
+
+    // Contacts Logic
+    async function loadContacts() {
+        if (!sbClient || !currentUser) return;
+        const { data } = await sbClient.from('contacts').select('*').eq('user_id', currentUser.id);
+        if (data) {
+            STATE.contacts = data;
+            const datalist = document.getElementById('contacts-list');
+            if (datalist) {
+                datalist.innerHTML = data.map(c => `<option value="${c.first_name} ${c.last_name || ''}".trim()></option>`).join('');
+            }
+        }
+    }
+
+    function handleContactSelect(val) {
+        if (!STATE.contacts) return;
+        const name = val.trim().toLowerCase();
+        const contact = STATE.contacts.find(c => `${c.first_name} ${c.last_name || ''}`.trim().toLowerCase() === name);
+        if (contact) {
+            if (contact.phone) document.getElementById('client-phone').value = contact.phone;
+            if (contact.email) document.getElementById('client-email').value = contact.email;
+            STATE.contact_id = contact.id;
+        } else {
+            STATE.contact_id = null;
+        }
+    }
+
+    async function getOrCreateContact(name, email, phone) {
+        if (!name || name.trim() === '') return null;
+        if (STATE.contact_id) return STATE.contact_id;
+        
+        try {
+            const parts = name.trim().split(' ');
+            const firstName = parts[0] || 'Desconocido';
+            const lastName = parts.slice(1).join(' ') || null;
+            
+            const { data, error } = await sbClient.from('contacts').insert({
+                user_id: currentUser.id,
+                first_name: firstName,
+                last_name: lastName,
+                email: email || null,
+                phone: phone || null,
+                type: 'Seller'
+            }).select('id').single();
+            
+            if (error) {
+                console.error('Error creando contacto:', error);
+                return null;
+            }
+            STATE.contact_id = data.id;
+            return data.id;
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
     }
 
     function isAllowedDomain(email) {
@@ -2071,6 +2130,12 @@
     async function saveCMA() {
         if (!sbClient) { showToast('Supabase no configurado', 'error'); return; }
 
+        const contactId = currentUser ? await getOrCreateContact(
+            document.getElementById('client-name')?.value,
+            document.getElementById('client-email')?.value,
+            document.getElementById('client-phone')?.value
+        ) : null;
+
         const report = {
             agent_id: STATE.agent?.id || null,
             agent_name: STATE.agent?.name || 'Sin agente',
@@ -2079,6 +2144,7 @@
             agent_photo: STATE.agent?.photo || null,
             office: STATE.office,
             user_id: currentUser?.id || null,
+            contact_id: contactId,
             property_category: STATE.propertyCategory,
             transaction_type: STATE.transactionType,
             property_type: STATE.propertyType,
@@ -2177,9 +2243,16 @@
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Error subiendo a Drive');
 
+            const contactId = await getOrCreateContact(
+                ownerName,
+                document.getElementById('client-email')?.value,
+                document.getElementById('client-phone')?.value
+            );
+
             showToast('Guardando listing en Altitud Hub...', 'info');
             const { error: dbError } = await sbClient.from('properties').insert({
                 agent_id: currentUser.id,
+                contact_id: contactId,
                 name: propName,
                 property_type: propertyType,
                 list_price: listPrice,
@@ -5650,15 +5723,7 @@
         const container = document.getElementById(`comp-indicators-${idx}`);
         if (!container || container.children.length > 0) return; // already rendered
         const indicators = getSelectedIndicators();
-        container.innerHTML = indicators.map(ind => {
-            if (ind.type === 'boolean') {
-                return `<div class="form-group"><label class="form-label">${ind.label}</label><div class="toggle-switch"><input type="checkbox" id="comp${idx}-${ind.key}"><label for="comp${idx}-${ind.key}">${ind.label}</label></div></div>`;
-            } else if (ind.type === 'select') {
-                return `<div class="form-group"><label class="form-label">${ind.label}</label><select class="form-input" id="comp${idx}-${ind.key}">${(ind.options||[]).map(o => `<option value="${o}">${o}</option>`).join('')}</select></div>`;
-            } else {
-                return `<div class="form-group"><label class="form-label">${ind.label}</label><input type="${ind.type === 'number' || ind.type === 'percent' ? 'number' : 'text'}" class="form-input" id="comp${idx}-${ind.key}" placeholder="${ind.label}"></div>`;
-            }
-        }).join('');
+        container.innerHTML = indicators.map(ind => renderIndicatorInput(ind, `comp${idx}`)).join('');
     }
 
     // getSelectedIndicators is defined above in the STEP 3 section
