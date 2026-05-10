@@ -12,18 +12,20 @@ export default function ACMClient({ initialProperties = [] }) {
 
   const handleNewACM = () => {
     let url = ACM_REMAX_URL;
+    const isDark = document.documentElement.classList.contains('dark');
+    const params = new URLSearchParams();
+    params.append('theme', isDark ? 'dark' : 'light');
+
     if (selectedPropertyId) {
       const prop = initialProperties.find(p => p.id === selectedPropertyId);
       if (prop) {
-        const params = new URLSearchParams({
-          prop_id: prop.id,
-          address: prop.name || '',
-          size: prop.size_sqm || '',
-          client: prop.contacts ? `${prop.contacts.first_name} ${prop.contacts.last_name || ''}`.trim() : ''
-        });
-        url += `?${params.toString()}`;
+        params.append('prop_id', prop.id);
+        params.append('address', prop.name || '');
+        params.append('size', prop.size_sqm || '');
+        params.append('client', prop.contacts ? `${prop.contacts.first_name} ${prop.contacts.last_name || ''}`.trim() : '');
       }
     }
+    url += `?${params.toString()}`;
     window.open(url, '_blank');
   };
 

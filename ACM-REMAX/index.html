@@ -5825,8 +5825,16 @@
         checkAuth();
 
         // Restore theme/lang
-        const savedTheme = localStorage.getItem('color-theme');
-        if (savedTheme === 'light') toggleTheme();
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlTheme = urlParams.get('theme');
+        if (urlTheme === 'light') {
+            if (!document.body.classList.contains('light-mode')) toggleTheme();
+        } else if (urlTheme === 'dark') {
+            // Default is dark, do nothing unless light-mode is set (unlikely on load)
+        } else {
+            const savedTheme = localStorage.getItem('color-theme');
+            if (savedTheme === 'light') toggleTheme();
+        }
         const savedLang = localStorage.getItem('app-lang');
         if (savedLang && savedLang !== currentLang) toggleLang();
     });
