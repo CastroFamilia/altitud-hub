@@ -23,13 +23,13 @@ export default function Sidebar() {
     <>
       <div className="flex flex-col h-full">
         {/* Logo */}
-        <div className={`flex-shrink-0 h-16 md:h-20 flex items-center px-4 md:px-6 border-b border-gray-200 dark:border-dark-border transition-colors ${isAdminMode ? 'bg-slate-900 dark:bg-slate-950 border-b-0' : ''}`}>
+        <div className={`flex-shrink-0 h-16 md:h-20 flex items-center px-4 md:px-6 border-b border-gray-200 dark:border-dark-border transition-colors`}>
           {isAdminMode ? (
              <div className="flex items-center gap-3">
                <div className="w-8 h-8 rounded bg-gradient-to-br from-nexus-blue to-blue-600 flex items-center justify-center shadow-md">
                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                </div>
-               <h1 className="nexus-header text-[14px] text-white leading-tight uppercase tracking-widest mt-0.5">Admin<br/><span className="text-nexus-blue">ALTITUD</span></h1>
+               <h1 className="nexus-header text-[14px] text-slate-800 dark:text-white leading-tight uppercase tracking-widest mt-0.5">Admin<br/><span className="text-nexus-blue">ALTITUD</span></h1>
              </div>
            ) : (
              <>
@@ -47,7 +47,7 @@ export default function Sidebar() {
           </button>
         </div>
 
-        <nav className={`flex-1 mt-4 md:mt-6 px-3 space-y-1 overflow-y-auto ${isAdminMode ? 'bg-slate-900 dark:bg-slate-950 mt-0 pt-6' : ''}`}>
+        <nav className={`flex-1 mt-4 md:mt-6 px-3 space-y-1 overflow-y-auto`}>
           {isAdminMode ? (
             /* ── ADMIN NAVIGATION ── */
             <>
@@ -97,7 +97,7 @@ export default function Sidebar() {
               </Link>
 
               <div className="mt-8 px-3 pb-6">
-                <Link href="/contactos" className="flex items-center justify-center gap-2 w-full py-3 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 hover:text-white transition-all shadow-sm">
+                <Link href="/contactos" className="flex items-center justify-center gap-2 w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shadow-sm">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                   <span className="text-[10px] font-black uppercase tracking-widest">Volver al CRM</span>
                 </Link>
@@ -202,19 +202,19 @@ export default function Sidebar() {
       </div>
 
       {/* User — now with real data */}
-      <div className={`relative ${isAdminMode ? 'bg-slate-900 dark:bg-slate-950 border-t border-slate-800' : ''}`}>
+      <div className={`relative border-t border-gray-200 dark:border-dark-border`}>
         <div 
           onClick={() => setShowUserMenu(!showUserMenu)}
-          className={`h-16 md:h-20 border-t border-gray-200 dark:border-dark-border flex items-center px-4 md:px-6 cursor-pointer transition-colors ${isAdminMode ? 'border-t-0 hover:bg-slate-800' : 'hover:bg-brand-50 dark:hover:bg-white/5'}`}
+          className={`h-16 md:h-20 flex items-center px-4 md:px-6 cursor-pointer transition-colors hover:bg-brand-50 dark:hover:bg-white/5`}
         >
           <img src={avatarUrl} className="w-8 h-8 md:w-9 md:h-9 rounded-full mr-3 border-2 border-brand-200 dark:border-dark-border object-cover" alt="Avatar" />
           <div className="flex-1 min-w-0">
             <p className={`text-sm font-semibold truncate ${isAdminMode ? 'text-white' : 'text-gray-800 dark:text-white'}`}>{displayName}</p>
-            <p className={`text-[10px] truncate ${isAdminMode ? 'text-slate-400' : 'text-gray-500 dark:text-gray-400'}`}>
+            <p className={`text-[10px] truncate text-gray-500 dark:text-gray-400`}>
               {profile?.role === 'broker' ? '🏢 Broker' : profile?.role === 'team_leader' ? '👥 Team Leader' : t('agent_hq')}
             </p>
           </div>
-          <svg className={`w-4 h-4 shrink-0 transition-transform ${showUserMenu ? 'rotate-180' : ''} ${isAdminMode ? 'text-slate-500' : 'text-gray-400 dark:text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`w-4 h-4 shrink-0 transition-transform ${showUserMenu ? 'rotate-180' : ''} text-gray-400 dark:text-gray-500`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
           </svg>
         </div>
@@ -252,7 +252,7 @@ export default function Sidebar() {
       </button>
 
       {/* ── Desktop sidebar ── */}
-      <aside className={`hidden md:flex w-64 flex-shrink-0 border-r border-gray-200 dark:border-dark-border flex-col justify-between transition-all duration-300 relative z-20 shadow-sm dark:shadow-none ${isAdminMode ? 'bg-slate-900 dark:bg-slate-950 border-r-slate-800' : 'glass-panel'}`}>
+      <aside className={`hidden md:flex w-64 flex-shrink-0 border-r border-gray-200 dark:border-dark-border flex-col justify-between transition-all duration-300 relative z-20 shadow-sm dark:shadow-none glass-panel`}>
         {navContent}
       </aside>
 
@@ -261,7 +261,7 @@ export default function Sidebar() {
         <div className="fixed inset-0 z-50 md:hidden" onClick={() => setMobileOpen(false)}>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <aside
-            className={`absolute inset-y-0 left-0 w-72 border-r border-gray-200 dark:border-dark-border flex flex-col justify-between shadow-2xl ${isAdminMode ? 'bg-slate-900 dark:bg-slate-950 border-r-slate-800' : 'bg-white dark:bg-dark-panel'}`}
+            className={`absolute inset-y-0 left-0 w-72 border-r border-gray-200 dark:border-dark-border flex flex-col justify-between shadow-2xl bg-white dark:bg-dark-panel`}
             onClick={e => e.stopPropagation()}
           >
             {navContent}
