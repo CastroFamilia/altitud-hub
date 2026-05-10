@@ -1,0 +1,10 @@
+{
+  "name": "acm-remax",
+  "version": "1.0.0",
+  "description": "Análisis Comparativo de Mercado — RE/MAX Altitud",
+  "private": true,
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "cheerio": "^1.0.0"
+  }
+}
