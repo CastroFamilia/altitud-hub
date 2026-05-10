@@ -223,56 +223,111 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
                   <svg className={`w-4 h-4 text-slate-400 transition-transform flex-shrink-0 ${isOpen?'rotate-180':''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                 </div>
 
-                {/* Expanded detail */}
-                {isOpen && (
-                  <div className="border-t border-slate-200 dark:border-slate-700 p-4 space-y-4 bg-white dark:bg-slate-800/50">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                      <div><span className="text-slate-500 text-[10px] uppercase font-bold">{t('ofc_leads_source')}</span><p className="text-slate-900 dark:text-white font-medium mt-0.5">{sourceLabel(lead.source)}</p></div>
-                      <div><span className="text-slate-500 text-[10px] uppercase font-bold">{t('ofc_leads_type')}</span><p className="mt-0.5"><span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${TYPE_COLORS[lead.lead_type]||TYPE_COLORS.otro}`}>{typeLabel(lead.lead_type)}</span></p></div>
-                      <div><span className="text-slate-500 text-[10px] uppercase font-bold">{t('ofc_leads_language')}</span><p className="text-slate-900 dark:text-white font-medium mt-0.5">{LANG_FLAGS[lead.lead_language]} {lead.lead_language==='es'?'Español':lead.lead_language==='en'?'English':'Other'}</p></div>
-                      <div><span className="text-slate-500 text-[10px] uppercase font-bold">{t('ofc_leads_date')}</span><p className="text-slate-900 dark:text-white font-medium mt-0.5">{new Date(lead.created_at).toLocaleDateString()}</p></div>
-                    </div>
-                    {propTitle && (
-                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3">
-                        <p className="text-[10px] text-blue-500 uppercase font-bold">{t('ofc_leads_linked_property')}</p>
-                        <p className="text-sm font-bold text-blue-700 dark:text-blue-300 mt-0.5">{propTitle}</p>
-                      </div>
-                    )}
-                    {lead.notes && <div><p className="text-[10px] text-slate-500 uppercase font-bold mb-1">{t('ofc_leads_notes')}</p><p className="text-sm text-slate-700 dark:text-slate-300">{lead.notes}</p></div>}
-                    {/* Quick actions */}
-                    <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-700">
-                      <div>
-                        <label className="text-[9px] text-slate-400 uppercase font-bold mr-2">{t('ofc_leads_status')}</label>
-                        <select value={lead.status} onChange={e => handleStatusChange(lead.id, e.target.value)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-900 dark:text-white">
-                          {['new','contacted','converted','dismissed'].map(s => <option key={s} value={s}>{statusLabel(s)}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[9px] text-slate-400 uppercase font-bold mr-2">{t('ofc_leads_agent')}</label>
-                        <select value={lead.assigned_agent_id||''} onChange={e => handleAssign(lead.id, e.target.value)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-900 dark:text-white">
-                          <option value="">{t('ofc_leads_unassigned')}</option>
-                          {agents.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Communication Panel */}
-                    <div className="pt-3 border-t border-slate-100 dark:border-slate-700">
-                      <CommunicationPanel
-                        lead={lead}
-                        agentId={lead.assigned_agent_id}
-                        communications={communications}
-                        onUpdate={() => { fetchComms(); fetchFollowUps(); }}
-                        onFollowUpCreated={fetchFollowUps}
-                      />
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
             );
           })}
         </div>
       )}
+
+      {/* Slide-out Drawer for Lead Details */}
+      {(() => {
+        const lead = leads.find(l => l.id === expanded);
+        if (!lead) return null;
+        const agent = agentMap[lead.assigned_agent_id];
+        const propTitle = lead.properties ? (lang === 'es' ? lead.properties.listing_title_es : lead.properties.listing_title_en) || lead.properties.name : null;
+        
+        return (
+          <div className="fixed inset-0 z-50 flex justify-end" onClick={() => setExpanded(null)}>
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <div 
+              className="relative w-full max-w-md h-full bg-white dark:bg-slate-900 shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800 animate-in slide-in-from-right duration-300"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Drawer Header */}
+              <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-nexus-blue/10 flex items-center justify-center text-nexus-blue text-lg">
+                    {lead.lead_name?.charAt(0).toUpperCase() || '👤'}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 dark:text-white">{lead.lead_name || t('ofc_leads_no_name')}</h3>
+                    <p className="text-xs text-slate-500">{lead.lead_email || lead.lead_phone}</p>
+                  </div>
+                </div>
+                <button onClick={() => setExpanded(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-2 text-xl">&times;</button>
+              </div>
+
+              {/* Drawer Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold">{t('ofc_leads_source')}</span>
+                    <p className="text-slate-900 dark:text-white font-medium mt-0.5">{sourceLabel(lead.source)}</p>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold">{t('ofc_leads_type')}</span>
+                    <p className="mt-0.5"><span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${TYPE_COLORS[lead.lead_type]||TYPE_COLORS.otro}`}>{typeLabel(lead.lead_type)}</span></p>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold">{t('ofc_leads_language')}</span>
+                    <p className="text-slate-900 dark:text-white font-medium mt-0.5">{LANG_FLAGS[lead.lead_language]} {lead.lead_language==='es'?'Español':lead.lead_language==='en'?'English':'Other'}</p>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold">{t('ofc_leads_date')}</span>
+                    <p className="text-slate-900 dark:text-white font-medium mt-0.5">{new Date(lead.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+
+                {propTitle && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-900/30">
+                    <p className="text-[10px] text-blue-500 uppercase font-bold flex items-center gap-1"><span>🏠</span> {t('ofc_leads_linked_property')}</p>
+                    <p className="text-sm font-bold text-blue-700 dark:text-blue-300 mt-1">{propTitle}</p>
+                  </div>
+                )}
+
+                {lead.notes && (
+                  <div>
+                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-2">{t('ofc_leads_notes')}</p>
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl text-sm text-slate-700 dark:text-slate-300 border border-slate-100 dark:border-slate-700">
+                      {lead.notes}
+                    </div>
+                  </div>
+                )}
+
+                {/* Quick actions */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[9px] text-slate-400 uppercase font-bold mb-1 block">{t('ofc_leads_status')}</label>
+                    <select value={lead.status} onChange={e => handleStatusChange(lead.id, e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-nexus-blue outline-none transition-all">
+                      {['new','contacted','converted','dismissed'].map(s => <option key={s} value={s}>{statusLabel(s)}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[9px] text-slate-400 uppercase font-bold mb-1 block">{t('ofc_leads_agent')}</label>
+                    <select value={lead.assigned_agent_id||''} onChange={e => handleAssign(lead.id, e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-nexus-blue outline-none transition-all">
+                      <option value="">{t('ofc_leads_unassigned')}</option>
+                      {agents.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Communication Panel */}
+                <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
+                  <CommunicationPanel
+                    lead={lead}
+                    agentId={lead.assigned_agent_id}
+                    communications={communications}
+                    onUpdate={() => { fetchComms(); fetchFollowUps(); }}
+                    onFollowUpCreated={fetchFollowUps}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Create Modal */}
       {showCreate && (
