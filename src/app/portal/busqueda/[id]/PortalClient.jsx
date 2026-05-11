@@ -67,7 +67,7 @@ export default function PortalClient({ search, initialPipeline }) {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl max-w-md w-full p-8 text-center border border-slate-100 dark:border-slate-700">
           {agent?.avatar_url && (
-            <img src={agent.avatar_url} alt={agent.full_name} className="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-brand-50" />
+            <Image src={agent.avatar_url} alt={agent.full_name} className="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-brand-50" width={80} height={80} />
           )}
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">¡Hola!</h1>
           <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm">
@@ -100,7 +100,7 @@ export default function PortalClient({ search, initialPipeline }) {
       <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 sticky top-0 z-10 flex items-center justify-between shadow-sm">
         <div className="flex items-center space-x-3">
           {agent?.avatar_url ? (
-            <img src={agent.avatar_url} alt={agent.full_name} className="w-10 h-10 rounded-full" />
+            <Image src={agent.avatar_url} alt={agent.full_name} className="w-10 h-10 rounded-full" width={40} height={40} />
           ) : (
             <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold">
               {agent?.full_name?.charAt(0)}
@@ -143,7 +143,7 @@ export default function PortalClient({ search, initialPipeline }) {
               {/* Image Carousel (Simplified for now, taking first image or generic) */}
               <div className="aspect-[4/5] relative bg-slate-200 dark:bg-slate-700">
                 {currentItem.details.main_image_url || currentItem.details.image_urls?.[0] ? (
-                  <img src={currentItem.details.main_image_url || currentItem.details.image_urls[0]} alt="Propiedad" className="w-full h-full object-cover" />
+                  <Image src={currentItem.details.main_image_url || currentItem.details.image_urls[0]} alt="Propiedad" className="w-full h-full object-cover" fill />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-slate-400">Sin foto</div>
                 )}
@@ -249,7 +249,7 @@ export default function PortalClient({ search, initialPipeline }) {
                           <div className="flex items-center space-x-3">
                             <div className="w-10 h-10 rounded-lg bg-slate-200 dark:bg-slate-700 overflow-hidden flex-shrink-0">
                               {p.details.main_image_url || p.details.image_urls?.[0] ? (
-                                <img src={p.details.main_image_url || p.details.image_urls[0]} alt="Prop" className="w-full h-full object-cover" />
+                                <Image src={p.details.main_image_url || p.details.image_urls[0]} alt="Prop" className="w-full h-full object-cover" fill />
                               ) : null}
                             </div>
                             <div>

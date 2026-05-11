@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useApp } from '@/lib/context';
 import CommunicationPanel from './CommunicationPanel';
+import Image from 'next/image';
 
 const TYPE_COLORS = {
   propiedad_especifica: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -42,27 +43,29 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
   const [expanded, setExpanded] = useState(null);
   const [search, setSearch] = useState('');
 
-  const fetchLeads = async () => {
+  const fetchLeads = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase.from('property_inquiries').select('*, properties(name, listing_title_es, listing_title_en)').order('created_at', { ascending: false });
     setLeads(data || []);
     setLoading(false);
-  };
-  const fetchSources = async () => {
+  }, []);
+
+  const fetchSources = useCallback(async () => {
     const { data } = await supabase.from('lead_sources').select('*').eq('active', true).order('sort_order');
     setSources(data || []);
-  };
+  }, []);
 
   const fetchComms = useCallback(async () => {
     const { data } = await supabase.from('lead_communications').select('*').order('created_at', { ascending: false });
     setCommunications(data || []);
   }, []);
+
   const fetchFollowUps = useCallback(async () => {
     const { data } = await supabase.from('lead_follow_ups').select('*, property_inquiries(lead_name)').eq('status', 'pending').order('due_date');
     setFollowUps(data || []);
   }, []);
 
-  useEffect(() => { fetchLeads(); fetchSources(); fetchComms(); fetchFollowUps(); }, []);
+  useEffect(() => { fetchLeads(); fetchSources(); fetchComms(); fetchFollowUps(); }, [fetchLeads, fetchSources, fetchComms, fetchFollowUps]);
 
   const agents = profiles.filter(p => p.role !== 'photographer');
   const agentMap = useMemo(() => Object.fromEntries(agents.map(a => [a.id, a])), [agents]);
@@ -233,7 +236,7 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
                   {/* Language */}
                   <span className="text-sm flex-shrink-0">{LANG_FLAGS[lead.lead_language] || '🌐'}</span>
                   {/* Agent */}
-                  {agent && <img src={agent.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.full_name)}&background=5a82bf&color=fff&size=28`} className="w-7 h-7 rounded-full border border-slate-200 dark:border-slate-600 flex-shrink-0" alt="" title={agent.full_name} />}
+                  {agent && <Image src={agent.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.full_name)}&background=5a82bf&color=fff&size=28`} className="w-7 h-7 rounded-full border border-slate-200 dark:border-slate-600 flex-shrink-0" alt="" title={agent.full_name} width={28} height={28} />}
                   {/* Time */}
                   <span className="text-[10px] text-slate-400 font-medium flex-shrink-0 w-8 text-right">{timeAgo(lead.created_at)}</span>
                   <svg className={`w-4 h-4 text-slate-400 transition-transform flex-shrink-0 ${isOpen?'rotate-180':''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>

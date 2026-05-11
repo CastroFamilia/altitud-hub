@@ -14,10 +14,11 @@ export default function AuthGate({ children }) {
   const pathname = usePathname();
   const isPublicRoute = pathname?.startsWith('/d/') || pathname?.startsWith('/reportes/') || pathname === '/login';
 
+  const { loading, isAuthenticated, error } = useAuth();
+
   // Public routes bypass auth entirely
   if (isPublicRoute) return <>{children}</>;
 
-  const { loading, isAuthenticated, error } = useAuth();
 
   // Show loading spinner while checking auth state
   if (loading) {

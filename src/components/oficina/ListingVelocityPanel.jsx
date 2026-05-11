@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from 'react';
+import Image from 'next/image';
 
 /* ═══════════════════════════════════════════
    LISTING VELOCITY PANEL — Broker Analytics
@@ -178,7 +179,7 @@ export default function ListingVelocityPanel({ t, lang, milestones = [], profile
                   <tr key={a.agentId} className="border-b border-slate-100 dark:border-slate-700/30 last:border-0 hover:bg-slate-50/50 dark:hover:bg-white/5">
                     <td className="py-2.5 px-3">
                       <div className="flex items-center gap-2">
-                        <img src={a.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}&background=5a82bf&color=fff&size=28`} alt="" className="w-7 h-7 rounded-full border border-slate-200 dark:border-slate-600 object-cover" />
+                        <Image src={a.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}&background=5a82bf&color=fff&size=28`} alt="" className="w-7 h-7 rounded-full border border-slate-200 dark:border-slate-600 object-cover" width={28} height={28} />
                         <span className="text-xs font-bold text-slate-900 dark:text-white truncate">{a.name}</span>
                       </div>
                     </td>

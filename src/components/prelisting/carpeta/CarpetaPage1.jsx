@@ -1,3 +1,4 @@
+import Image from 'next/image';
 export default function CarpetaPage1({ cfg, agentName, agentPhone, agentEmail, agentPhoto, t }) {
   return (
     <div className="carpeta-page" style={{ padding: 0, display: 'flex', flexDirection: 'column' }}>
@@ -10,7 +11,7 @@ export default function CarpetaPage1({ cfg, agentName, agentPhone, agentEmail, a
         <div style={{ position:'absolute',bottom:-40,right:100,width:100,height:100,borderRadius:'50%',background:'rgba(255,255,255,0.03)' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <img src="/assets/logo-altitud.png" alt="Logo" style={{ height: 20, marginBottom: 16, filter: 'brightness(10)' }} />
+            <Image src="/assets/logo-altitud.png" alt="Logo" style={{ height: 20, marginBottom: 16, filter: 'brightness(10)' }} width={100} height={100} unoptimized />
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, fontWeight: 700, color: 'white', letterSpacing: '0.02em', lineHeight: 1.1, textTransform: 'uppercase' }}>
               {t.p1_title1}<br/>{t.p1_title2}
             </h2>
@@ -54,7 +55,7 @@ export default function CarpetaPage1({ cfg, agentName, agentPhone, agentEmail, a
         {/* ── AGENT — editorial style ── */}
         <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
           <div style={{ width: 96, height: 96, borderRadius: 16, overflow: 'hidden', flexShrink: 0, border: `3px solid ${cfg.accent}` }}>
-            <img src={agentPhoto} alt={agentName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <Image src={agentPhoto} alt={agentName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} fill />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 9, color: '#DC1431', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 4 }}>{t.p1_yourAdvisor}</p>

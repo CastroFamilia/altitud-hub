@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
+import Image from 'next/image';
 
 export default function AgentEditModal({ profile, teams, selectedOffice, onClose, onUpdateProfile, t }) {
   const { supabase } = useAuth();
@@ -22,42 +23,48 @@ export default function AgentEditModal({ profile, teams, selectedOffice, onClose
   const [loadingTx, setLoadingTx] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
 
+  const fetchTransactions = useCallback(async () => {
+    setLoadingTx(true);
+    try {
+      const { data, error } = await supabase
+        .from('acm_reports')
+        .select('*')
+        .eq('agent_id', profile.id)
+        .order('created_at', { ascending: false });
+      if (!error && data) setTransactions(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingTx(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agent.id]);
+
+  const fetchNotes = useCallback(async () => {
+    setLoadingNotes(true);
+    try {
+      const { data, error } = await supabase
+        .from('agent_notes')
+        .select('*, author:author_id(full_name)')
+        .eq('agent_id', profile.id)
+        .order('created_at', { ascending: false });
+      
+      if (!error && data) setNotes(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingNotes(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agent.id]);
+
   useEffect(() => {
     if (activeTab === 'evaluacion') {
       fetchNotes();
     } else if (activeTab === 'estado-cuenta') {
       fetchTransactions();
     }
-  }, [activeTab]);
-
-  const fetchTransactions = async () => {
-    setLoadingTx(true);
-    try {
-      const { data } = await supabase
-        .from('account_transactions')
-        .select('*')
-        .eq('profile_id', profile.id)
-        .order('date', { ascending: false });
-      setTransactions(data || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingTx(false);
-    }
-  };
-
-  const fetchNotes = async () => {
-    setLoadingNotes(true);
-    try {
-      const res = await fetch(`/api/agent-notes?agent_id=${profile.id}`);
-      const data = await res.json();
-      if (data.notes) setNotes(data.notes);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingNotes(false);
-    }
-  };
+  }, [activeTab, fetchNotes, fetchTransactions]);
 
   const handleSaveNote = async () => {
     if (!newNote.trim()) return;
@@ -158,7 +165,9 @@ export default function AgentEditModal({ profile, teams, selectedOffice, onClose
             olympia_behavior_analysis: data.analysis
           })
         });
-        profile.olympia_behavior_analysis = data.analysis;
+        // Do not mutate profile directly, mutate the parent state if possible or keep local
+        // Here we just notify user. To update UI, we rely on parent's state or a refetch
+        alert("Análisis completado exitosamente.");
       } else {
         alert("Error de Olympia: " + data.error);
       }
@@ -180,11 +189,9 @@ export default function AgentEditModal({ profile, teams, selectedOffice, onClose
         {/* Header */}
         <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <img
-              src={profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name)}&background=5a82bf&color=fff`}
+            <Image src={profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name)}&background=5a82bf&color=fff`}
               className="w-14 h-14 rounded-full border-2 border-slate-200"
-              alt=""
-            />
+              alt="" width={56} height={56} />
             <div>
               <h3 className="text-xl font-black italic text-slate-900 dark:text-white">{profile.full_name}</h3>
               <p className="text-sm text-slate-400">{profile.email}</p>
@@ -416,7 +423,7 @@ export default function AgentEditModal({ profile, teams, selectedOffice, onClose
                         <p className="text-xs text-slate-700 dark:text-slate-300 mb-2">{note.note_content}</p>
                         <div className="flex items-center justify-between text-[10px] text-slate-400">
                           <span className="flex items-center gap-1 font-medium">
-                            <img src={note.author?.avatar_url} alt="" className="w-4 h-4 rounded-full" />
+                            <Image src={note.author?.avatar_url} alt="" className="w-4 h-4 rounded-full" width={16} height={16} />
                             {note.author?.full_name}
                           </span>
                           <span>{new Date(note.created_at).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}</span>

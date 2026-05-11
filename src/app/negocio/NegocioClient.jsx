@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { useApp } from '@/lib/context';
@@ -59,6 +59,37 @@ export default function NegocioClient({ initialReservations = [], initialContact
   // (e.g. user navigated client-side without a full page load)
   // The server component always pre-fetches, so we skip redundant client-side fetches
   // that may fail due to auth/table issues in production
+  const fetchContacts = useCallback(async () => {
+    try {
+      const { data } = await supabase.from('contacts').select('id, first_name, last_name, type').order('first_name');
+      if (data) setContacts(data);
+    } catch (err) {
+      console.error('Error fetching contacts:', err);
+    }
+  }, []);
+
+  const fetchReservations = useCallback(async () => {
+    if (!profile?.id) return;
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('office_reservations')
+        .select(`
+          *,
+          due_diligence_items (*)
+        `)
+        .eq('profile_id', profile.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setReservations(data || []);
+    } catch (err) {
+      console.error('Error fetching reservations:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [profile?.id]);
+
   useEffect(() => {
     // Don't re-fetch if data was already loaded server-side
     if (serverDataLoaded) return;
@@ -66,16 +97,7 @@ export default function NegocioClient({ initialReservations = [], initialContact
       fetchReservations();
       fetchContacts();
     }
-  }, [profile?.id, serverDataLoaded]);
-
-  async function fetchContacts() {
-    try {
-      const { data } = await supabase.from('contacts').select('id, first_name, last_name, type').order('first_name');
-      if (data) setContacts(data);
-    } catch (err) {
-      console.error('Error fetching contacts:', err);
-    }
-  }
+  }, [profile?.id, serverDataLoaded, fetchReservations, fetchContacts]);
 
   async function handleCreateDriveFolder() {
     if (!formData.property_address) {
@@ -108,26 +130,7 @@ export default function NegocioClient({ initialReservations = [], initialContact
     }
   }
 
-  async function fetchReservations() {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('office_reservations')
-        .select(`
-          *,
-          due_diligence_items (*)
-        `)
-        .eq('profile_id', profile.id)
-        .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setReservations(data || []);
-    } catch (err) {
-      console.error('Error fetching reservations:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   // Calculate Pipeline Metrics
   const activeReservations = reservations.filter(r => r.status === 'pending' || r.status === 'signed');

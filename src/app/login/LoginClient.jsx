@@ -3,6 +3,7 @@
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import Image from 'next/image';
 
 export default function LoginClient() {
   const { signIn, isAuthenticated, loading, error } = useAuth();
@@ -39,10 +40,12 @@ export default function LoginClient() {
           {/* Logo */}
           <div className="space-y-4">
             <div className="inline-flex items-center justify-center p-3 bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100">
-              <img 
+              <Image  
                 src="/assets/logo-altitud.png" 
                 alt="RE/MAX Altitud" 
                 className="h-8 object-contain"
+                width={200}
+                height={32}
                 onError={(e) => { e.target.style.display = 'none'; }}
               />
             </div>

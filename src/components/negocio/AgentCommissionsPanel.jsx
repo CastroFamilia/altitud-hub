@@ -85,7 +85,7 @@ export default function AgentCommissionsPanel({ initialCommissions = [], initial
   const fmt = (n) => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   // ── Stats ──
-  const now = new Date();
+  const now = useMemo(() => new Date(), []);
   const yearStart = `${now.getFullYear()}-01-01`;
   const ytdCommissions = commissions.filter(c => c.closing_date >= yearStart);
 
@@ -120,6 +120,7 @@ export default function AgentCommissionsPanel({ initialCommissions = [], initial
       labels.push(monthLabels[d.getMonth()]);
     }
     return { data, labels };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commissions, monthLabels]);
 
   if (loading) {

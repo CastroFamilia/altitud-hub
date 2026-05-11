@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useApp } from '@/lib/context';
+import Image from 'next/image';
 
 export default function EstadoCuentaTab() {
   const { profile, supabase } = useAuth();
@@ -192,11 +193,9 @@ export default function EstadoCuentaTab() {
                     className={`w-full px-6 py-4 flex items-center justify-between text-left transition-colors ${selectedAgentId === agent.id ? 'bg-nexus-blue/10 dark:bg-nexus-blue/20' : 'hover:bg-slate-50 dark:hover:bg-white/5'}`}
                   >
                     <div className="flex items-center gap-3">
-                      <img 
-                        src={agent.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.full_name)}&background=5a82bf&color=fff`} 
+                      <Image src={agent.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.full_name)}&background=5a82bf&color=fff`} 
                         alt="" 
-                        className="w-10 h-10 rounded-full border border-slate-200"
-                      />
+                        className="w-10 h-10 rounded-full border border-slate-200" width={40} height={40} />
                       <div>
                         <p className={`text-sm font-bold ${selectedAgentId === agent.id ? 'text-nexus-blue dark:text-white' : 'text-slate-900 dark:text-white'}`}>{agent.full_name}</p>
                         <p className="text-[10px] text-slate-400 uppercase tracking-widest">{agent.role}</p>
@@ -228,11 +227,9 @@ export default function EstadoCuentaTab() {
               {/* Header Profile */}
               <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/50 dark:bg-slate-900/50">
                 <div className="flex items-center gap-4">
-                  <img 
-                    src={selectedAgent?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedAgent?.full_name || '')}&background=5a82bf&color=fff`} 
+                  <Image src={selectedAgent?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedAgent?.full_name || '')}&background=5a82bf&color=fff`} 
                     alt="" 
-                    className="w-14 h-14 rounded-full border-2 border-white shadow-md"
-                  />
+                    className="w-14 h-14 rounded-full border-2 border-white shadow-md" width={56} height={56} />
                   <div>
                     <h2 className="text-2xl font-black italic text-slate-900 dark:text-white">{selectedAgent?.full_name}</h2>
                     <p className={`text-xs font-bold uppercase tracking-widest mt-1 ${selectedAgent?.debt > 0 ? 'text-red-500' : 'text-emerald-500'}`}>

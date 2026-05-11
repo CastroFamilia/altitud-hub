@@ -14,6 +14,7 @@ import CommissionCalculator from '@/components/propiedades/CommissionCalculator'
 import SoldCongratsModal from '@/components/propiedades/SoldCongratsModal';
 import ListingAnalyticsPanel from '@/components/propiedades/ListingAnalyticsPanel';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const AMENITY_LABELS = {
   pool_private: { es: 'Piscina', en: 'Pool' },
@@ -306,7 +307,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
                   {images.slice(0, 8).map((img, i) => (
                     <div key={img.id} className={`relative group ${i === 0 ? 'col-span-2 row-span-2' : ''}`}>
-                      <img src={img.image_url} alt="" className="w-full h-full object-cover aspect-square" />
+                      <Image src={img.image_url} alt="" className="w-full h-full object-cover aspect-square" fill />
                       <button
                         onClick={() => handleDeleteImage(img.id)}
                         className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import Image from 'next/image';
 
 /* ═══════════════════════════════════════
    DASHBOARD TAB — Office Metrics & KPIs
@@ -78,7 +79,7 @@ export default function DashboardTab({
   const { isBroker, user } = useAuth(); // Assume we can use context, though impersonation might just be a router redirect or local storage
   const lang = 'es'; // default for office dashboard
   
-  const now = new Date();
+  const now = useMemo(() => new Date(), []);
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
   const monthLabels = MONTH_NAMES_ES;
@@ -376,7 +377,7 @@ export default function DashboardTab({
               {topMonth.listers.filter(a=>a.listAmt>0).map((a,i) => (
                 <div key={a.id} className="flex items-center gap-2">
                   <span className="text-[10px] font-black text-slate-400 w-3">{i+1}.</span>
-                  <img src={a.avatar || `https://ui-avatars.com/api/?name=${a.name}`} className="w-6 h-6 rounded-full" alt="" />
+                  <Image src={a.avatar || `https://ui-avatars.com/api/?name=${a.name}`} className="w-6 h-6 rounded-full" alt="" width={24} height={24} />
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
                     <p className="text-[9px] text-slate-500">${a.listAmt.toLocaleString()}</p>
@@ -393,7 +394,7 @@ export default function DashboardTab({
               {topMonth.closers.filter(a=>a.sellAmt>0).map((a,i) => (
                 <div key={a.id} className="flex items-center gap-2">
                   <span className="text-[10px] font-black text-slate-400 w-3">{i+1}.</span>
-                  <img src={a.avatar || `https://ui-avatars.com/api/?name=${a.name}`} className="w-6 h-6 rounded-full" alt="" />
+                  <Image src={a.avatar || `https://ui-avatars.com/api/?name=${a.name}`} className="w-6 h-6 rounded-full" alt="" width={24} height={24} />
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
                     <p className="text-[9px] text-slate-500">${a.sellAmt.toLocaleString()}</p>
@@ -410,7 +411,7 @@ export default function DashboardTab({
               {topYear.listers.filter(a=>a.listAmt>0).map((a,i) => (
                 <div key={a.id} className="flex items-center gap-2">
                   <span className="text-[10px] font-black text-slate-400 w-3">{i+1}.</span>
-                  <img src={a.avatar || `https://ui-avatars.com/api/?name=${a.name}`} className="w-6 h-6 rounded-full" alt="" />
+                  <Image src={a.avatar || `https://ui-avatars.com/api/?name=${a.name}`} className="w-6 h-6 rounded-full" alt="" width={24} height={24} />
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
                     <p className="text-[9px] text-slate-500">${a.listAmt.toLocaleString()}</p>
@@ -427,7 +428,7 @@ export default function DashboardTab({
               {topYear.closers.filter(a=>a.sellAmt>0).map((a,i) => (
                 <div key={a.id} className="flex items-center gap-2">
                   <span className="text-[10px] font-black text-slate-400 w-3">{i+1}.</span>
-                  <img src={a.avatar || `https://ui-avatars.com/api/?name=${a.name}`} className="w-6 h-6 rounded-full" alt="" />
+                  <Image src={a.avatar || `https://ui-avatars.com/api/?name=${a.name}`} className="w-6 h-6 rounded-full" alt="" width={24} height={24} />
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
                     <p className="text-[9px] text-slate-500">${a.sellAmt.toLocaleString()}</p>

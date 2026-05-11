@@ -14,11 +14,25 @@ export default function TopNav({ titleKey, subtitleKey, title, subtitle }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef(null);
 
+  const loadNotifications = useCallback(async () => {
+    try {
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (data) setNotifications(data);
+    } catch (err) {
+      console.error("Error loading notifications:", err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile]);
+
   useEffect(() => {
     if (profile) {
       loadNotifications();
     }
-  }, [profile]);
+  }, [profile, loadNotifications]);
 
   useEffect(() => {
     // Close notifications on outside click
@@ -30,20 +44,6 @@ export default function TopNav({ titleKey, subtitleKey, title, subtitle }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const loadNotifications = async () => {
-    try {
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', profile.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      setNotifications(data || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const markAsRead = async (id) => {
     try {

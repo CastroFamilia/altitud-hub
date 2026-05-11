@@ -40,18 +40,19 @@ export async function POST(request) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     let dbClient = supabase;
-    let activeUserId = user ? user.id : 'b2ebf531-50e5-4a67-85b4-d53b5161cebc';
+    let activeUserId = user ? user.id : null;
 
     if (!user) {
       if (process.env.NODE_ENV !== 'development') {
         console.error('Auth Error:', authError);
-        return NextResponse.json({ error: `Unauthorized: ${authError?.message || 'No user'}` }, { status: 401 });
+        return NextResponse.json({ error: `Unauthorized: Debes iniciar sesión para guardar búsquedas.` }, { status: 401 });
       } else {
         const adminClient = createAdminSupabase();
-        if (!adminClient) {
-           return NextResponse.json({ error: 'Dev Error: No user session found AND SUPABASE_SERVICE_ROLE_KEY is missing. RLS will block the mock user insert. Please login or add the service role key.' }, { status: 500 });
-        }
-        dbClient = adminClient;
+        dbClient = adminClient || supabase;
+        
+        // Buscamos un usuario válido para que la base de datos no rechace la prueba (Bypass FK Constraint)
+        const { data: firstProfile } = await dbClient.from('profiles').select('id').limit(1).single();
+        activeUserId = firstProfile?.id || 'b2ebf531-50e5-4a67-85b4-d53b5161cebc';
       }
     }
 

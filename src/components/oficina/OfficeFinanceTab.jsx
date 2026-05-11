@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
+import Image from 'next/image';
 
 /* ═══════════════════════════════════════════════════════════════
    OFFICE FINANCE TAB — Expenses, Incomes & Petty Cash Tracking
@@ -333,7 +334,7 @@ export default function OfficeFinanceTab({ expenses = [], categories = [], funds
                   <div key={fund.id} className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <img src={assistant?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(assistant?.full_name || 'Asistente')}`} className="w-8 h-8 rounded-full border-2 border-slate-200" alt=""/>
+                        <Image src={assistant?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(assistant?.full_name || 'Asistente')}`} className="w-8 h-8 rounded-full border-2 border-slate-200" alt="" width={32} height={32} />
                         <div>
                           <p className="text-xs font-bold text-slate-900 dark:text-white">{assistant?.full_name || 'Asistente'}</p>
                           <p className="text-[9px] text-slate-400 uppercase tracking-widest">Responsable</p>

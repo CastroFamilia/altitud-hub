@@ -1320,7 +1320,7 @@ const T = {
     nav_plan: 'My Plan',
     nav_tools: 'Tools',
     nav_prelisting: 'Pre-Listing',
-    nav_acm: 'ACM',
+    nav_acm: 'CMA',
     nav_magic: 'Magic Links',
     nav_search: 'Search',
     nav_portfolio: 'Portfolio',

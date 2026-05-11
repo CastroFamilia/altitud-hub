@@ -11,25 +11,25 @@ export default function AgentLeadsPanel() {
   const [rejectModalLead, setRejectModalLead] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
-  useEffect(() => {
-    fetchMyLeads();
-  }, []);
-
   const fetchMyLeads = async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data } = await supabase
-      .from('property_inquiries')
-      .select('*, properties(listing_title_es, listing_title_en, name)')
-      .eq('assigned_agent_id', user.id)
-      .in('status', ['new', 'contacted', 'prelisting', 'cma'])
-      .order('assigned_at', { ascending: false });
-
-    setLeads(data || []);
+    if (user) {
+      const { data, error } = await supabase
+        .from('property_inquiries')
+        .select('*, properties(listing_title_es, listing_title_en, name)')
+        .eq('assigned_agent_id', user.id)
+        .in('status', ['new', 'contacted', 'prelisting', 'cma'])
+        .order('assigned_at', { ascending: false });
+      
+      if (!error && data) setLeads(data);
+    }
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchMyLeads();
+  }, []);
 
   const handleStatusUpdate = async (id, status, reason = null) => {
     const updatePayload = { status };
@@ -73,7 +73,7 @@ export default function AgentLeadsPanel() {
       const cleanPhone = destination.replace(/\D/g, '');
       window.open(`https://wa.me/${cleanPhone}`, '_blank');
     } else if (channel === 'email') {
-      window.location.href = `mailto:${destination}`;
+      window.location.assign(`mailto:${destination}`);
     }
   };
 

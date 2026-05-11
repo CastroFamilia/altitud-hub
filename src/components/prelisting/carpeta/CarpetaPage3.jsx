@@ -1,3 +1,4 @@
+import Image from 'next/image';
 export default function CarpetaPage3({ cfg, t }) {
   return (
     <div className="carpeta-page" style={{ padding: 0, display: 'flex', flexDirection: 'column' }}>
@@ -5,7 +6,7 @@ export default function CarpetaPage3({ cfg, t }) {
 
       {/* Header */}
       <div style={{ padding: '14px 44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
-        <img src="/assets/logo-altitud.png" alt="Logo" style={{ height: 20 }} />
+        <Image src="/assets/logo-altitud.png" alt="Logo" style={{ height: 20 }} width={100} height={100} unoptimized />
         <span style={{ fontSize: 9, color: '#94a3b8', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{t.p3_header}</span>
       </div>
 

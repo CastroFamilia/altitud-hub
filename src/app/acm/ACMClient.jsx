@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import TopNav from '@/components/layout/TopNav';
 import { useApp } from '@/lib/context';
+import Image from 'next/image';
 
 const ACM_REMAX_URL = 'https://acm-remax.vercel.app';
 
 export default function ACMClient({ initialProperties = [] }) {
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
   const [activeSearches, setActiveSearches] = useState([]);
   
@@ -57,13 +58,13 @@ export default function ACMClient({ initialProperties = [] }) {
               </div>
               <div className="flex flex-col md:flex-row items-end gap-3">
                 <div className="flex flex-col">
-                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Vincular Propiedad</label>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">{lang === 'en' ? 'Link Property' : 'Vincular Propiedad'}</label>
                   <select 
                     value={selectedPropertyId}
                     onChange={(e) => setSelectedPropertyId(e.target.value)}
                     className="px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-nexus-blue w-64"
                   >
-                    <option value="">-- Sin vincular --</option>
+                    <option value="">-- {lang === 'en' ? 'Unlinked' : 'Sin vincular'} --</option>
                     {initialProperties.map(p => (
                       <option key={p.id} value={p.id}>{p.name} ({p.contacts?.first_name})</option>
                     ))}
@@ -118,8 +119,8 @@ export default function ACMClient({ initialProperties = [] }) {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-black italic text-blue-900 dark:text-blue-100">Cruces Inteligentes</h3>
-                    <p className="text-xs text-blue-600 dark:text-blue-400 font-bold">Hay {activeSearches.length} compradores/inquilinos buscando propiedades ahora mismo.</p>
+                    <h3 className="text-xl font-black italic text-blue-900 dark:text-blue-100">{lang === 'en' ? 'Smart Matches' : 'Cruces Inteligentes'}</h3>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-bold">{lang === 'en' ? `There are ${activeSearches.length} buyers/renters looking for properties right now.` : `Hay ${activeSearches.length} compradores/inquilinos buscando propiedades ahora mismo.`}</p>
                   </div>
                 </div>
                 
@@ -128,17 +129,17 @@ export default function ACMClient({ initialProperties = [] }) {
                     <div key={s.id} className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/30">
                       <div className="flex items-center gap-2 mb-2">
                         {s.profiles?.avatar_url ? (
-                          <img src={s.profiles.avatar_url} alt="agent" className="w-6 h-6 rounded-full" />
+                          <Image src={s.profiles.avatar_url} alt="agent" className="w-6 h-6 rounded-full" width={24} height={24} />
                         ) : (
                           <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold">
                             {s.profiles?.full_name?.charAt(0) || '?'}
                           </div>
                         )}
-                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">{s.profiles?.full_name || 'Agente'}</span>
+                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">{s.profiles?.full_name || (lang === 'en' ? 'Agent' : 'Agente')}</span>
                       </div>
                       <h4 className="text-sm font-bold text-slate-900 dark:text-white">{s.property_type}</h4>
                       <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest my-1">
-                        {s.operation_type === 'alquiler' ? 'ALQ' : 'VTA'} • {(s.zones && s.zones.length > 0) ? s.zones.join(', ') : 'Sin zona'}
+                        {s.operation_type === 'alquiler' ? (lang === 'en' ? 'RENT' : 'ALQ') : (lang === 'en' ? 'SALE' : 'VTA')} • {(s.zones && s.zones.length > 0) ? s.zones.join(', ') : '-'}
                       </p>
                       <p className="text-xs font-black italic text-nexus-blue">
                         ${Number(s.price_min || 0).toLocaleString()} - ${Number(s.price_max || 0).toLocaleString()}

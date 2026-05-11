@@ -164,38 +164,7 @@ export function AuthProvider({ children }) {
   const isOfficeAssistant = role === 'office_assistant';
   const isAuthenticated = !!user && !!realProfile;
 
-  // Dev bypass for local testing without login
-  if (process.env.NODE_ENV === 'development') {
-    return (
-      <AuthContext.Provider value={{
-        supabase,
-        user: { id: '00000000-0000-0000-0000-000000000000', email: 'dev@remax-altitud.cr' },
-        profile: (() => {
-          if (typeof window !== 'undefined') {
-            const impId = localStorage.getItem('impersonated_id');
-            // Mock an impersonated profile object if we have one (since we don't fetch DB in dev mode here natively, but we could)
-            // Just return a dummy profile so UI updates
-            if (impId) return { id: impId, full_name: 'Agente Suplantado', role: 'agent', office: 'altitud', email: 'agente@remax.cr' };
-          }
-          return { id: '00000000-0000-0000-0000-000000000000', full_name: 'Dev Admin', role: 'broker', office: 'altitud', email: 'dev@remax-altitud.cr' };
-        })(),
-        realProfile: { id: '00000000-0000-0000-0000-000000000000', full_name: 'Dev Admin', role: 'broker', office: 'altitud', email: 'dev@remax-altitud.cr' },
-        role: typeof window !== 'undefined' && localStorage.getItem('impersonated_id') ? 'agent' : 'broker',
-        loading: false,
-        error: null,
-        signIn: () => {},
-        signOut: () => {},
-        isBroker: true, // Always broker in dev bypass
-        isTeamLeader: false,
-        isAgent: typeof window !== 'undefined' && !!localStorage.getItem('impersonated_id'),
-        isOfficeAssistant: false,
-        isAuthenticated: true,
-        fetchProfile: () => {},
-      }}>
-        {children}
-      </AuthContext.Provider>
-    );
-  }
+
 
   return (
     <AuthContext.Provider value={{

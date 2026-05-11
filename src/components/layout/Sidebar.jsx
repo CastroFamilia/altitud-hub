@@ -5,9 +5,10 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useState, Suspense } from 'react';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
+import Image from 'next/image';
 
 function SidebarContent() {
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const { profile, isBroker, isTeamLeader, signOut } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -36,7 +37,7 @@ function SidebarContent() {
            ) : (
              <>
                <div className="dark:bg-white/90 dark:p-1 dark:rounded-lg transition-colors inline-flex items-center p-1 rounded">
-                 <img src="/assets/logo-altitud.png" alt="RE/MAX Altitud" className="h-5 md:h-6 object-contain" id="brand-logo" />
+                 <Image src="/assets/logo-altitud.png" alt="RE/MAX Altitud" className="h-5 md:h-6 object-contain" id="brand-logo" width={100} height={100} unoptimized />
                </div>
                <div className="ml-3">
                  <h1 className="nexus-header text-lg text-nexus-blue dark:text-white leading-none">ALTITUD HUB</h1>
@@ -168,7 +169,7 @@ function SidebarContent() {
             <span className="nexus-header text-[11px] leading-none">{t('nav_prelisting')}</span>
           </Link>
 
-          <Link href="/acm" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${pathname.startsWith('/acm') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+          <Link href={lang === 'en' ? '/cma' : '/acm'} onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${pathname.startsWith('/acm') || pathname.startsWith('/cma') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
             <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
             <span className="nexus-header text-[11px] leading-none">{t('nav_acm')}</span>
           </Link>
@@ -178,7 +179,7 @@ function SidebarContent() {
             <span className="font-medium text-gray-800 dark:text-white">{t('nav_magic')}</span>
           </a>
 
-          <Link href="/busqueda" onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${pathname.startsWith('/busqueda') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+          <Link href={lang === 'en' ? '/search' : '/busqueda'} onClick={() => setMobileOpen(false)} className={`nav-item flex items-center px-3 py-2.5 rounded-2xl transition-colors ${pathname.startsWith('/busqueda') || pathname.startsWith('/search') ? 'active bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
             <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             <span className="nexus-header text-[11px] leading-none">{t('nav_search') || 'BÚSQUEDA'}</span>
           </Link>
@@ -231,7 +232,7 @@ function SidebarContent() {
           onClick={() => setShowUserMenu(!showUserMenu)}
           className={`h-16 md:h-20 flex items-center px-4 md:px-6 cursor-pointer transition-colors hover:bg-brand-50 dark:hover:bg-white/5`}
         >
-          <img src={avatarUrl} className="w-8 h-8 md:w-9 md:h-9 rounded-full mr-3 border-2 border-brand-200 dark:border-dark-border object-cover" alt="Avatar" />
+          <Image src={avatarUrl} className="w-8 h-8 md:w-9 md:h-9 rounded-full mr-3 border-2 border-brand-200 dark:border-dark-border object-cover" alt="Avatar" width={32} height={32} />
           <div className="flex-1 min-w-0">
             <p className={`text-sm font-semibold truncate ${isAdminMode ? 'text-white' : 'text-gray-800 dark:text-white'}`}>{displayName}</p>
             <p className={`text-[10px] truncate text-gray-500 dark:text-gray-400`}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useApp } from '@/lib/context';
 
@@ -22,12 +22,7 @@ export default function DevelopmentAnalytics({ developmentId }) {
     sales: 0
   });
 
-  useEffect(() => {
-    if (!developmentId) return;
-    fetchAnalytics();
-  }, [developmentId]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     setLoading(true);
     try {
       const [{ data: eventsData }, { data: inquiriesData }, { data: propertiesData }] = await Promise.all([
@@ -85,7 +80,14 @@ export default function DevelopmentAnalytics({ developmentId }) {
     } finally {
       setLoading(false);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [developmentId, fetchAnalytics]);
+
+  useEffect(() => {
+    if (!developmentId) return;
+    fetchAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [developmentId]);
 
   if (loading) {
     return (

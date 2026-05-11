@@ -1,3 +1,4 @@
+import Image from 'next/image';
 export default function CarpetaPage2({ cfg, t }) {
   return (
     <div className="carpeta-page" style={{ padding: 0, display: 'flex', flexDirection: 'column' }}>
@@ -5,10 +6,10 @@ export default function CarpetaPage2({ cfg, t }) {
 
       {/* ── HERO IMAGE ── */}
       <div style={{ position: 'relative', height: 200, flexShrink: 0, overflow: 'hidden' }}>
-        <img src="/assets/carpeta-luxury-villa.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <Image src="/assets/carpeta-luxury-villa.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} fill />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(255,255,255,0) 20%, rgba(255,255,255,0.95) 100%)' }} />
         <div style={{ position: 'absolute', top: 16, left: 44, right: 44, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <img src="/assets/logo-altitud.png" alt="Logo" style={{ height: 20 }} />
+          <Image src="/assets/logo-altitud.png" alt="Logo" style={{ height: 20 }} width={100} height={100} unoptimized />
           <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', textShadow: '0 1px 4px rgba(0,0,0,0.3)' }}>{t.p2_header}</span>
         </div>
         <div style={{ position: 'absolute', bottom: 16, left: 44 }}>
@@ -30,7 +31,7 @@ export default function CarpetaPage2({ cfg, t }) {
             </div>
             <p style={{ fontSize: 10.5, lineHeight: 1.8, color: '#4b5563' }} dangerouslySetInnerHTML={{ __html: t.p2_buyersDesc }} />
             <div style={{ marginTop: 14, paddingLeft: 14, borderLeft: `3px solid ${cfg.accent}` }}>
-              <p style={{ fontSize: 10, color: '#64748b', fontStyle: 'italic', lineHeight: 1.6 }}>"{t.p2_buyersQuote}"</p>
+              <p style={{ fontSize: 10, color: '#64748b', fontStyle: 'italic', lineHeight: 1.6 }}>&quot;{t.p2_buyersQuote}&quot;</p>
             </div>
           </div>
 
@@ -42,7 +43,7 @@ export default function CarpetaPage2({ cfg, t }) {
             </div>
             <p style={{ fontSize: 10.5, lineHeight: 1.8, color: '#4b5563' }} dangerouslySetInnerHTML={{ __html: t.p2_sellersDesc }} />
             <div style={{ marginTop: 14, paddingLeft: 14, borderLeft: '3px solid #DC1431' }}>
-              <p style={{ fontSize: 10, color: '#64748b', fontStyle: 'italic', lineHeight: 1.6 }}>"{t.p2_sellersQuote}"</p>
+              <p style={{ fontSize: 10, color: '#64748b', fontStyle: 'italic', lineHeight: 1.6 }}>&quot;{t.p2_sellersQuote}&quot;</p>
             </div>
           </div>
         </div>
@@ -50,7 +51,7 @@ export default function CarpetaPage2({ cfg, t }) {
         {/* Pull quote — light brand color background */}
         <div style={{ background: `${cfg.accent}08`, padding: '20px 28px', borderLeft: `4px solid ${cfg.accent}` }}>
           <p style={{ fontSize: 13, fontWeight: 400, color: '#1a1a2e', lineHeight: 1.7, fontStyle: 'italic' }}>
-            "{t.p2_pullQuote}"
+            &quot;{t.p2_pullQuote}&quot;
           </p>
           <p style={{ fontSize: 9, color: cfg.accent, fontWeight: 700, marginTop: 8, letterSpacing: '0.1em', textTransform: 'uppercase' }}>— {cfg.name}</p>
         </div>

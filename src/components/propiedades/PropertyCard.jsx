@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import PropertyStatusBadge from './PropertyStatusBadge';
+import Image from 'next/image';
 
 /* ═══════════════════════════════════════════════════════════════
    PropertyCard — Reusable card for the property portfolio grid
@@ -61,11 +62,9 @@ export default function PropertyCard({ property, lang = 'es' }) {
       {/* Image / Placeholder */}
       <div className="relative h-44 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-dark-border dark:to-dark-bg overflow-hidden">
         {mainImage ? (
-          <img
-            src={mainImage}
+          <Image src={mainImage}
             alt={title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" fill />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <svg className="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

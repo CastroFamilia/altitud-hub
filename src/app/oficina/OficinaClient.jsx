@@ -18,6 +18,7 @@ import EventsAttendanceTab from '@/components/oficina/EventsAttendanceTab';
 import IntegrationSettingsTab from '@/components/oficina/IntegrationSettingsTab';
 import DashboardTab from '@/components/oficina/DashboardTab';
 import AgentEditModal from '@/components/oficina/AgentEditModal';
+import Image from 'next/image';
 
 /* ═══════════════════════════════════════
    OFFICE PANEL — Broker Admin Dashboard
@@ -405,11 +406,9 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
                     {pendingAgents.map(agent => (
                       <div key={agent.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
                         <div className="flex items-center gap-4">
-                          <img
-                            src={agent.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.name)}&background=f59e0b&color=fff`}
+                          <Image src={agent.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.name)}&background=f59e0b&color=fff`}
                             alt={agent.name}
-                            className="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-600 object-cover"
-                          />
+                            className="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-600 object-cover" width={40} height={40} />
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-white">{agent.name}</p>
                             <p className="text-[10px] text-slate-400">{agent.email || t('ofc_no_email_label')}</p>
@@ -473,11 +472,9 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
                     </div>
                   ) : filteredOfficeProfiles.map(p => (
                     <div key={p.id} className="px-6 py-4 flex items-center gap-4 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors group">
-                      <img
-                        src={p.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.full_name)}&background=5a82bf&color=fff`}
+                      <Image src={p.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.full_name)}&background=5a82bf&color=fff`}
                         alt={p.full_name}
-                        className="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-600 object-cover"
-                      />
+                        className="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-600 object-cover" width={40} height={40} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{p.full_name}</p>
                         <p className="text-[10px] text-slate-400 truncate">{p.email}</p>
@@ -530,7 +527,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
                             <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400 mb-2">{t('ofc_leader')}</p>
                             {leader ? (
                               <div className="flex items-center gap-3">
-                                <img src={leader.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.full_name)}&background=5a82bf&color=fff`} className="w-8 h-8 rounded-full" alt="" />
+                                <Image src={leader.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.full_name)}&background=5a82bf&color=fff`} className="w-8 h-8 rounded-full" alt="" width={32} height={32} />
                                 <div>
                                   <p className="text-xs font-bold text-slate-900 dark:text-white">{leader.full_name}</p>
                                   <p className="text-[9px] text-nexus-blue">Team Leader</p>
@@ -547,7 +544,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
                             <div className="flex flex-col gap-2">
                               {members.map(m => (
                                 <div key={m.id} className="flex items-center gap-2">
-                                  <img src={m.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.full_name)}&background=5a82bf&color=fff`} className="w-6 h-6 rounded-full" alt="" />
+                                  <Image src={m.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.full_name)}&background=5a82bf&color=fff`} className="w-6 h-6 rounded-full" alt="" width={24} height={24} />
                                   <p className="text-[11px] text-slate-700 dark:text-slate-300">{m.full_name}</p>
                                 </div>
                               ))}

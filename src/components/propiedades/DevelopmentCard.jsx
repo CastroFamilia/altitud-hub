@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 /* ═══════════════════════════════════════════════════════════════
    DevelopmentCard — Reusable card for development portfolio grid
@@ -37,10 +38,10 @@ export default function DevelopmentCard({ development, lang = 'es' }) {
       {/* Image / Placeholder */}
       <div className="relative h-44 bg-gradient-to-br from-emerald-900/30 to-blue-900/30 dark:from-emerald-950/50 dark:to-blue-950/50 overflow-hidden">
         {d.og_image_url ? (
-          <img src={d.og_image_url} alt={d.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <Image src={d.og_image_url} alt={d.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" fill />
         ) : d.logo_url ? (
           <div className="w-full h-full flex items-center justify-center p-6">
-            <img src={d.logo_url} alt={d.name} className="max-h-full max-w-full object-contain opacity-80" />
+            <Image src={d.logo_url} alt={d.name} className="max-h-full max-w-full object-contain opacity-80" fill />
           </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center">

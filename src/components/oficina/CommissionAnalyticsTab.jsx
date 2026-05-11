@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
+import Image from 'next/image';
 
 /* ═══════════════════════════════════════════════════════════════
    BROKER COMMISSION ANALYTICS TAB
@@ -226,7 +227,7 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
                     <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${rank < 3 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}>
                       {rank + 1}
                     </span>
-                    <img src={a.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}&background=5a82bf&color=fff`} className="w-8 h-8 rounded-full object-cover" alt="" />
+                    <Image src={a.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}&background=5a82bf&color=fff`} className="w-8 h-8 rounded-full object-cover" alt="" width={32} height={32} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
                       <p className="text-[10px] text-slate-400">{a.closings} {t('ofc_comm_closings')} · {tier?.name || '—'}</p>

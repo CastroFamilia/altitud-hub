@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useApp } from '@/lib/context';
+import Image from 'next/image';
 
 export default function OlympiaCoach() {
   const { t, lang } = useApp();
@@ -17,7 +18,7 @@ export default function OlympiaCoach() {
   if (pathname?.includes('/oficina')) currentModule = 'office';
   else if (pathname?.includes('/team')) currentModule = 'team';
 
-  const getInitialMessage = () => {
+  const getInitialMessage = useCallback(() => {
     if (lang === 'en') {
       if (currentModule === 'office') return 'Hello! I am Olympia, your Altitud Hub expert and Office Manager advisor. How can I help you today? You can ask me how to use the hub, check your office metrics, or get ideas for recruiting and operations.';
       if (currentModule === 'team') return 'Hello! I am Olympia, your Altitud Hub expert and Team Leader advisor. How can I help you today? You can ask me how to use the hub, review your team metrics, or get ideas for coaching your agents.';
@@ -27,7 +28,7 @@ export default function OlympiaCoach() {
       if (currentModule === 'team') return '¡Hola! Soy Olympia, tu experta en el Altitud Hub y asesora de Líder de Equipo. ¿En qué te puedo ayudar hoy? Puedes preguntarme cómo usar el hub, revisar las métricas de tu equipo, o pedirme ideas para el coaching de tus agentes.';
       return '¡Hola! Soy Olympia, tu coach y experta en el Altitud Hub. ¿En qué te puedo ayudar hoy? Puedes preguntarme cómo usar el hub, revisar tus métricas, o pedirme ideas de prospección.';
     }
-  };
+  }, [lang, currentModule]);
 
   // Load history
   useEffect(() => {
@@ -75,7 +76,11 @@ export default function OlympiaCoach() {
     if (typeof window !== 'undefined') {
       loadHistory();
     }
-  }, []);
+  }, [getInitialMessage]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   // Save history on change
   useEffect(() => {
@@ -109,10 +114,6 @@ export default function OlympiaCoach() {
     }
     scrollToBottom();
   }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   const clearHistory = () => {
     if (confirm('¿Estás seguro de que quieres borrar el historial del chat?')) {
@@ -212,7 +213,7 @@ export default function OlympiaCoach() {
           className="fixed bottom-6 right-6 z-40 w-16 h-16 rounded-full shadow-2xl hover:scale-105 transition-transform flex items-center justify-center bg-brand-500 overflow-hidden ring-4 ring-white dark:ring-dark-bg"
           title="Olympia - AI Hub Expert"
         >
-          <img src="/assets/olympia-avatar.png" alt="Olympia AI" className="w-full h-full object-cover" />
+          <Image src="/assets/olympia-avatar.png" alt="Olympia AI" className="w-full h-full object-cover" fill />
         </button>
       )}
 

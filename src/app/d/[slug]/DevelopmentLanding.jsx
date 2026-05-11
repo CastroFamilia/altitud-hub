@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import Image from 'next/image';
 
 const trackEvent = async (devId, propId, type, meta = {}) => {
   if (!devId) return;
@@ -64,7 +65,7 @@ function LeadForm({ development, content }) {
       <div className="text-center py-12">
         <div className="text-5xl mb-4">✅</div>
         <h3 className="text-2xl font-bold text-white mb-2">Thank you!</h3>
-        <p className="text-white/60">We'll be in touch shortly.</p>
+        <p className="text-white/60">We&apos;ll be in touch shortly.</p>
       </div>
     );
   }
@@ -120,12 +121,12 @@ const Blocks = {
   hero: ({ content, dev }) => (
     <section className="relative w-full min-h-[70vh] md:min-h-[80vh] flex items-center justify-center overflow-hidden">
       {dev.og_image_url && (
-        <img src={dev.og_image_url} alt={dev.name} className="absolute inset-0 w-full h-full object-cover" />
+        <Image src={dev.og_image_url} alt={dev.name} className="absolute inset-0 w-full h-full object-cover" fill />
       )}
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
         {dev.logo_url ? (
-          <img src={dev.logo_url} alt={`${dev.name} logo`} className="h-16 md:h-20 mx-auto mb-8 drop-shadow-2xl" />
+          <Image src={dev.logo_url} alt={`${dev.name} logo`} className="h-16 md:h-20 mx-auto mb-8 drop-shadow-2xl" width={8} height={64} />
         ) : null}
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.1] mb-6">
           {dev.name}
@@ -165,8 +166,8 @@ const Blocks = {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
             {images.map((img, i) => (
               <div key={i} className="aspect-[4/3] rounded-2xl overflow-hidden group cursor-pointer">
-                <img src={img.url || img} alt={img.alt || `Gallery ${i + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <Image src={img.url || img} alt={img.alt || `Gallery ${i + 1}`}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" fill />
               </div>
             ))}
           </div>
@@ -227,8 +228,8 @@ const Blocks = {
               <div key={prop.id} onClick={() => trackEvent(dev.id, prop.id, 'listing_click')} className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden hover:border-emerald-500/30 transition-all group cursor-pointer">
                 {prop.main_image_url && (
                   <div className="aspect-[16/10] overflow-hidden">
-                    <img src={prop.main_image_url} alt={prop.title_es || prop.title_en}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <Image src={prop.main_image_url} alt={prop.title_es || prop.title_en}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" fill />
                   </div>
                 )}
                 <div className="p-5">
@@ -304,8 +305,8 @@ const Blocks = {
       <section className="py-20 px-6 bg-white/[0.02]">
         <div className="max-w-md mx-auto text-center">
           {agent.avatar_url ? (
-            <img src={agent.avatar_url} alt={agent.full_name}
-              className="w-24 h-24 rounded-full mx-auto mb-6 border-4 border-emerald-500/30 object-cover shadow-xl" />
+            <Image src={agent.avatar_url} alt={agent.full_name}
+              className="w-24 h-24 rounded-full mx-auto mb-6 border-4 border-emerald-500/30 object-cover shadow-xl" width={96} height={96} />
           ) : (
             <div className="w-24 h-24 rounded-full mx-auto mb-6 bg-emerald-500/20 flex items-center justify-center text-4xl text-emerald-400 border-4 border-emerald-500/30">
               {agent.full_name?.[0] || '👤'}

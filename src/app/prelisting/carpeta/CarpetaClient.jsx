@@ -9,6 +9,7 @@ import CarpetaPage2b from '@/components/prelisting/carpeta/CarpetaPage2b';
 import CarpetaPage3 from '@/components/prelisting/carpeta/CarpetaPage3';
 import CarpetaPage4 from '@/components/prelisting/carpeta/CarpetaPage4';
 import CarpetaPage5 from '@/components/prelisting/carpeta/CarpetaPage5';
+import Image from 'next/image';
 
 const OFFICES = {
   altitud: {
@@ -256,7 +257,7 @@ export default function CarpetaClient() {
             <button key={o.key} onClick={()=>setOffice(o.key)} style={{ width:320,borderRadius:20,overflow:'hidden',cursor:'pointer',background:'#111',border:'1px solid rgba(255,255,255,0.08)',transition:'all 0.3s',textAlign:'left' }}
               onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.borderColor=o.accent;e.currentTarget.style.boxShadow=`0 20px 60px ${o.accent}40`;}}
               onMouseLeave={e=>{e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.borderColor='rgba(255,255,255,0.08)';e.currentTarget.style.boxShadow='none';}}>
-              <div style={{ height:180,overflow:'hidden' }}><img src={OFFICES[o.key].coverImage} alt="" style={{ width:'100%',height:'100%',objectFit:'cover' }} /></div>
+              <div style={{ height:180,overflow:'hidden' }}><Image src={OFFICES[o.key].coverImage} alt="" style={{ width:'100%',height:'100%',objectFit:'cover' }} fill /></div>
               <div style={{ padding:'20px 24px 24px' }}>
                 <p style={{ fontSize:10,color:o.accent,fontWeight:700,letterSpacing:'0.15em',textTransform:'uppercase' }}>{o.label}</p>
                 <h3 style={{ fontSize:20,fontWeight:900,color:'white',marginTop:4 }}>{OFFICES[o.key].name}</h3>

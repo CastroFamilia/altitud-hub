@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import Image from 'next/image';
 
 /* ═══════════════════════════════════════════════════════════════
    BLOCK EDITOR COMPONENT
@@ -13,9 +14,9 @@ import { useState } from 'react';
 const BlockTemplates = {
   hero: ({ content, dev }) => (
     <div className="relative w-full h-[400px] bg-slate-900 overflow-hidden flex items-center justify-center">
-      {dev?.og_image_url && <img src={dev.og_image_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-50" />}
+      {dev?.og_image_url && <Image src={dev.og_image_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-50" fill />}
       <div className="relative z-10 text-center px-4">
-        {dev?.logo_url ? <img src={dev.logo_url} alt="Logo" className="h-16 mx-auto mb-6" /> : <h1 className="text-4xl md:text-5xl font-black text-white mb-4">{dev?.name || 'Project Name'}</h1>}
+        {dev?.logo_url ? <Image src={dev.logo_url} alt="Logo" className="h-16 mx-auto mb-6" width={100} height={100} unoptimized /> : <h1 className="text-4xl md:text-5xl font-black text-white mb-4">{dev?.name || 'Project Name'}</h1>}
         <p className="text-xl text-emerald-400 font-medium">{content.tagline || dev?.tagline_es || 'Your headline here'}</p>
       </div>
     </div>

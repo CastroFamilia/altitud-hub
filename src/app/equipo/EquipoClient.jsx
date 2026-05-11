@@ -5,6 +5,7 @@ import { useApp } from '@/lib/context';
 import TopNav from '@/components/layout/TopNav';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import Image from 'next/image';
 
 export default function EquipoClient({ initialTeam, initialMembers, initialOkrLogs }) {
   const { profile, isTeamLeader } = useAuth();
@@ -60,11 +61,9 @@ export default function EquipoClient({ initialTeam, initialMembers, initialOkrLo
                       <div className="p-8 text-center text-xs text-slate-400">No hay agentes asignados a este equipo.</div>
                     ) : initialMembers.map(m => (
                       <div key={m.id} className="px-6 py-4 flex items-center gap-4 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors group">
-                        <img
-                          src={m.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.full_name)}&background=5a82bf&color=fff`}
+                        <Image src={m.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.full_name)}&background=5a82bf&color=fff`}
                           alt={m.full_name}
-                          className="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-600 object-cover"
-                        />
+                          className="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-600 object-cover" width={40} height={40} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{m.full_name}</p>
                           <p className="text-[10px] text-slate-400 truncate">{m.email}</p>
@@ -107,7 +106,7 @@ export default function EquipoClient({ initialTeam, initialMembers, initialOkrLo
                           return (
                             <div key={log.id} className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-700">
                               <div className="flex items-center gap-3 mb-4">
-                                <img src={agentAvatar} alt={agentName} className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-600" />
+                                <Image src={agentAvatar} alt={agentName} className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-600" width={32} height={32} />
                                 <div>
                                   <h4 className="text-sm font-bold text-slate-900 dark:text-white">{agentName}</h4>
                                   <p className="text-[10px] text-slate-400">Log del {new Date(log.log_date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>

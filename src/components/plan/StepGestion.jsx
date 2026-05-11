@@ -30,7 +30,7 @@ const ROADMAP_KEYS = [
 
 export default function StepGestion({ plan, updatePlan }) {
   const { t } = useApp();
-  const r = plan.conversion_ratios || {};
+  const r = useMemo(() => plan.conversion_ratios || {}, [plan.conversion_ratios]);
   const portfolioTarget = plan.target_portfolio_size || 25;
 
   const commPerClose = useMemo(() => {
@@ -81,8 +81,11 @@ export default function StepGestion({ plan, updatePlan }) {
 
   // Cumulative captaciones for portfolio progress
   const portfolioByMonth = useMemo(() => {
-    let cum = 0;
-    return progressiveTargets.map(m => { cum += (m.captaciones || 0); return cum; });
+    return progressiveTargets.reduce((acc, m) => {
+      const last = acc.length > 0 ? acc[acc.length - 1] : 0;
+      acc.push(last + (m.captaciones || 0));
+      return acc;
+    }, []);
   }, [progressiveTargets]);
 
   const portfolioReachedMonth = portfolioByMonth.findIndex(v => v >= portfolioTarget);

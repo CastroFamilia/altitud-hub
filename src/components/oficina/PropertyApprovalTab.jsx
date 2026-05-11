@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import PropertyStatusBadge from '@/components/propiedades/PropertyStatusBadge';
 import { formatPrice } from '@/components/propiedades/PropertyCard';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function PropertyApprovalTab() {
   const { lang } = useApp();
@@ -164,7 +165,7 @@ export default function PropertyApprovalTab() {
                   <button onClick={() => setExpanded(isOpen ? null : p.id)} className="flex items-center gap-4 flex-1 min-w-0 text-left">
                     {/* Thumbnail */}
                     <div className="w-14 h-14 rounded-lg bg-slate-700 overflow-hidden flex-shrink-0">
-                      {mainImg ? <img src={mainImg} className="w-full h-full object-cover" alt="" /> : (
+                      {mainImg ? <Image src={mainImg} className="w-full h-full object-cover" alt="" fill /> : (
                         <div className="w-full h-full flex items-center justify-center text-slate-500"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg></div>
                       )}
                     </div>
@@ -218,7 +219,7 @@ export default function PropertyApprovalTab() {
                         <p className="text-xs text-slate-500 mb-2">📸 {photoCount} {lang === 'en' ? 'photos' : 'fotos'}</p>
                         <div className="flex gap-1.5 overflow-x-auto pb-1">
                           {p.property_images?.sort((a, b) => a.priority - b.priority).slice(0, 6).map((img, i) => (
-                            <img key={i} src={img.image_url} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" alt="" />
+                            <Image key={i} src={img.image_url} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" alt="" width={64} height={64} />
                           ))}
                           {photoCount > 6 && (
                             <div className="w-16 h-16 rounded-lg bg-slate-700 flex items-center justify-center text-xs text-slate-400 flex-shrink-0">+{photoCount - 6}</div>

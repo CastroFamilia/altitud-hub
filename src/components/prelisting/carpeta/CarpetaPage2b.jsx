@@ -1,3 +1,4 @@
+import Image from 'next/image';
 export default function CarpetaPage2b({ cfg, t }) {
   const isEs = t.p2b_header === 'La Visión del Desarrollo';
   
@@ -7,7 +8,7 @@ export default function CarpetaPage2b({ cfg, t }) {
 
       {/* Header */}
       <div style={{ padding: '14px 44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
-        <img src="/assets/logo-altitud.png" alt="Logo" style={{ height: 20 }} />
+        <Image src="/assets/logo-altitud.png" alt="Logo" style={{ height: 20 }} width={100} height={100} unoptimized />
         <span style={{ fontSize: 9, color: '#94a3b8', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{t.p2b_header}</span>
       </div>
 
@@ -31,7 +32,7 @@ export default function CarpetaPage2b({ cfg, t }) {
         {/* Pull quote */}
         <div style={{ background: `${cfg.accent}08`, padding: '16px 24px', borderLeft: `4px solid ${cfg.accent}`, marginBottom: 20 }}>
           <p style={{ fontSize: 12, fontWeight: 400, color: '#1a1a2e', lineHeight: 1.7, fontStyle: 'italic' }}>
-            "{t.p2b_quote}"
+            &quot;{t.p2b_quote}&quot;
           </p>
         </div>
 

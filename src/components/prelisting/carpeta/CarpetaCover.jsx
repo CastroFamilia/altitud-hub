@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 export default function CarpetaCover({ cfg, agentName, agentPhoto, t }) {
   // Fallback for when t is not provided
   const tr = t || ((key) => {
@@ -14,11 +16,9 @@ export default function CarpetaCover({ cfg, agentName, agentPhoto, t }) {
 
       {/* Full-bleed hero image */}
       <div style={{ position: 'absolute', inset: 0 }}>
-        <img
-          src={cfg.coverImage}
+        <Image src={cfg.coverImage}
           alt={cfg.location}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        />
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }} fill />
         {/* Dark gradient overlay to ensure text readability */}
         <div style={{
           position: 'absolute', inset: 0,
@@ -62,7 +62,7 @@ export default function CarpetaCover({ cfg, agentName, agentPhoto, t }) {
         <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {agentPhoto && (
             <div style={{ width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.8)', marginBottom: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
-              <img src={agentPhoto} alt={agentName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <Image src={agentPhoto} alt={agentName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} fill />
             </div>
           )}
           
@@ -80,7 +80,7 @@ export default function CarpetaCover({ cfg, agentName, agentPhoto, t }) {
 
       {/* Logo at the very bottom */}
       <div style={{ position: 'absolute', bottom: 40, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
-        <img src="/assets/logo-altitud.png" alt="Logo" style={{ height: 40, filter: 'brightness(0) invert(1)', opacity: 0.9 }} />
+        <Image src="/assets/logo-altitud.png" alt="Logo" style={{ height: 40, filter: 'brightness(0) invert(1)', opacity: 0.9 }} width={100} height={100} unoptimized />
       </div>
 
     </div>

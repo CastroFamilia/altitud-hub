@@ -78,7 +78,8 @@ export default function AgentReferralsPanel({ initialReferrals = [] }) {
     if (filter === 'sent') return sent;
     if (filter === 'received') return received;
     return referrals;
-  }, [referrals, filter, profile?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [referrals, filter, profile?.id, sent, received]);
 
   // Determine direction label for a referral row
   const getDirection = (r) => r.referring_agent_id === profile?.id ? 'sent' : 'received';

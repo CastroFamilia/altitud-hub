@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useApp } from '@/lib/context';
+import Image from 'next/image';
 
 export default function SoporteClient({ initialTickets }) {
   const { profile, isBroker, isTeamLeader, supabase } = useAuth();
@@ -102,7 +103,7 @@ export default function SoporteClient({ initialTickets }) {
                         <tr key={ticket.id} className="hover:bg-gray-50 dark:hover:bg-dark-bg/30 transition-colors">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
-                              <img src={ticket.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(ticket.profiles?.full_name || 'Agente')}`} className="w-8 h-8 rounded-full" alt="avatar" />
+                              <Image src={ticket.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(ticket.profiles?.full_name || 'Agente')}`} className="w-8 h-8 rounded-full" alt="avatar" width={32} height={32} />
                               <div className="text-sm font-medium text-gray-900 dark:text-white">
                                 {ticket.profiles?.full_name || 'Usuario'}
                               </div>
@@ -146,7 +147,7 @@ export default function SoporteClient({ initialTickets }) {
                   <div className="mb-4">
                     <p className="text-xs text-gray-500 mb-1">Agente</p>
                     <div className="flex items-center gap-2">
-                      <img src={selectedTicket.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedTicket.profiles?.full_name || 'Agente')}`} className="w-6 h-6 rounded-full" alt="avatar" />
+                      <Image src={selectedTicket.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedTicket.profiles?.full_name || 'Agente')}`} className="w-6 h-6 rounded-full" alt="avatar" width={24} height={24} />
                       <span className="text-sm font-medium dark:text-white">{selectedTicket.profiles?.full_name}</span>
                     </div>
                   </div>
@@ -165,7 +166,7 @@ export default function SoporteClient({ initialTickets }) {
                     <div className="mb-4">
                       <p className="text-xs text-gray-500 mb-1">Captura de pantalla</p>
                       <a href={selectedTicket.image_url} target="_blank" rel="noopener noreferrer" className="block w-full h-24 bg-gray-100 dark:bg-dark-bg rounded-lg border border-gray-200 dark:border-dark-border overflow-hidden group relative">
-                        <img src={selectedTicket.image_url} className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" alt="Captura adjunta" />
+                        <Image src={selectedTicket.image_url} className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" alt="Captura adjunta" fill />
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <span className="bg-black/70 text-white text-xs px-2 py-1 rounded">Abrir imagen</span>
                         </div>
