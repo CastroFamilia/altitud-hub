@@ -52,6 +52,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
     team_id: '',
   });
   const [inviting, setInviting] = useState(false);
+  const [agentSearchQuery, setAgentSearchQuery] = useState('');
 
   // Redirect non-brokers to dashboard
   useEffect(() => {
@@ -93,10 +94,16 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Filter profiles by office
+  // Filter profiles by office and search query
   const officeProfiles = profiles.filter(p => p.office === selectedOffice);
   const activeProfiles = officeProfiles.filter(p => p.status === 'active');
   const invitedProfiles = officeProfiles.filter(p => p.status === 'invited');
+
+  const filteredOfficeProfiles = officeProfiles.filter(p => 
+    !agentSearchQuery || 
+    p.full_name?.toLowerCase().includes(agentSearchQuery.toLowerCase()) || 
+    p.email?.toLowerCase().includes(agentSearchQuery.toLowerCase())
+  );
 
   // Stats
   const totalAgents = officeProfiles.length;
@@ -423,26 +430,48 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
 
               {/* Roster de Agentes */}
               <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                   <div>
                     <h3 className="text-lg font-black italic text-slate-900 dark:text-white">{t('ofc_registered_roster')}</h3>
                     <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mt-1">
                       {t('ofc_all_members')}
                     </p>
                   </div>
-                  <button
-                    onClick={() => setShowInviteModal(true)}
-                    className="bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    {t('ofc_manual_assign')}
-                  </button>
+                  
+                  <div className="flex flex-1 max-w-sm w-full gap-3">
+                    <div className="relative flex-1">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Buscar agente..."
+                        value={agentSearchQuery}
+                        onChange={(e) => setAgentSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-nexus-blue transition-all"
+                      />
+                    </div>
+                    
+                    <button
+                      onClick={() => setShowInviteModal(true)}
+                      className="bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all flex items-center gap-2 whitespace-nowrap"
+                    >
+                      <svg className="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      {t('ofc_manual_assign')}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="divide-y divide-slate-100 dark:divide-slate-700/50 max-h-[600px] overflow-y-auto">
-                  {officeProfiles.map(p => (
+                  {filteredOfficeProfiles.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 text-xs uppercase tracking-widest font-bold">
+                      No se encontraron agentes
+                    </div>
+                  ) : filteredOfficeProfiles.map(p => (
                     <div key={p.id} className="px-6 py-4 flex items-center gap-4 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors group">
                       <img
                         src={p.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.full_name)}&background=5a82bf&color=fff`}

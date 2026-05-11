@@ -1,7 +1,7 @@
 export default function CarpetaCover({ cfg, agentName, agentPhoto, t }) {
   // Fallback for when t is not provided
   const tr = t || ((key) => {
-    const fallback = { pre_carpeta_title: 'STRATEGIC ASSET VALUATION' };
+    const fallback = { pre_carpeta_title: 'STRATEGIC ASSET VALUATION', pre_presented_by: 'PRESENTED BY' };
     return fallback[key] || key;
   });
 
@@ -40,7 +40,7 @@ export default function CarpetaCover({ cfg, agentName, agentPhoto, t }) {
           marginBottom: 20,
           textShadow: '0 4px 20px rgba(0,0,0,0.5)'
         }}>
-          {tr('presentation') || 'Strategic Asset Valuation'}
+          {tr('pre_carpeta_title')}
         </h1>
         
         {/* Elegant thin dividing line */}
@@ -67,7 +67,7 @@ export default function CarpetaCover({ cfg, agentName, agentPhoto, t }) {
           )}
           
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: 400, letterSpacing: '0.05em', marginBottom: 8, textTransform: 'uppercase' }}>
-            Presented By
+            {tr('pre_presented_by')}
           </p>
           <p style={{ fontSize: 16, color: 'white', fontWeight: 600, letterSpacing: '0.02em', marginBottom: 4 }}>
             {agentName}

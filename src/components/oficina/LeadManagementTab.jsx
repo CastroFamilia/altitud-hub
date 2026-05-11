@@ -14,8 +14,12 @@ const TYPE_COLORS = {
 const STATUS_COLORS = {
   new: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   contacted: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  prelisting: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
+  cma: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+  listed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   converted: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  dismissed: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+  rejected: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  dismissed: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 };
 const LANG_FLAGS = { es: '🇪🇸', en: '🇺🇸', other: '🌐' };
 
@@ -78,9 +82,16 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
   const hasTodayFollowUp = (leadId) => (followUpMap[leadId] || []).some(f => f.due_date === todayStr);
   const hasFutureFollowUp = (leadId) => (followUpMap[leadId] || []).some(f => f.due_date > todayStr);
 
+  const isBreached = (lead) => {
+    if (lead.status !== 'new' || lead.first_contact_at) return false;
+    if (!lead.assigned_at) return false;
+    return (new Date().getTime() - new Date(lead.assigned_at).getTime()) > 48 * 60 * 60 * 1000;
+  };
+
   const filtered = useMemo(() => {
     let list = leads;
-    if (filter !== 'all') list = list.filter(l => l.status === filter);
+    if (filter === 'breached') list = list.filter(l => isBreached(l));
+    else if (filter !== 'all') list = list.filter(l => l.status === filter);
     if (typeFilter !== 'all') list = list.filter(l => l.lead_type === typeFilter);
     if (search) {
       const q = search.toLowerCase();
@@ -128,7 +139,11 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
   };
 
   const typeLabel = (tp) => t('ofc_lead_' + ({propiedad_especifica:'propiedad',comprar:'comprar',vender:'vender',alquiler:'alquiler',otro:'otro'}[tp]||'otro'));
-  const statusLabel = (s) => t('ofc_leads_' + ({new:'new',contacted:'contacted',converted:'converted',dismissed:'dismissed'}[s]||s));
+  const statusLabel = (s) => {
+    const custom = { prelisting: 'Pre-Listing', cma: 'CMA', listed: 'Listed', rejected: 'Rejected' };
+    if (custom[s]) return custom[s];
+    return t('ofc_leads_' + ({new:'new',contacted:'contacted',converted:'converted',dismissed:'dismissed'}[s]||s));
+  };
 
   const sourceLabel = (src) => {
     const found = sources.find(s => s.name === src);
@@ -166,9 +181,9 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2 mb-2">
-        {['all','new','contacted','converted','dismissed'].map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${filter===f?'bg-nexus-blue text-white':'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-white'}`}>
-            {f==='all'?t('ofc_leads_all'):statusLabel(f)} <span className="opacity-60 ml-1">({f==='all'?leads.length:leads.filter(l=>l.status===f).length})</span>
+        {['all','new','contacted','prelisting','cma','listed','converted','rejected','dismissed','breached'].map(f => (
+          <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${filter===f?'bg-nexus-blue text-white':'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-white'} ${f==='breached' && filter!=='breached'?'!text-red-500 !bg-red-50 border border-red-200':''}`}>
+            {f==='all'?t('ofc_leads_all'):f==='breached'?'🚨 Vencido':statusLabel(f)} <span className="opacity-60 ml-1">({f==='all'?leads.length:f==='breached'?leads.filter(isBreached).length:leads.filter(l=>l.status===f).length})</span>
           </button>
         ))}
       </div>
@@ -209,11 +224,12 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
                     </div>
                   </div>
                   {/* Follow-up badge */}
+                  {isBreached(lead) && <span className="text-[9px] font-black px-2 py-1 rounded-full bg-red-600 text-white flex-shrink-0 animate-pulse shadow-lg shadow-red-500/30">🚨 SLA Vencido</span>}
                   {hasOverdueFollowUp(lead.id) && <span className="text-[9px] font-black px-2 py-1 rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 flex-shrink-0 animate-pulse">🔔 {t('ofc_leads_followup_overdue')}</span>}
                   {!hasOverdueFollowUp(lead.id) && hasTodayFollowUp(lead.id) && <span className="text-[9px] font-black px-2 py-1 rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 flex-shrink-0">🔔 {t('ofc_leads_followup_today')}</span>}
                   {!hasOverdueFollowUp(lead.id) && !hasTodayFollowUp(lead.id) && hasFutureFollowUp(lead.id) && <span className="text-[9px] font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-500 dark:bg-blue-900/20 dark:text-blue-400 flex-shrink-0">🔔</span>}
                   {/* Type badge */}
-                  <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-full flex-shrink-0 ${TYPE_COLORS[lead.lead_type] || TYPE_COLORS.otro}`}>{typeLabel(lead.lead_type)}</span>
+                  <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-full flex-shrink-0 ${STATUS_COLORS[lead.status] || STATUS_COLORS.new}`}>{statusLabel(lead.status)}</span>
                   {/* Language */}
                   <span className="text-sm flex-shrink-0">{LANG_FLAGS[lead.lead_language] || '🌐'}</span>
                   {/* Agent */}
@@ -285,6 +301,13 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
                   </div>
                 )}
 
+                {lead.status === 'rejected' && lead.rejection_reason && (
+                  <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 border border-red-100 dark:border-red-900/30">
+                    <p className="text-[10px] text-red-600 uppercase font-bold flex items-center gap-1"><span>❌</span> Motivo de Rechazo (Agente)</p>
+                    <p className="text-sm font-medium text-red-800 dark:text-red-300 mt-1">{lead.rejection_reason}</p>
+                  </div>
+                )}
+
                 {lead.notes && (
                   <div>
                     <p className="text-[10px] text-slate-500 uppercase font-bold mb-2">{t('ofc_leads_notes')}</p>
@@ -299,7 +322,7 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
                   <div>
                     <label className="text-[9px] text-slate-400 uppercase font-bold mb-1 block">{t('ofc_leads_status')}</label>
                     <select value={lead.status} onChange={e => handleStatusChange(lead.id, e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-nexus-blue outline-none transition-all">
-                      {['new','contacted','converted','dismissed'].map(s => <option key={s} value={s}>{statusLabel(s)}</option>)}
+                      {['new','contacted','prelisting','cma','listed','converted','rejected','dismissed'].map(s => <option key={s} value={s}>{statusLabel(s)}</option>)}
                     </select>
                   </div>
                   <div>

@@ -266,6 +266,8 @@ const T = {
     dash_acm_tab_presented: 'Presentados',
 
     // Missing Pre-Listing Keys
+    pre_carpeta_title: 'Strategic Asset Valuation',
+    pre_presented_by: 'Presentado Por',
     pre_stat_month: 'Este Mes',
     pre_stat_total: 'Entrevistas totales',
     pre_stat_origin: 'Origen',
@@ -1569,6 +1571,8 @@ const T = {
     dash_acm_tab_presented: 'Presented',
 
     // Missing Pre-Listing Keys
+    pre_carpeta_title: 'Strategic Asset Valuation',
+    pre_presented_by: 'Presented By',
     pre_stat_month: 'This Month',
     pre_stat_total: 'Total Interviews',
     pre_stat_origin: 'Origin',

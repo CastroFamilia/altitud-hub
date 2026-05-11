@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '@/lib/context';
+import { useAuth } from '@/lib/auth-context';
 
 export default function AgentEditModal({ profile, teams, selectedOffice, onClose, onUpdateProfile, t }) {
+  const { supabase } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
   const [role, setRole] = useState(profile.role);
   const [teamId, setTeamId] = useState(profile.team_id || '');
@@ -15,11 +17,34 @@ export default function AgentEditModal({ profile, teams, selectedOffice, onClose
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [analyzingBehavior, setAnalyzingBehavior] = useState(false);
 
+  // Estado de Cuenta State
+  const [transactions, setTransactions] = useState([]);
+  const [loadingTx, setLoadingTx] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+
   useEffect(() => {
     if (activeTab === 'evaluacion') {
       fetchNotes();
+    } else if (activeTab === 'estado-cuenta') {
+      fetchTransactions();
     }
   }, [activeTab]);
+
+  const fetchTransactions = async () => {
+    setLoadingTx(true);
+    try {
+      const { data } = await supabase
+        .from('account_transactions')
+        .select('*')
+        .eq('profile_id', profile.id)
+        .order('date', { ascending: false });
+      setTransactions(data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingTx(false);
+    }
+  };
 
   const fetchNotes = async () => {
     setLoadingNotes(true);
@@ -187,6 +212,16 @@ export default function AgentEditModal({ profile, teams, selectedOffice, onClose
             >
               Evaluación & Notas
             </button>
+            <button
+              onClick={() => setActiveTab('estado-cuenta')}
+              className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                activeTab === 'estado-cuenta'
+                  ? 'bg-white dark:bg-slate-700 text-nexus-blue shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-white'
+              }`}
+            >
+              Estado de Cuenta
+            </button>
           </div>
         </div>
 
@@ -225,6 +260,80 @@ export default function AgentEditModal({ profile, teams, selectedOffice, onClose
                     <option key={team.id} value={team.id}>{team.name}</option>
                   ))}
                 </select>
+              </div>
+            </div>
+          ) : activeTab === 'estado-cuenta' ? (
+            <div className="space-y-6">
+              {/* Resumen de Saldo */}
+              <div className="bg-slate-50 dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Estado de Cuenta</h4>
+                  <p className="text-xs text-slate-500">Historial financiero y saldo pendiente con la oficina.</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Saldo Total</p>
+                  <p className={`text-2xl font-black italic ${
+                    transactions.reduce((acc, t) => acc + (t.type === 'office_charge' ? Number(t.amount) : -Number(t.amount)), 0) > 0 
+                      ? 'text-red-500' 
+                      : 'text-emerald-500'
+                  }`}>
+                    ${Math.abs(transactions.reduce((acc, t) => acc + (t.type === 'office_charge' ? Number(t.amount) : -Number(t.amount)), 0)).toLocaleString('en-US', {minimumFractionDigits: 2})}
+                  </p>
+                  {transactions.reduce((acc, t) => acc + (t.type === 'office_charge' ? Number(t.amount) : -Number(t.amount)), 0) > 0 && <p className="text-[9px] text-red-500/70 font-bold uppercase mt-1">Debe</p>}
+                  {transactions.reduce((acc, t) => acc + (t.type === 'office_charge' ? Number(t.amount) : -Number(t.amount)), 0) === 0 && <p className="text-[9px] text-emerald-500/70 font-bold uppercase mt-1">Al Día</p>}
+                </div>
+              </div>
+
+              {/* Filtros */}
+              <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Historial Mensual</h3>
+                <input 
+                  type="month" 
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-nexus-blue"
+                />
+              </div>
+
+              {/* Lista de Transacciones */}
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                {loadingTx ? (
+                  <div className="p-8 flex justify-center"><div className="animate-spin w-6 h-6 border-2 border-nexus-blue border-t-transparent rounded-full"></div></div>
+                ) : transactions.filter(t => t.date.startsWith(selectedMonth)).length === 0 ? (
+                  <div className="p-12 text-center text-slate-400">
+                    <p className="text-xs font-bold uppercase tracking-widest">No hay transacciones este mes.</p>
+                  </div>
+                ) : (
+                  <table className="w-full text-left">
+                    <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
+                      <tr>
+                        <th className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Fecha</th>
+                        <th className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Concepto / Cat.</th>
+                        <th className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Monto</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                      {transactions.filter(t => t.date.startsWith(selectedMonth)).map(t => (
+                        <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                          <td className="px-6 py-4 text-xs font-medium text-slate-500">{new Date(t.date).toLocaleDateString()}</td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{t.description || t.category}</p>
+                            <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
+                              t.type === 'office_charge' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' : 
+                              t.type === 'agent_payment' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' : 
+                              'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                            }`}>
+                              {t.type === 'office_charge' ? 'Cargo Oficina' : t.type === 'agent_payment' ? 'Pago Recibido' : 'Gasto Personal'}
+                            </span>
+                          </td>
+                          <td className={`px-6 py-4 text-right font-black italic text-sm ${t.type === 'agent_payment' ? 'text-emerald-500' : t.type === 'office_charge' ? 'text-red-500' : 'text-slate-400'}`}>
+                            {t.type === 'agent_payment' ? '+' : '-'}${Number(t.amount).toLocaleString('en-US', {minimumFractionDigits: 2})}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
           ) : (

@@ -6,6 +6,7 @@ import TopNav from '@/components/layout/TopNav';
 import CommissionBar from '@/components/layout/CommissionBar';
 import { useApp } from '@/lib/context';
 import { supabase } from '@/lib/supabase';
+import AgentLeadsPanel from '@/components/oficina/AgentLeadsPanel';
 
 /* ═══════════════════════════════════════════════════════
    PIPELINE / FUNNEL ACTIVITIES — 10 stages
@@ -606,6 +607,9 @@ export default function DashboardClient() {
             </div>
           </div>
           )}
+
+          {/* ── Agent Leads Panel ── */}
+          {mounted && <AgentLeadsPanel />}
 
           {/* ── Commission Progress Bar ── */}
           {mounted && (
