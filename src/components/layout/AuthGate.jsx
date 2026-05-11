@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/lib/auth-context';
 import { usePathname } from 'next/navigation';
-import LoginPage from '@/app/login/page';
+import LoginClient from '@/app/login/LoginClient';
 
 /**
  * AuthGate — Shows the login page when not authenticated,
@@ -33,7 +33,7 @@ export default function AuthGate({ children }) {
 
   // Show login page if not authenticated
   if (!isAuthenticated) {
-    return <LoginPage />;
+    return <LoginClient />;
   }
 
   // Authenticated — render the app

@@ -13,6 +13,7 @@ export function AuthProvider({ children }) {
   const [supabase] = useState(() => createClient());
   const [user, setUser] = useState(null);         // auth.users row
   const [profile, setProfile] = useState(null);    // profiles row
+  const [realProfile, setRealProfile] = useState(null); // real profile for broker
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -71,6 +72,7 @@ export function AuthProvider({ children }) {
       .eq('id', data.id)
       .then(() => {});
 
+    setRealProfile(data);
     setProfile(data);
     setError(null);
     return data;
@@ -78,12 +80,27 @@ export function AuthProvider({ children }) {
 
   // Initialize auth state
   useEffect(() => {
+    const applyImpersonation = async (realP) => {
+      if (realP?.role === 'broker') {
+        const impId = localStorage.getItem('impersonated_id');
+        if (impId) {
+          const { data: impP } = await supabase.from('profiles').select('*, teams(id, name)').eq('id', impId).single();
+          if (impP) {
+            setProfile(impP);
+            return;
+          }
+        }
+      }
+      setProfile(realP);
+    };
+
     const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           setUser(session.user);
-          await fetchProfile(session.user);
+          const realP = await fetchProfile(session.user);
+          await applyImpersonation(realP);
         }
       } catch (e) {
         console.error('Auth init error:', e);
@@ -100,8 +117,10 @@ export function AuthProvider({ children }) {
         const authUser = session?.user ?? null;
         setUser(authUser);
         if (authUser) {
-          await fetchProfile(authUser);
+          const realP = await fetchProfile(authUser);
+          await applyImpersonation(realP);
         } else {
+          setRealProfile(null);
           setProfile(null);
         }
         setLoading(false);
@@ -138,11 +157,12 @@ export function AuthProvider({ children }) {
 
   // Derived helpers
   const role = profile?.role || null;
-  const isBroker = role === 'broker';
+  const realRole = realProfile?.role || null;
+  const isBroker = realRole === 'broker'; // Always true if real user is broker
   const isTeamLeader = role === 'team_leader';
   const isAgent = role === 'agent';
   const isOfficeAssistant = role === 'office_assistant';
-  const isAuthenticated = !!user && !!profile;
+  const isAuthenticated = !!user && !!realProfile;
 
   // Dev bypass for local testing without login
   if (process.env.NODE_ENV === 'development') {
@@ -150,15 +170,24 @@ export function AuthProvider({ children }) {
       <AuthContext.Provider value={{
         supabase,
         user: { id: '00000000-0000-0000-0000-000000000000', email: 'dev@remax-altitud.cr' },
-        profile: { id: '00000000-0000-0000-0000-000000000000', full_name: 'Dev Admin', role: 'broker', office: 'altitud', email: 'dev@remax-altitud.cr' },
-        role: 'broker',
+        profile: (() => {
+          if (typeof window !== 'undefined') {
+            const impId = localStorage.getItem('impersonated_id');
+            // Mock an impersonated profile object if we have one (since we don't fetch DB in dev mode here natively, but we could)
+            // Just return a dummy profile so UI updates
+            if (impId) return { id: impId, full_name: 'Agente Suplantado', role: 'agent', office: 'altitud', email: 'agente@remax.cr' };
+          }
+          return { id: '00000000-0000-0000-0000-000000000000', full_name: 'Dev Admin', role: 'broker', office: 'altitud', email: 'dev@remax-altitud.cr' };
+        })(),
+        realProfile: { id: '00000000-0000-0000-0000-000000000000', full_name: 'Dev Admin', role: 'broker', office: 'altitud', email: 'dev@remax-altitud.cr' },
+        role: typeof window !== 'undefined' && localStorage.getItem('impersonated_id') ? 'agent' : 'broker',
         loading: false,
         error: null,
         signIn: () => {},
         signOut: () => {},
-        isBroker: true,
+        isBroker: true, // Always broker in dev bypass
         isTeamLeader: false,
-        isAgent: false,
+        isAgent: typeof window !== 'undefined' && !!localStorage.getItem('impersonated_id'),
         isOfficeAssistant: false,
         isAuthenticated: true,
         fetchProfile: () => {},
@@ -173,6 +202,7 @@ export function AuthProvider({ children }) {
       supabase,
       user,
       profile,
+      realProfile,
       role,
       loading,
       error,

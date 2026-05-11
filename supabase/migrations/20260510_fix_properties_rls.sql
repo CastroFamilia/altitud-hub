@@ -3,9 +3,11 @@
 -- =============================================
 
 -- 1. Ensure the SECURITY DEFINER function exists (this safely bypasses RLS recursion)
+-- Using STABLE ensures Postgres caches the result per statement
 CREATE OR REPLACE FUNCTION public.get_auth_user_role()
 RETURNS TEXT
 LANGUAGE sql
+STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
@@ -16,6 +18,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.is_team_leader_of(target_team_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql
+STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$

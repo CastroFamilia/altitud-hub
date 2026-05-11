@@ -36,7 +36,7 @@ export async function PATCH(request) {
     }
 
     // Only allow safe fields to be updated
-    const allowedFields = ['role', 'team_id', 'status', 'full_name', 'phone', 'office', 'remax_agent_id', 'remax_agent_name', 'avatar_url'];
+    const allowedFields = ['role', 'team_id', 'status', 'full_name', 'phone', 'office', 'remax_agent_id', 'remax_agent_name', 'avatar_url', 'psicotest_url', 'psicotest_file_id', 'olympia_behavior_analysis'];
     const safeUpdates = {};
     for (const key of allowedFields) {
       if (key in updates) safeUpdates[key] = updates[key];

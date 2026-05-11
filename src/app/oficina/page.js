@@ -68,6 +68,11 @@ export default async function OficinaPage() {
   const { data: officeEvents } = await supabase.from('office_events').select('*').order('event_date', { ascending: false });
   const { data: eventAttendance } = await supabase.from('event_attendance').select('*');
 
+  // --- Dashboard Analytics Data ---
+  const { data: commissions } = await supabase.from('agent_commissions').select('*, profiles!agent_commissions_agent_id_fkey(full_name, avatar_url, commission_tier_id)').order('closing_date', { ascending: false });
+  const { data: reservations } = await supabase.from('office_reservations').select('*').order('created_at', { ascending: false });
+
+
   return (
     <OficinaClient 
       initialProfiles={profiles || []} 
@@ -86,6 +91,8 @@ export default async function OficinaPage() {
       initialSalaries={salaries || []}
       initialEvents={officeEvents || []}
       initialAttendance={eventAttendance || []}
+      initialCommissions={commissions || []}
+      initialReservations={reservations || []}
     />
   );
 }

@@ -16,12 +16,14 @@ import OfficeFinanceTab from '@/components/oficina/OfficeFinanceTab';
 import EstadoCuentaTab from '@/components/oficina/EstadoCuentaTab';
 import EventsAttendanceTab from '@/components/oficina/EventsAttendanceTab';
 import IntegrationSettingsTab from '@/components/oficina/IntegrationSettingsTab';
+import DashboardTab from '@/components/oficina/DashboardTab';
+import AgentEditModal from '@/components/oficina/AgentEditModal';
 
 /* ═══════════════════════════════════════
    OFFICE PANEL — Broker Admin Dashboard
    ═══════════════════════════════════════ */
 
-export default function OficinaClient({ initialProfiles = [], initialTeams = [], initialMilestones = [], initialInquiries = [], initialLeadSources = [], initialCommunications = [], initialFollowUps = [], initialProperties = [], initialDevelopments = [], initialExpenses = [], initialCategories = [], initialFunds = [], initialTxs = [], initialSalaries = [], initialEvents = [], initialAttendance = [] }) {
+export default function OficinaClient({ initialProfiles = [], initialTeams = [], initialMilestones = [], initialInquiries = [], initialLeadSources = [], initialCommunications = [], initialFollowUps = [], initialProperties = [], initialDevelopments = [], initialExpenses = [], initialCategories = [], initialFunds = [], initialTxs = [], initialSalaries = [], initialEvents = [], initialAttendance = [], initialCommissions = [], initialReservations = [] }) {
   const { profile, isBroker, supabase } = useAuth();
   const { t, lang } = useApp();
   const router = useRouter();
@@ -533,66 +535,18 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
 
           </div>
           ) : (
-            <div className="space-y-8">
-              {/* ── Stats Grid ── */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { label: t('ofc_total_registered'), val: totalAgents, color: 'text-slate-900 dark:text-white' },
-                  { label: t('ofc_active_agents'), val: activeCount, color: 'text-emerald-500' },
-                  { label: t('ofc_team_leaders'), val: teamLeaders, color: 'text-nexus-blue' },
-                  { label: t('ofc_pending_api'), val: pendingAgents.length, color: 'text-amber-500' },
-                ].map((s, i) => (
-                  <div key={i} className="bg-white dark:bg-slate-800 rounded-[24px] p-5 shadow-sm border border-slate-200 dark:border-slate-700 group hover:shadow-lg transition-all">
-                    <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-black tracking-widest leading-none">{s.label}</p>
-                    <h3 className={`text-3xl font-black italic mt-2 ${s.color}`}>{loading ? '—' : s.val}</h3>
-                  </div>
-                ))}
-              </div>
-
-              {/* ── Dashboard Previews ── */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                 {/* Leads Preview */}
-                 <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 p-6 flex flex-col justify-between">
-                    <div>
-                      <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-2 flex items-center gap-2"><span>📩</span> Últimos Leads</h3>
-                      <p className="text-xs text-slate-400 mb-4">Resumen de prospectos recientes</p>
-                      {initialInquiries?.slice(0, 5).map(lead => (
-                        <div key={lead.id} className="py-2 border-b border-slate-100 dark:border-slate-700 last:border-0 flex justify-between items-center">
-                          <div className="truncate pr-4">
-                            <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{lead.client_name}</p>
-                            <p className="text-[10px] text-slate-400">{new Date(lead.created_at).toLocaleDateString()}</p>
-                          </div>
-                          <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-full whitespace-nowrap">{lead.status}</span>
-                        </div>
-                      ))}
-                      {(!initialInquiries || initialInquiries.length === 0) && (
-                        <p className="text-xs text-slate-400 italic">No hay leads recientes.</p>
-                      )}
-                    </div>
-                    <button onClick={() => router.push('/oficina?tab=leads')} className="mt-4 w-full py-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-700/50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] uppercase font-black tracking-widest transition-colors">Ver todos</button>
-                 </div>
-
-                 {/* Properties Preview */}
-                 <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 p-6 flex flex-col justify-between">
-                    <div>
-                      <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-2 flex items-center gap-2"><span>🏠</span> Propiedades</h3>
-                      <p className="text-xs text-slate-400 mb-4">Últimas propiedades listadas</p>
-                      {initialProperties?.slice(0, 5).map(prop => (
-                        <div key={prop.id} className="py-2 border-b border-slate-100 dark:border-slate-700 last:border-0 flex justify-between items-center">
-                          <div className="truncate pr-4">
-                            <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{prop.title_es || prop.title}</p>
-                            <p className="text-[10px] text-slate-400">{prop.status}</p>
-                          </div>
-                          <span className="text-[10px] font-bold bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-1 rounded-full whitespace-nowrap">{prop.listing_type}</span>
-                        </div>
-                      ))}
-                      {(!initialProperties || initialProperties.length === 0) && (
-                        <p className="text-xs text-slate-400 italic">No hay propiedades recientes.</p>
-                      )}
-                    </div>
-                    <button onClick={() => router.push('/oficina?tab=propiedades')} className="mt-4 w-full py-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-700/50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] uppercase font-black tracking-widest transition-colors">Gestionar inventario</button>
-                 </div>
-              </div>
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6 lg:p-8">
+               <DashboardTab 
+                 profiles={profiles}
+                 teams={teams}
+                 inquiries={initialInquiries}
+                 expenses={initialExpenses}
+                 categories={initialCategories}
+                 commissions={initialCommissions}
+                 reservations={initialReservations}
+                 selectedOffice={selectedOffice}
+                 loading={loading}
+               />
             </div>
           )}
 
@@ -694,65 +648,14 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
 
       {/* ═══ EDIT PROFILE MODAL ═══ */}
       {editingProfile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setEditingProfile(null)}>
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-          <div
-            className="relative bg-white dark:bg-slate-800 rounded-[32px] shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md p-8 space-y-6"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-4">
-              <img
-                src={editingProfile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(editingProfile.full_name)}&background=5a82bf&color=fff`}
-                className="w-14 h-14 rounded-full border-2 border-slate-200"
-                alt=""
-              />
-              <div>
-                <h3 className="text-lg font-black italic text-slate-900 dark:text-white">{editingProfile.full_name}</h3>
-                <p className="text-xs text-slate-400">{editingProfile.email}</p>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">{t('ofc_manual_role')}</label>
-              <div className="flex gap-2">
-                {['agent', 'team_leader'].map(r => (
-                  <button
-                    key={r}
-                    onClick={() => handleUpdateProfile(editingProfile.id, { role: r })}
-                    className={`flex-1 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border ${
-                      editingProfile.role === r
-                        ? 'bg-nexus-blue text-white border-nexus-blue'
-                        : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'
-                    }`}
-                  >
-                    {r === 'agent' ? t('ofc_role_junior') : t('ofc_role_leader')}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">{t('ofc_manual_team')}</label>
-              <select
-                value={editingProfile.team_id || ''}
-                onChange={e => handleUpdateProfile(editingProfile.id, { team_id: e.target.value || null })}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">{t('ofc_manual_no_team')}</option>
-                {teams.filter(team => team.office === selectedOffice).map(team => (
-                  <option key={team.id} value={team.id}>{team.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              onClick={() => setEditingProfile(null)}
-              className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-500 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors"
-            >
-              {t('ofc_done')}
-            </button>
-          </div>
-        </div>
+        <AgentEditModal 
+          profile={editingProfile}
+          teams={teams}
+          selectedOffice={selectedOffice}
+          onClose={() => setEditingProfile(null)}
+          onUpdateProfile={handleUpdateProfile}
+          t={t}
+        />
       )}
     </>
   );

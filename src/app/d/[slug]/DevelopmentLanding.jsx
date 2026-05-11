@@ -6,11 +6,18 @@ import { supabase } from '@/lib/supabase';
 const trackEvent = async (devId, propId, type, meta = {}) => {
   if (!devId) return;
   try {
+    let device_type = 'desktop';
+    if (typeof navigator !== 'undefined') {
+      const ua = navigator.userAgent.toLowerCase();
+      if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) device_type = 'tablet';
+      else if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(navigator.userAgent)) device_type = 'mobile';
+    }
+    
     await supabase.from('page_events').insert({
       development_id: devId,
       property_id: propId || null,
       event_type: type,
-      event_meta: meta,
+      event_meta: { ...meta, device_type },
       referrer: typeof document !== 'undefined' ? document.referrer : null,
     });
   } catch (err) {
@@ -362,6 +369,29 @@ const Blocks = {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+    );
+  },
+  
+  document: ({ content, dev }) => {
+    if (!content?.url) return null;
+    return (
+      <section className="py-20 px-6 bg-white/[0.02]">
+        <div className="max-w-3xl mx-auto text-center p-12 border border-white/10 rounded-3xl bg-white/5 backdrop-blur-sm">
+          <div className="w-20 h-20 rounded-full bg-blue-500/20 text-blue-400 mx-auto flex items-center justify-center text-4xl mb-6 shadow-lg shadow-blue-500/10">📄</div>
+          <h2 className="text-3xl font-bold text-white mb-4">{content.title || 'Download Brochure'}</h2>
+          <p className="text-gray-400 mb-10 text-lg">{content.subtitle || 'Get all the details, floor plans, and pricing in our comprehensive project brochure.'}</p>
+          <a 
+            href={content.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            onClick={() => trackEvent(dev?.id, null, 'pdf_download', { url: content.url })}
+            className="px-10 py-4 rounded-xl bg-[#003DA5] hover:bg-[#002d7a] text-white text-lg font-bold shadow-xl shadow-blue-900/30 transition-all hover:-translate-y-1 inline-flex items-center gap-3"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            {content.buttonText || 'Download PDF'}
+          </a>
         </div>
       </section>
     );

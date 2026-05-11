@@ -84,6 +84,51 @@ const BlockTemplates = {
       <p className="text-gray-500 dark:text-gray-400 mb-4">RE/MAX Altitud</p>
       <button disabled className="px-6 py-2 rounded-full border-2 border-emerald-500 text-emerald-500 font-bold opacity-70">Contact Me</button>
     </div>
+  ),
+  document: ({ content, updateContent }) => (
+    <div className="max-w-2xl mx-auto py-16 px-4 text-center border border-gray-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-800 my-8 shadow-sm group">
+      <div className="w-16 h-16 rounded-full bg-blue-500/10 text-blue-500 mx-auto flex items-center justify-center text-3xl mb-6">📄</div>
+      <input 
+        type="text" 
+        value={content.title !== undefined ? content.title : 'Download Brochure'} 
+        onChange={(e) => updateContent && updateContent({ title: e.target.value })}
+        className="text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center bg-transparent border-none focus:ring-2 focus:ring-emerald-500 rounded"
+        placeholder="Document Title"
+      />
+      <input 
+        type="text" 
+        value={content.subtitle !== undefined ? content.subtitle : 'Get all the details, floor plans, and pricing in our comprehensive project brochure.'} 
+        onChange={(e) => updateContent && updateContent({ subtitle: e.target.value })}
+        className="w-full text-gray-500 dark:text-gray-400 mb-8 text-center bg-transparent border-none focus:ring-2 focus:ring-emerald-500 rounded"
+        placeholder="Subtitle"
+      />
+      <div className="text-left w-full space-y-4 mb-6 px-4">
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Document URL (PDF link)</label>
+          <input 
+            type="url" 
+            placeholder="https://example.com/brochure.pdf" 
+            value={content.url || ''} 
+            onChange={(e) => updateContent && updateContent({ url: e.target.value })}
+            className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Button Text</label>
+          <input 
+            type="text" 
+            placeholder="Download PDF" 
+            value={content.buttonText || ''} 
+            onChange={(e) => updateContent && updateContent({ buttonText: e.target.value })}
+            className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+          />
+        </div>
+      </div>
+      <button disabled className="px-8 py-3 rounded-xl bg-[#003DA5] text-white font-bold opacity-70 inline-flex items-center gap-2">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        {content.buttonText || 'Download PDF'}
+      </button>
+    </div>
   )
 };
 
@@ -135,7 +180,11 @@ export default function BlockEditor({ development, blocks, onChange }) {
 
             {/* Block Content Wrapper */}
             <div className={`transition-all ${isActive ? 'ring-4 ring-emerald-500/20' : ''}`}>
-              {Template ? <Template content={block.content || {}} dev={development} /> : <div className="p-8 text-center text-red-500">Unknown block type: {block.type}</div>}
+              {Template ? <Template content={block.content || {}} dev={development} updateContent={(newContent) => {
+                const newBlocks = [...blocks];
+                newBlocks[index].content = { ...newBlocks[index].content, ...newContent };
+                onChange(newBlocks);
+              }} /> : <div className="p-8 text-center text-red-500">Unknown block type: {block.type}</div>}
             </div>
           </div>
         );

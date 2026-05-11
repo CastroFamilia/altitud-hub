@@ -3,9 +3,11 @@
 -- =============================================
 
 -- 1. Create SECURITY DEFINER functions to securely get user roles without triggering RLS
+-- Using STABLE ensures Postgres caches the result per statement, preventing massive slowdowns
 CREATE OR REPLACE FUNCTION public.get_auth_user_role()
 RETURNS TEXT
 LANGUAGE sql
+STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
@@ -15,6 +17,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.is_team_leader_of(target_team_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql
+STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
