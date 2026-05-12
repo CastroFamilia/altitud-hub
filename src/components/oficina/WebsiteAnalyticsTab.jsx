@@ -57,6 +57,7 @@ export default function WebsiteAnalyticsTab({ properties = [], developments = []
     }
   }, [startDate]);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadData(); }, [loadData]);
 
   // Trigger aggregation

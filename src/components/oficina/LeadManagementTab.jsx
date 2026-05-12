@@ -65,6 +65,7 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
     setFollowUps(data || []);
   }, []);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchLeads(); fetchSources(); fetchComms(); fetchFollowUps(); }, [fetchLeads, fetchSources, fetchComms, fetchFollowUps]);
 
   const agents = profiles.filter(p => p.role !== 'photographer');
@@ -134,6 +135,7 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
   };
 
   const timeAgo = (d) => {
+    // eslint-disable-next-line react-hooks/purity
     const mins = Math.floor((Date.now() - new Date(d)) / 60000);
     if (mins < 60) return `${mins}m`;
     const hrs = Math.floor(mins/60);

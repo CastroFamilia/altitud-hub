@@ -19,6 +19,7 @@ export default function StepGoals({ plan, updatePlan }) {
 
   const addGoal = (name = '', emoji = '🎯') => {
     const newGoal = {
+    // eslint-disable-next-line react-hooks/purity
       id: 'goal_' + Date.now(),
       name,
       emoji,

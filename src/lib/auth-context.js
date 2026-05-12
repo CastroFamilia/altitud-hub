@@ -17,65 +17,70 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch the profile from the `profiles` table
   const fetchProfile = useCallback(async (authUser) => {
     if (!authUser) {
       setProfile(null);
       return null;
     }
-    const { data, error: err } = await supabase
-      .from('profiles')
-      .select('*, teams(id, name)')
-      .eq('auth_user_id', authUser.id)
-      .single();
-
-    if (err || !data) {
-      // User exists in auth.users but not pre-authorized in profiles
-      // Try matching by email (for first login after invite)
-      const { data: emailMatch, error: emailErr } = await supabase
+    try {
+      // IMPORTANT: No JOIN on teams here — avoids RLS cross-table recursion freeze
+      const { data, error: err } = await supabase
         .from('profiles')
-        .select('*, teams(id, name)')
-        .eq('email', authUser.email.toLowerCase())
-        .single();
+        .select('id, email, full_name, role, office, status, avatar_url, auth_user_id, team_id')
+        .eq('auth_user_id', authUser.id)
+        .maybeSingle();
 
-      if (emailErr || !emailMatch) {
-        setError('Tu cuenta no está autorizada. Contacta al administrador de la oficina.');
-        await supabase.auth.signOut();
-        setProfile(null);
-        return null;
-      }
-
-      // Link the auth user to the profile if not yet linked
-      if (!emailMatch.auth_user_id) {
-        await supabase
+      if (err || !data) {
+        // Fallback: look up by email to link new Google auth users to existing profiles
+        const { data: emailMatch, error: emailErr } = await supabase
           .from('profiles')
-          .update({ 
-            auth_user_id: authUser.id, 
-            status: 'active',
-            last_login: new Date().toISOString(),
-            avatar_url: authUser.user_metadata?.avatar_url || emailMatch.avatar_url,
-          })
-          .eq('id', emailMatch.id);
-        emailMatch.auth_user_id = authUser.id;
-        emailMatch.status = 'active';
+          .select('id, email, full_name, role, office, status, avatar_url, auth_user_id, team_id')
+          .eq('email', authUser.email?.toLowerCase())
+          .maybeSingle();
+
+        if (emailErr || !emailMatch) {
+          setError('Tu cuenta no está autorizada. Contacta al administrador de la oficina.');
+          await supabase.auth.signOut();
+          setProfile(null);
+          return null;
+        }
+
+        // Link the Google auth_user_id to the existing profile row
+        if (!emailMatch.auth_user_id) {
+          await supabase
+            .from('profiles')
+            .update({ 
+              auth_user_id: authUser.id, 
+              status: 'active',
+              last_login: new Date().toISOString(),
+              avatar_url: authUser.user_metadata?.avatar_url || emailMatch.avatar_url,
+            })
+            .eq('id', emailMatch.id);
+          emailMatch.auth_user_id = authUser.id;
+          emailMatch.status = 'active';
+        }
+
+        setRealProfile(emailMatch);
+        setProfile(emailMatch);
+        setError(null);
+        return emailMatch;
       }
 
-      setProfile(emailMatch);
+      // Update last_login timestamp (fire-and-forget)
+      supabase
+        .from('profiles')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', data.id)
+        .then(() => {});
+
+      setRealProfile(data);
+      setProfile(data);
       setError(null);
-      return emailMatch;
+      return data;
+    } catch (e) {
+      console.error('fetchProfile error:', e);
+      return null;
     }
-
-    // Update last_login
-    supabase
-      .from('profiles')
-      .update({ last_login: new Date().toISOString() })
-      .eq('id', data.id)
-      .then(() => {});
-
-    setRealProfile(data);
-    setProfile(data);
-    setError(null);
-    return data;
   }, [supabase]);
 
   // Initialize auth state
@@ -114,36 +119,55 @@ export function AuthProvider({ children }) {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        const authUser = session?.user ?? null;
-        setUser(authUser);
-        if (authUser) {
-          const realP = await fetchProfile(authUser);
-          await applyImpersonation(realP);
-        } else {
-          setRealProfile(null);
-          setProfile(null);
+        try {
+          const authUser = session?.user ?? null;
+          setUser(authUser);
+          if (authUser) {
+            const realP = await fetchProfile(authUser);
+            await applyImpersonation(realP);
+          } else {
+            setRealProfile(null);
+            setProfile(null);
+          }
+        } catch (e) {
+          console.error('Error on auth state change:', e);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Fallback timeout to ensure we don't stay in loading state forever
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeoutId);
+    };
   }, [supabase, fetchProfile]);
 
   // Sign in with Google OAuth — restricted to @remax-altitud.cr
   const signIn = useCallback(async () => {
-    setError(null);
-    const { error: err } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: {
-          hd: 'remax-altitud.cr'  // Only show @remax-altitud.cr accounts
+    try {
+      setError(null);
+      const { error: err } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            hd: 'remax-altitud.cr'  // Only show @remax-altitud.cr accounts
+          }
         }
+      });
+      if (err) {
+        console.error('Supabase auth error:', err);
+        setError('Error de autenticación: ' + err.message);
       }
-    });
-    if (err) {
-      setError('Error de autenticación: ' + err.message);
+    } catch (e) {
+      console.error('JavaScript Error in signIn:', e);
+      setError('Error inesperado: ' + e.message);
     }
   }, [supabase]);
 

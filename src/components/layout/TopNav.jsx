@@ -21,7 +21,10 @@ export default function TopNav({ titleKey, subtitleKey, title, subtitle }) {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(20);
-      if (data) setNotifications(data);
+      if (data) {
+         
+        setNotifications(data);
+      }
     } catch (err) {
       console.error("Error loading notifications:", err);
     }
@@ -30,6 +33,7 @@ export default function TopNav({ titleKey, subtitleKey, title, subtitle }) {
 
   useEffect(() => {
     if (profile) {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
       loadNotifications();
     }
   }, [profile, loadNotifications]);

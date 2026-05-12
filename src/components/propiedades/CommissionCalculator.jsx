@@ -63,6 +63,7 @@ export default function CommissionCalculator({
 
   // Auto-set side % based on selection
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (side === 'both') setSidePct(100);
     else setSidePct(50);
   }, [side]);

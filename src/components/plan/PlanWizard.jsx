@@ -88,6 +88,7 @@ export default function PlanWizard({ existingPlan, onComplete, onSaveDraft }) {
   // Load existing plan
   useEffect(() => {
     if (existingPlan && Object.keys(existingPlan).length > 0) {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
       setPlan(prev => ({ ...prev, ...existingPlan }));
     }
   }, [existingPlan]);

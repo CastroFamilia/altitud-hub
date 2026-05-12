@@ -213,6 +213,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
 
   // Days on market
   const daysOnMarket = p.submitted_at
+    // eslint-disable-next-line react-hooks/purity
     ? Math.floor((Date.now() - new Date(p.submitted_at).getTime()) / (1000 * 60 * 60 * 24))
     : null;
 

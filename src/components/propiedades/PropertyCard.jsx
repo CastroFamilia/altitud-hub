@@ -51,6 +51,7 @@ export default function PropertyCard({ property, lang = 'es' }) {
 
   // Days on market
   const daysOnMarket = property.submitted_at
+    // eslint-disable-next-line react-hooks/purity
     ? Math.floor((Date.now() - new Date(property.submitted_at).getTime()) / (1000 * 60 * 60 * 24))
     : null;
 

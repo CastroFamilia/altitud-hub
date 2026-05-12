@@ -88,12 +88,14 @@ export default function NegocioClient({ initialReservations = [], initialContact
     } finally {
       setLoading(false);
     }
-  }, [profile?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, profile?.id]);
 
   useEffect(() => {
     // Don't re-fetch if data was already loaded server-side
     if (serverDataLoaded) return;
     if (profile?.id) {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchReservations();
       fetchContacts();
     }

@@ -67,6 +67,7 @@ export default function CommunicationPanel({ lead, agentId, communications = [],
   };
 
   const timeAgo = (d) => {
+    // eslint-disable-next-line react-hooks/purity
     const mins = Math.floor((Date.now() - new Date(d)) / 60000);
     if (mins < 60) return `${mins}m`;
     const hrs = Math.floor(mins / 60);

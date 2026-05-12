@@ -181,14 +181,14 @@ const LOCAL_T = {
   }
 };
 
-export default function BusquedaClient() {
+export default function BusquedaClient({ initialSearches = [], initialAllSearches = [] }) {
   const { profile, supabase } = useAuth();
   const { t, lang } = useApp();
-  const l = LOCAL_T[lang] || LOCAL_T.es;
+  const l = LOCAL_T[lang] || LOCAL_T['es'];
   
-  const [searches, setSearches] = useState([]);
-  const [allSearches, setAllSearches] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [searches, setSearches] = useState(initialSearches);
+  const [allSearches, setAllSearches] = useState(initialAllSearches);
+  const [loading, setLoading] = useState(false);
   
   const [showModal, setShowModal] = useState(false);
   const [selectedSearch, setSelectedSearch] = useState(null);
@@ -260,10 +260,6 @@ export default function BusquedaClient() {
       setLoading(false);
     }
   }, [profile]);
-
-  useEffect(() => {
-    loadSearches();
-  }, [loadSearches]);
 
 
   const handleCreateSearch = async (e) => {

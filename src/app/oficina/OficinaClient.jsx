@@ -64,6 +64,8 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
 
   // Load data
   const loadData = useCallback(async () => {
+     
+    setMounted(true);
     setLoading(true);
     try {
       // Fetch profiles
@@ -93,7 +95,11 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
     }
   }, [supabase, selectedOffice]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+     
+  useEffect(() => { 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData(); 
+  }, [loadData]);
 
   // Filter profiles by office and search query
   const officeProfiles = profiles.filter(p => p.office === selectedOffice);

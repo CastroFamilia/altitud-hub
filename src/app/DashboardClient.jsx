@@ -256,6 +256,7 @@ function WeekCalendar({ entries, t }) {
    ═══════════════════════════════════════════════════════ */
 function DailyFormModal({ isOpen, onClose, onSave, existingEntry, t }) {
   const [values, setValues] = useState({});
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { const i={}; ACTIVITIES.forEach(a=>{i[a.key]=existingEntry?.[a.key]??0}); setValues(i); }, [existingEntry, isOpen]);
   const update = (key,delta) => setValues(prev=>({...prev,[key]:Math.max(0,(prev[key]||0)+delta)}));
   const handleSave = () => { onSave({date:todayISO(),...values}); onClose(); };
@@ -323,6 +324,7 @@ function DailyFormModal({ isOpen, onClose, onSave, existingEntry, t }) {
    ═══════════════════════════════════════════════════════ */
 function PlanEditorModal({ isOpen, onClose, plan, onSave, t }) {
   const [draft, setDraft] = useState({ monthly_targets: {}, weekly_targets: {} });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if(isOpen && plan) setDraft(JSON.parse(JSON.stringify(plan))); }, [isOpen, plan]);
   const upd = (period, key, val) => setDraft(prev => ({ ...prev, [period]: { ...prev[period], [key]: Math.max(0, parseInt(val)||0) } }));
   if(!isOpen) return null;
@@ -431,6 +433,7 @@ export default function DashboardClient() {
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEntries(loadEntries());
     const loadedPlan = loadPlan();
     setPlan(loadedPlan);

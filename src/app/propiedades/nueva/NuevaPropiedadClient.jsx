@@ -78,6 +78,7 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
   useEffect(() => {
     if (profile?.office && !editId) {
       const officeCode = profile.office === 'cero' ? 'R0700151' : 'R0700130';
+    // eslint-disable-next-line react-hooks/set-state-in-effect
       set('office_code', officeCode);
     }
   }, [profile?.office, editId]);

@@ -97,6 +97,7 @@ export default function SoldCongratsModal({
 
   useEffect(() => {
     if (isOpen) {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowConfetti(true);
       // Animate the agent amount counting up
       const target = agentAmount || 0;

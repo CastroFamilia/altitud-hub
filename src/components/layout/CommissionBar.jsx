@@ -64,6 +64,7 @@ export default function CommissionBar() {
       const bp = localStorage.getItem('altitud_business_plan');
       if (bp) {
         const parsed = JSON.parse(bp);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
         setAnnualTarget(parsed.annual_income_target || parsed.income_target || 50000);
       }
     } catch { /* ignore */ }

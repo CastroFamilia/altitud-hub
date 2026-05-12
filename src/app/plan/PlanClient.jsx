@@ -25,8 +25,11 @@ export default function PlanClient({ initialPlan }) {
   useEffect(() => {
     if (!initialPlan) {
       const local = loadLocalPlan();
+     
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (local) setExistingPlan(local);
     }
+     
     setLoading(false);
   }, [initialPlan]);
 

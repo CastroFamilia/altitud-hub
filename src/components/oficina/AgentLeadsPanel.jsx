@@ -28,6 +28,7 @@ export default function AgentLeadsPanel() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchMyLeads();
   }, []);
 

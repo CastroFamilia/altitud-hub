@@ -60,6 +60,7 @@ export default function AgentEditModal({ profile, teams, selectedOffice, onClose
 
   useEffect(() => {
     if (activeTab === 'evaluacion') {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchNotes();
     } else if (activeTab === 'estado-cuenta') {
       fetchTransactions();

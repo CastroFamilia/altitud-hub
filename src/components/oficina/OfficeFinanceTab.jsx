@@ -77,8 +77,8 @@ export default function OfficeFinanceTab({ expenses = [], categories = [], funds
   };
   
   // Split expenses vs incomes
-  const expensesList = localExpenses.filter(e => e.transaction_type === 'expense' || !e.transaction_type);
-  const incomesList = localExpenses.filter(e => e.transaction_type === 'income');
+  const expensesList = useMemo(() => localExpenses.filter(e => e.transaction_type === 'expense' || !e.transaction_type), [localExpenses]);
+  const incomesList = useMemo(() => localExpenses.filter(e => e.transaction_type === 'income'), [localExpenses]);
 
   // Completed in period (Paid expenses / Received incomes)
   const completedExpenses = expensesList.filter(e => e.status === 'paid' && e.paid_date >= dateRange.start && e.paid_date <= dateRange.end);
@@ -106,12 +106,12 @@ export default function OfficeFinanceTab({ expenses = [], categories = [], funds
   }, 0);
 
   // Filtered List based on active tab
-  const activeList = activeTab === 'expense' ? expensesList : incomesList;
-  const filteredList = activeList.filter(e => {
+  const activeList = useMemo(() => activeTab === 'expense' ? expensesList : incomesList, [activeTab, expensesList, incomesList]);
+  const filteredList = useMemo(() => activeList.filter(e => {
     if (filterCategory && e.category_id !== filterCategory) return false;
     if (filterStatus && e.status !== filterStatus) return false;
     return true;
-  }).sort((a, b) => new Date(b.due_date) - new Date(a.due_date));
+  }).sort((a, b) => new Date(b.due_date) - new Date(a.due_date)), [activeList, filterCategory, filterStatus]);
 
   // Category breakdown for active tab
   const categoryStats = useMemo(() => {

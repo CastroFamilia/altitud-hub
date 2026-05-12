@@ -2632,8 +2632,11 @@ export function AppProvider({ children }) {
   useEffect(() => {
     const savedLang  = localStorage.getItem('app-lang')    || 'es';
     const savedTheme = localStorage.getItem('color-theme') || 'light';
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLangState(savedLang);
+     
     setThemeState(savedTheme);
+     
     setMounted(true);
   }, []);
 

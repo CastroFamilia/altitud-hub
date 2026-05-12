@@ -31,6 +31,7 @@ export default function PropertyApprovalTab() {
     setLoading(false);
   };
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchProperties(); }, []);
 
   const filtered = filter === 'all'

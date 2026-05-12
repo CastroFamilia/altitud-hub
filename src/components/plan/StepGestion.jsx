@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useApp } from '@/lib/context';
 import { formatMoney, convertCurrency } from './PlanWizard';
 import { generateProgressiveTargets, getPhaseForMonth, getPhaseColor } from './distributionCurves';
@@ -90,21 +90,19 @@ export default function StepGestion({ plan, updatePlan }) {
 
   const portfolioReachedMonth = portfolioByMonth.findIndex(v => v >= portfolioTarget);
 
-  // Sync targets back to plan
-  useMemo(() => {
+  // Sync targets back to plan whenever computed values change
+  useEffect(() => {
     if (commPerClose > 0 && closesNeeded > 0) {
-      setTimeout(() => {
-        updatePlan({
-          commission_per_close: commPerClose,
-          closes_needed_monthly: closesNeeded,
-          monthly_targets: avgMonthly,
-          weekly_targets: weeklyTargets,
-          monthly_targets_by_month: progressiveTargets,
-        });
-      }, 0);
+      updatePlan({
+        commission_per_close: commPerClose,
+        closes_needed_monthly: closesNeeded,
+        monthly_targets: avgMonthly,
+        weekly_targets: weeklyTargets,
+        monthly_targets_by_month: progressiveTargets,
+      });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commPerClose, closesNeeded, JSON.stringify(progressiveTargets)]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commPerClose, closesNeeded, progressiveTargets]);
 
   const updateRatio = (key, value) => {
     const v = Math.min(1, Math.max(0, Number(value) || 0));
