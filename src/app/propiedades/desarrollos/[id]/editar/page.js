@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server';
 import EditorClient from './EditorClient';
+import { getDevelopmentById } from '@/lib/dal/developments';
 
 export default async function EditarDesarrolloPage({ params }) {
   const { id } = params;
@@ -9,12 +10,7 @@ export default async function EditarDesarrolloPage({ params }) {
 
   if (id) {
     try {
-      const { data } = await supabase
-        .from('developments')
-        .select('*')
-        .eq('id', id)
-        .single();
-        
+      const data = await getDevelopmentById(id, supabase);
       if (data) {
         initialDevelopment = data;
       }

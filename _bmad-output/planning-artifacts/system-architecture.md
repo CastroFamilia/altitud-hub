@@ -2,9 +2,9 @@
 
 ## 1. Technology Stack
 - **Framework:** Next.js 16.2.x (App Router paradigm).
-- **Database / Auth:** Currently Supabase (PostgreSQL), but **migrating to a new server**. Authentication and security implementation are deferred until the new backend is established.
+- **Database:** Self-hosted **PostgreSQL** (replacing Supabase). Direct connection via connection string. Authentication and security implementation are deferred until the new backend is fully established.
 - **Styling:** Tailwind CSS v4, ensuring utility-first responsive design.
-- **Deployment:** Vercel (Edge-compatible optimizations).
+- **Deployment:** Self-hosted on **Coolify** (replacing Vercel). Docker-based deployment with environment variable management via Coolify dashboard.
 
 ## 2. Directory Structure & Conventions
 - `/src/app`: Exclusively contains Next.js route handlers (`page.js`, `layout.js`, `route.js`). Business logic should be extracted to components or utilities to prevent server-component bloat.
@@ -16,7 +16,7 @@
 
 ## 3. Data Fetching & State Management
 - **Server Components:** Prioritize fetching data directly on the server within `page.js` async functions to minimize client payload.
-- **Client Components:** Use Supabase Browser Client for optimistic UI updates or highly interactive forms, but ensure Row Level Security (RLS) is strictly enforced in the database.
+- **Client Components:** Use direct PostgreSQL queries (via a lightweight ORM or query builder) for data fetching. Row Level Security will be implemented at the application layer rather than database-level RLS (since Supabase is no longer used).
 - **Global Context:** Rely on React Context (`src/lib/context.js` and `auth-context.js`) sparingly, primarily for Auth state, Theme (Dark/Light), and i18n Dictionary. Prop drilling is preferred for shallow component trees.
 
 ## 4. Internationalization (i18n) Architecture
@@ -26,10 +26,11 @@
 
 ## 5. Security Guardrails (DEFERRED)
 > [!WARNING]
-> Due to an upcoming backend migration, **all security, authentication, and endpoint protection are deliberately deferred** to the end of the project. The current Supabase implementation will be replaced.
+> With the migration to **self-hosted PostgreSQL on Coolify**, authentication and endpoint protection are deliberately deferred until the database layer is fully stabilized.
 > 
-> - **Development Pattern:** Components should be built "auth-agnostic" where possible, using a mock user context if necessary, so that the future backend swap requires minimal UI refactoring.
-> - **API Endpoints:** API routes will remain unprotected during this phase to facilitate rapid development until the final server is deployed.
+> - **Development Pattern:** Components should be built "auth-agnostic" where possible, using a mock user context if necessary, so that the future auth implementation requires minimal UI refactoring.
+> - **API Endpoints:** API routes will remain unprotected during this phase to facilitate rapid development until auth middleware is implemented on Coolify.
+> - **Supabase Removal:** The `@supabase/supabase-js` and `@supabase/ssr` dependencies will be replaced with a direct PostgreSQL client (e.g., `pg`, `drizzle-orm`, or `prisma`) as part of the migration.
 
 ## 6. Hub-First Property Architecture
 - **Single Source of Truth:** All property listings are created and managed in the Hub's `properties` table. External systems (RECONNECT, portals, website) consume data from the Hub.
@@ -41,10 +42,35 @@
 - **Analytics:** Public pages track events (`page_view`, `listing_click`, `whatsapp_click`, `faq_expand`, `lead_submit`, etc.) in a `page_events` table. Agents see dashboards with full funnel: views → inquiries → site visits → reservations → closings.
 
 ## 7. External API Integrations
-- **RECONNECT (REI API CCA v1.0):** Base URL `https://remax-cca.com/reiapi/`. OAuth 2.0 bearer tokens (48h expiry). JSON format. Credentials stored in environment variables: `RECONNECT_API_KEY`, `RECONNECT_SECRET_KEY`, `RECONNECT_INTEGRATOR_ID`.
+- **RECONNECT (REI API CCA v1.0):**
+  - **Production:** `https://remax-cca.com/apiCCA` (confirmed by Roberto Ceron, RE/MAX CCA)
+  - **Test:** `https://remax-cca.com/api` (currently enabled only for ALTITUD)
+  - OAuth 2.0 bearer tokens (48h expiry). JSON format.
+  - **Per-office credentials** (each office has its own API key, secret, and integrator ID):
+    - ALTITUD: `RECONNECT_ALTITUD_API_KEY`, `RECONNECT_ALTITUD_SECRET_KEY`, `RECONNECT_ALTITUD_INTEGRATOR_ID`
+    - ALTITUD CERO: `RECONNECT_CERO_API_KEY`, `RECONNECT_CERO_SECRET_KEY`, `RECONNECT_CERO_INTEGRATOR_ID`
+  - Set `RECONNECT_USE_TEST_ENV=true` to use test environment.
 - **Google Drive API:** Service account for folder creation and image management. Used for property photos and document storage.
 - **Google Gemini AI:** Powers Olympia coach, contract extraction, and prospecting suggestions.
 - **Portal Feeds:** Public JSON/XML endpoint at `/api/public/properties/feed` for third-party portals.
+
+## 7.1 Future: Hub → RECONNECT Property Export Pipeline
+> [!IMPORTANT]
+> Currently, agents upload properties directly to RECONNECT. The future goal is for agents to create properties **only in the Hub**, and the Hub pushes to RECONNECT via the API. This eliminates double data entry and ensures the Hub is the single source of truth.
+
+**Future flow:**
+1. Agent creates property in Hub → status: `draft`
+2. Broker reviews and approves → status: `approved`
+3. Hub calls `CreateProperty` → RECONNECT publishes the listing
+4. Hub calls `CreatePropertyImage` → Photos synced from Drive to RECONNECT
+5. Agent edits in Hub → Hub calls `FullUpdateProperty` to sync changes
+6. Broker cancels listing → Hub calls `CancelProperty`
+7. Website daily sync pulls the RECONNECT-published version back
+
+**Code status:** `src/lib/reconnect-api.js` has all write functions implemented and ready. Credentials have been received. Activation requires:
+- Adding credentials to `.env.local` / Coolify env vars
+- Testing against the test environment (`RECONNECT_USE_TEST_ENV=true`)
+- Wiring the publish/sync/cancel API routes to call the per-office functions
 
 ## 8. Aesthetics & UI Identity
 - **Dynamic Interactions:** Components must utilize Tailwind `transition`, `hover`, and `focus` states to feel responsive and premium.

@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase-server';
 import ContactProfileClient from './ContactProfileClient';
+import { getContactDetails } from '@/lib/dal/contacts';
+import { getPropertiesByContactId, getInquiriesByContactId } from '@/lib/dal/properties';
+import { getAcmsByContactId } from '@/lib/dal/acm';
 
 export default async function ContactProfilePage({ params }) {
   const { id } = params;
@@ -9,44 +12,29 @@ export default async function ContactProfilePage({ params }) {
   let initialProperties = [];
   let initialAcms = [];
   let initialInquiries = [];
+  let initialReservations = [];
 
   if (id) {
     try {
       // Fetch contact details
-      const { data: contactData } = await supabase
-        .from('contacts')
-        .select('*')
-        .eq('id', id)
-        .single();
-      
-      if (contactData) initialContact = contactData;
+      initialContact = await getContactDetails(id, supabase);
 
       // Fetch associated ACMs
-      const { data: acmData } = await supabase
-        .from('acm_reports')
-        .select('id, property_address, created_at, suggested_price, status')
-        .eq('contact_id', id)
-        .order('created_at', { ascending: false });
-        
-      if (acmData) initialAcms = acmData;
+      initialAcms = await getAcmsByContactId(id, supabase);
 
       // Fetch properties
-      const { data: propData } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('contact_id', id)
-        .order('created_at', { ascending: false });
-        
-      if (propData) initialProperties = propData;
+      initialProperties = await getPropertiesByContactId(id, supabase);
 
       // Fetch inquiries
-      const { data: inquiryData } = await supabase
-        .from('property_inquiries')
-        .select('*')
-        .eq('contact_id', id)
-        .order('inquiry_date', { ascending: false });
-        
-      if (inquiryData) initialInquiries = inquiryData;
+      initialInquiries = await getInquiriesByContactId(id, supabase);
+
+      // Fetch associated office reservations (deals)
+      const { data: reservations } = await supabase
+        .from('office_reservations')
+        .select('*, due_diligence_items (*)')
+        .or(`buyer_contact_id.eq.${id},seller_contact_id.eq.${id}`)
+        .order('created_at', { ascending: false });
+      if (reservations) initialReservations = reservations;
 
     } catch (err) {
       console.error("ContactProfilePage: Error fetching contact data:", err);
@@ -59,6 +47,7 @@ export default async function ContactProfilePage({ params }) {
       initialProperties={initialProperties}
       initialAcms={initialAcms}
       initialInquiries={initialInquiries}
+      initialReservations={initialReservations}
     />
   );
 }

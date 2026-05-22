@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { createProperty, isWriteConfigured } from '@/lib/reconnect-api';
+import { createProperty, createPropertyImage, isWriteConfigured } from '@/lib/reconnect-api';
 import { rateLimit } from '@/lib/rate-limit';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -50,15 +50,51 @@ export async function POST(req) {
 
     // 2. Attempt RECONNECT publish (if credentials available)
     let reconnectResult = null;
+    const officeCode = property.office_code || 'altitud';
 
-    if (isWriteConfigured()) {
-      reconnectResult = await createProperty(property);
+    if (false && isWriteConfigured(officeCode)) { // FUTURE EPIC 13: Push disabled for now
+      reconnectResult = await createProperty(property, officeCode);
 
       if (!reconnectResult.success) {
+        await supabaseAdmin.from('property_syndication').upsert({
+          property_id: propertyId,
+          portal_name: 'reconnect',
+          status: 'error',
+          last_synced_at: new Date().toISOString(),
+        }, { onConflict: 'property_id,portal_name' });
+
         return NextResponse.json(
           { error: 'RECONNECT publish failed', details: reconnectResult.error },
           { status: 502 }
         );
+      }
+
+      // 2b. Sync images to RECONNECT
+      if (reconnectResult.listingKey) {
+        const { data: images } = await supabaseAdmin
+          .from('property_images')
+          .select('*')
+          .eq('property_id', propertyId)
+          .order('priority', { ascending: true });
+
+        if (images && images.length > 0) {
+          for (const img of images) {
+            if (!img.reconnect_photo_id) {
+              const imgRes = await createPropertyImage(
+                reconnectResult.listingKey,
+                img.image_url,
+                img.priority || 0,
+                officeCode
+              );
+              if (imgRes.success && imgRes.photoId) {
+                await supabaseAdmin
+                  .from('property_images')
+                  .update({ reconnect_photo_id: imgRes.photoId })
+                  .eq('id', img.id);
+              }
+            }
+          }
+        }
       }
     }
 
@@ -96,9 +132,9 @@ export async function POST(req) {
     return NextResponse.json({
       success: true,
       published: true,
-      reconnect_configured: isWriteConfigured(),
+      reconnect_configured: isWriteConfigured(officeCode),
       reconnect_listing_id: reconnectResult?.listingId || null,
-      message: isWriteConfigured()
+      message: isWriteConfigured(officeCode)
         ? 'Published to RECONNECT and Hub'
         : 'Published locally in Hub. RECONNECT sync will activate when credentials are configured.',
     });

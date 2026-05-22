@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase-server';
 import OficinaClient from './OficinaClient';
+import { getDevelopments } from '@/lib/dal/developments';
+import { getOfficeExpenses, getOfficeExpenseCategories, getPettyCashFunds, getPettyCashTransactions, getOfficeSalaryConfig, getOfficeEvents, getEventAttendance, getAgentCommissions, getOfficeReservations } from '@/lib/dal/office';
 
 export default async function OficinaPage() {
   const supabase = await createClient();
@@ -7,7 +9,7 @@ export default async function OficinaPage() {
   // Fetch profiles
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('*, teams(name)')
+    .select('*, teams:teams!profiles_team_id_fkey(name)')
     .order('full_name');
 
   // Fetch teams
@@ -45,32 +47,29 @@ export default async function OficinaPage() {
     .select('*, property_inquiries(lead_name)')
     .order('due_date', { ascending: true });
 
-  // Fetch properties for analytics (name + listing titles for display)
+  // Fetch properties for analytics and office goals
   const { data: properties } = await supabase
     .from('properties')
-    .select('id, name, listing_title_es, listing_title_en')
-    .order('name');
+    .select('id, name, listing_title_es, listing_title_en, status, property_type, property_type_id, created_at, updated_at, sold_date, days_on_market, list_price, list_price_currency_id, listing_agreement, listing_side_comm, selling_side_comm, contact_id, agent_id, unparsed_address, lot_size_area, submitted_at, office_code, property_images(image_url, priority), contacts(lead_origin)')
+    .order('updated_at', { ascending: false });
 
   // Fetch developments for analytics
-  const { data: developments } = await supabase
-    .from('developments')
-    .select('id, name')
-    .order('name');
+  const developments = await getDevelopments(supabase);
 
   // --- Office Finance Data ---
-  const { data: expenses } = await supabase.from('office_expenses').select('*');
-  const { data: categories } = await supabase.from('office_expense_categories').select('*').eq('active', true).order('sort_order');
-  const { data: funds } = await supabase.from('petty_cash_funds').select('*').eq('is_active', true);
-  const { data: transactions } = await supabase.from('petty_cash_transactions').select('*').order('created_at', { ascending: false });
-  const { data: salaries } = await supabase.from('office_salary_config').select('*').eq('is_active', true);
+  const expenses = await getOfficeExpenses(supabase);
+  const categories = await getOfficeExpenseCategories(supabase);
+  const funds = await getPettyCashFunds(supabase);
+  const transactions = await getPettyCashTransactions(supabase);
+  const salaries = await getOfficeSalaryConfig(supabase);
 
   // --- Office Events & Attendance ---
-  const { data: officeEvents } = await supabase.from('office_events').select('*').order('event_date', { ascending: false });
-  const { data: eventAttendance } = await supabase.from('event_attendance').select('*');
+  const officeEvents = await getOfficeEvents(supabase);
+  const eventAttendance = await getEventAttendance(supabase);
 
   // --- Dashboard Analytics Data ---
-  const { data: commissions } = await supabase.from('agent_commissions').select('*, profiles!agent_commissions_agent_id_fkey(full_name, avatar_url, commission_tier_id)').order('closing_date', { ascending: false });
-  const { data: reservations } = await supabase.from('office_reservations').select('*').order('created_at', { ascending: false });
+  const commissions = await getAgentCommissions(supabase);
+  const reservations = await getOfficeReservations(supabase);
 
 
   return (

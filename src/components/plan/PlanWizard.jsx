@@ -78,7 +78,7 @@ export function convertCurrency(amount, fromCurrency, exchangeRate) {
 /* ═══════════════════════════════════════════════════════
    MAIN WIZARD COMPONENT
    ═══════════════════════════════════════════════════════ */
-export default function PlanWizard({ existingPlan, onComplete, onSaveDraft }) {
+export default function PlanWizard({ existingPlan, queriedYear = new Date().getFullYear(), onComplete, onSaveDraft }) {
   const { t } = useApp();
   const [step, setStep] = useState(0);
   const [plan, setPlan] = useState(DEFAULT_PLAN);
@@ -141,24 +141,29 @@ export default function PlanWizard({ existingPlan, onComplete, onSaveDraft }) {
       <div className="sticky top-0 z-30 bg-white/90 dark:bg-dark-panel/90 backdrop-blur-xl border-b border-gray-200 dark:border-dark-border px-4 md:px-8 py-3">
         <div className="max-w-4xl mx-auto">
           {/* Step indicators */}
-          <div className="flex items-center justify-between mb-2">
-            {STEPS.map((s, i) => (
-              <button
-                key={s.key}
-                onClick={() => { setDirection(i > step ? 1 : -1); setStep(i); }}
-                className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                  i === step
-                    ? 'bg-gradient-to-r ' + s.color + ' text-white shadow-lg scale-105'
-                    : i < step
-                    ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-                    : 'bg-gray-100 dark:bg-dark-bg text-gray-400 dark:text-gray-500'
-                }`}
-              >
-                <span className="text-sm md:text-base">{s.icon}</span>
-                <span className="hidden md:inline">{t(s.titleKey)}</span>
-                <span className="md:hidden text-[10px]">{i + 1}</span>
-              </button>
-            ))}
+          <div className="flex items-center justify-between gap-4 mb-2">
+            <div className="text-[10px] font-black tracking-widest text-nexus-blue uppercase italic shrink-0 bg-blue-50 dark:bg-blue-900/10 px-3 py-1.5 rounded-full border border-blue-100 dark:border-blue-500/20">
+              Plan {queriedYear}
+            </div>
+            <div className="flex items-center justify-end gap-1.5 md:gap-2 overflow-x-auto py-1">
+              {STEPS.map((s, i) => (
+                <button
+                  key={s.key}
+                  onClick={() => { setDirection(i > step ? 1 : -1); setStep(i); }}
+                  className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                    i === step
+                      ? 'bg-gradient-to-r ' + s.color + ' text-white shadow-lg scale-105'
+                      : i < step
+                      ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                      : 'bg-gray-100 dark:bg-dark-bg text-gray-400 dark:text-gray-500'
+                  }`}
+                >
+                  <span className="text-sm md:text-base">{s.icon}</span>
+                  <span className="hidden md:inline">{t(s.titleKey)}</span>
+                  <span className="md:hidden text-[10px]">{i + 1}</span>
+                </button>
+              ))}
+            </div>
           </div>
           {/* Progress track */}
           <div className="w-full h-1 bg-gray-200 dark:bg-dark-border rounded-full overflow-hidden">

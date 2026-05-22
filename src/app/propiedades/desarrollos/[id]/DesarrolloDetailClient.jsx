@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
+import { updateDevelopment } from '@/lib/dal/developments';
+import { getPropertiesByDevelopmentId, getUnlinkedProperties, updateProperty } from '@/lib/dal/properties';
 import TopNav from '@/components/layout/TopNav';
 import DevelopmentStatusBadge from '@/components/propiedades/DevelopmentStatusBadge';
 import { formatPriceRange } from '@/components/propiedades/DevelopmentCard';
@@ -12,6 +13,206 @@ import BlockEditor from '@/components/propiedades/BlockEditor';
 import DevelopmentAnalytics from '@/components/propiedades/DevelopmentAnalytics';
 import ReportBuilder from '@/components/propiedades/ReportBuilder';
 import Link from 'next/link';
+
+/* InventarioTab — links/unlinks agent properties to this development */
+function InventarioTab({ dev, t, lang }) {
+  const [properties, setProperties] = useState([]);
+  const [agentProps, setAgentProps] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [linking, setLinking] = useState(false);
+  const [search, setSearch] = useState('');
+  const [showPicker, setShowPicker] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      const linked = await getPropertiesByDevelopmentId(dev.id);
+      const mine = await getUnlinkedProperties();
+      setProperties(linked || []);
+      setAgentProps(mine || []);
+      setLoading(false);
+    };
+    load();
+  }, [dev.id]);
+
+  const linkProp = async (propId) => {
+    setLinking(true);
+    await updateProperty(propId, { development_id: dev.id });
+    const linked = await getPropertiesByDevelopmentId(dev.id);
+    setProperties(linked || []);
+    setAgentProps(prev => prev.filter(p => p.id !== propId));
+    setLinking(false);
+    setShowPicker(false);
+  };
+
+  const unlinkProp = async (propId) => {
+    if (!confirm(t('dev_inv_unlink_confirm'))) return;
+    await updateProperty(propId, { development_id: null });
+    setProperties(prev => prev.filter(p => p.id !== propId));
+  };
+
+  const STATUS_COLOR = { draft: 'bg-gray-100 text-gray-600', pending_approval: 'bg-amber-100 text-amber-700', approved: 'bg-blue-100 text-blue-700', published: 'bg-emerald-100 text-emerald-700', sold: 'bg-purple-100 text-purple-700' };
+
+  if (loading) return <div className="glass-panel rounded-2xl p-12 flex items-center justify-center"><div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" /></div>;
+
+  return (
+    <div className="glass-panel rounded-2xl p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-bold text-gray-900 dark:text-white">{t('dev_inv_title')}</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{properties.length} {lang === 'en' ? 'properties linked' : 'propiedades vinculadas'}</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => setShowPicker(!showPicker)} className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold shadow-md shadow-emerald-500/20 transition-all flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+            {t('dev_inv_link')}
+          </button>
+          <Link href={`/propiedades/nuevo?development_id=${dev.id}`} className="px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-gray-300 text-sm font-semibold transition-colors flex items-center gap-2">
+            {t('dev_inv_create')}
+          </Link>
+        </div>
+      </div>
+
+      {showPicker && (
+        <div className="border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl p-4">
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{lang === 'en' ? 'Select a property to link:' : 'Seleccionar propiedad para vincular:'}</p>
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={t('dev_inv_search')} className="w-full mb-3 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          {agentProps.filter(p => (p.title_es || p.title_en || '').toLowerCase().includes(search.toLowerCase())).length === 0
+            ? <p className="text-sm text-gray-500 text-center py-4">{lang === 'en' ? 'No unlinked properties found.' : 'No hay propiedades sin vincular.'}</p>
+            : agentProps.filter(p => (p.title_es || p.title_en || '').toLowerCase().includes(search.toLowerCase())).map(p => (
+              <button key={p.id} onClick={() => linkProp(p.id)} disabled={linking} className="w-full flex items-center justify-between p-3 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-colors text-left mb-1 disabled:opacity-50">
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white text-sm">{p.title_es || p.title_en || lang === 'en' ? 'Untitled' : 'Sin título'}</p>
+                  <p className="text-xs text-gray-500">{p.property_type}</p>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COLOR[p.status] || 'bg-gray-100 text-gray-600'}`}>{p.status}</span>
+              </button>
+            ))
+          }
+        </div>
+      )}
+
+      {properties.length === 0 ? (
+        <div className="text-center py-12">
+          <span className="text-5xl mb-4 block">🏘️</span>
+          <h3 className="font-bold text-gray-900 dark:text-white">{t('dev_inv_empty')}</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-sm mx-auto">{t('dev_inv_empty_desc')}</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {properties.map(prop => (
+            <div key={prop.id} className="border border-gray-200 dark:border-slate-700 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 hover:shadow-md transition-shadow">
+              {prop.main_image_url ? (
+                <div className="aspect-[16/9] bg-gray-100 dark:bg-slate-800 overflow-hidden relative">
+                  <img src={prop.main_image_url} alt="" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="aspect-[16/9] bg-gray-100 dark:bg-slate-800 flex items-center justify-center"><span className="text-3xl opacity-30">🏠</span></div>
+              )}
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-sm leading-snug">{prop.title_es || prop.title_en || '—'}</h3>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold shrink-0 ${STATUS_COLOR[prop.status] || 'bg-gray-100 text-gray-600'}`}>{prop.status}</span>
+                </div>
+                <p className="text-xs text-gray-500">{prop.property_type} {prop.size_m2 ? `• ${prop.size_m2.toLocaleString()} m²` : ''}</p>
+                {prop.price && <p className="text-emerald-600 dark:text-emerald-400 font-bold text-sm mt-2">${prop.price.toLocaleString()}</p>}
+                <div className="flex gap-2 mt-3">
+                  <Link href={`/propiedades/${prop.id}`} className="flex-1 text-center text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-gray-600 dark:text-gray-400">
+                    {lang === 'en' ? 'View' : 'Ver'}
+                  </Link>
+                  <button onClick={() => unlinkProp(prop.id)} className="flex-1 text-center text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors">
+                    {t('dev_inv_unlink')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* AjustesTab — status management, share link, danger zone */
+function AjustesTab({ dev, setDev, t, lang }) {
+  const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const publicUrl = typeof window !== 'undefined' ? `${window.location.origin}/d/${dev.slug}` : `/d/${dev.slug}`;
+
+  const STATUS_FLOW = ['draft', 'pending_approval', 'active', 'sold_out', 'archived'];
+  const STATUS_LABELS = { draft: t('dev_status_draft'), pending_approval: t('dev_status_pending'), active: t('dev_status_active'), sold_out: t('dev_status_sold_out'), archived: t('dev_status_archived') };
+  const STATUS_COLORS = { draft: 'bg-gray-100 text-gray-600', pending_approval: 'bg-amber-100 text-amber-700', active: 'bg-emerald-100 text-emerald-700', sold_out: 'bg-purple-100 text-purple-700', archived: 'bg-red-100 text-red-600' };
+
+  const changeStatus = async (newStatus) => {
+    setSaving(true);
+    try {
+      await updateDevelopment(dev.id, { status: newStatus });
+      setDev(prev => ({ ...prev, status: newStatus }));
+    } catch (error) {
+      console.error(error);
+    }
+    setSaving(false);
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(publicUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Status Section */}
+      <div className="glass-panel rounded-2xl p-6">
+        <h2 className="font-bold text-gray-900 dark:text-white mb-1">{t('dev_settings_status')}</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">{t('dev_settings_status_note')}</p>
+        <div className="flex flex-wrap gap-2">
+          {STATUS_FLOW.map(s => (
+            <button key={s} onClick={() => changeStatus(s)} disabled={saving || dev.status === s}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-60 ${dev.status === s ? STATUS_COLORS[s] + ' ring-2 ring-offset-2 ring-emerald-500' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700'}`}>
+              {STATUS_LABELS[s]}
+              {dev.status === s && ' ✓'}
+            </button>
+          ))}
+        </div>
+        {saving && <p className="text-xs text-emerald-500 mt-3">{t('dev_settings_saving')}</p>}
+      </div>
+
+      {/* Share Section */}
+      <div className="glass-panel rounded-2xl p-6">
+        <h2 className="font-bold text-gray-900 dark:text-white mb-4">{t('dev_settings_share')}</h2>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 px-4 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 font-mono text-sm text-gray-600 dark:text-gray-400 truncate">
+            {publicUrl}
+          </div>
+          <button onClick={copyLink} className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${copied ? 'bg-emerald-500 text-white' : 'border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'}`}>
+            {copied ? t('dev_settings_copied') : t('dev_settings_copy_link')}
+          </button>
+          {dev.status === 'active' && (
+            <a href={publicUrl} target="_blank" rel="noreferrer" className="px-4 py-3 rounded-xl text-sm font-semibold border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors whitespace-nowrap">
+              {lang === 'en' ? 'View Live ↗' : 'Ver Pública ↗'}
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* Edit Meta */}
+      <div className="glass-panel rounded-2xl p-6">
+        <h2 className="font-bold text-gray-900 dark:text-white mb-4">{t('dev_settings_edit_meta')}</h2>
+        <Link href={`/propiedades/desarrollos/${dev.id}/editar`} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+          {lang === 'en' ? 'Edit Name, Slug & Branding' : 'Editar Nombre, Slug y Branding'}
+        </Link>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="glass-panel rounded-2xl p-6 border border-red-200 dark:border-red-900">
+        <h2 className="font-bold text-red-600 dark:text-red-400 mb-4">{t('dev_settings_danger')}</h2>
+        <button onClick={() => { if (confirm(t('dev_settings_archive_confirm'))) changeStatus('archived'); }}
+          className="px-5 py-2.5 rounded-xl border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+          {t('dev_settings_archive')}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 /* ═══════════════════════════════════════════════════════════════
    DETALLE DESARROLLO — Development Detail & Editor
@@ -35,11 +236,7 @@ export default function DesarrolloDetailClient({ initialDevelopment }) {
   const handleSave = async () => {
     setActionLoading(true);
     try {
-      const { error } = await supabase
-        .from('developments')
-        .update({ sections: blocks })
-        .eq('id', id);
-      if (error) throw error;
+      await updateDevelopment(id, { sections: blocks });
       alert(lang === 'en' ? 'Saved successfully' : 'Guardado exitosamente');
     } catch (err) {
       alert('Error: ' + err.message);
@@ -148,13 +345,18 @@ export default function DesarrolloDetailClient({ initialDevelopment }) {
                       { id: 'text', icon: 'M4 6h16M4 12h16M4 18h7', label: 'Texto / Descripción' },
                       { id: 'gallery', icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z', label: 'Galería de Fotos' },
                       { id: 'amenities', icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z', label: 'Amenidades' },
+                      { id: 'stats', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', label: 'Estadísticas' },
+                      { id: 'inventory', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', label: 'Inventario de Unidades' },
+                      { id: 'video', icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z', label: 'Video' },
+                      { id: 'map', icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7', label: 'Mapa de Ubicación' },
                       { id: 'faq', icon: 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', label: 'Preguntas Frecuentes' },
                       { id: 'lead', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', label: 'Formulario Contacto' },
                       { id: 'document', icon: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z', label: 'Documento / Brochure' },
-                      { id: 'agent', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', label: 'Tarjeta del Agente' }
+                      { id: 'social', icon: 'M7 20l4-16m2 16l4-16M6 9h14M4 15h14', label: 'Redes Sociales' },
+                      { id: 'agent', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', label: 'Tarjeta del Agente' },
                     ].map(block => (
                       <button key={block.id} onClick={() => addBlock(block.id)} className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-800/50 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-500 transition-colors group border border-dashed border-gray-200 dark:border-slate-700 hover:border-emerald-500 text-left">
-                        <svg className="w-5 h-5 text-gray-400 group-hover:text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d={block.icon} /></svg>
+                        <svg className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d={block.icon} /></svg>
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-emerald-500">{block.label}</span>
                         <svg className="w-4 h-4 ml-auto text-gray-300 opacity-0 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
                       </button>
@@ -193,6 +395,10 @@ export default function DesarrolloDetailClient({ initialDevelopment }) {
                   )}
                   
                 </div>
+              ) : activeTab === 'Inventario' ? (
+                <InventarioTab dev={dev} t={t} lang={lang} />
+              ) : activeTab === 'Ajustes' ? (
+                <AjustesTab dev={dev} setDev={setDev} t={t} lang={lang} />
               ) : (
                 <div className="glass-panel rounded-2xl p-12 text-center text-gray-500 dark:text-gray-400">
                   {lang === 'en' ? 'Tab content coming soon.' : 'Contenido de la pestaña próximamente.'}

@@ -4,20 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
+import { updateProperty, insertProperty, upsertListingMilestone } from '@/lib/dal/properties';
 import TopNav from '@/components/layout/TopNav';
 import Link from 'next/link';
-
-const PROPERTY_TYPES = [
-  { id: 1, es: 'Casa', en: 'House' },
-  { id: 2, es: 'Apartamento', en: 'Apartment' },
-  { id: 3, es: 'Lote', en: 'Lot' },
-  { id: 4, es: 'Finca', en: 'Farm' },
-  { id: 5, es: 'Comercial', en: 'Commercial' },
-  { id: 6, es: 'Bodega', en: 'Warehouse' },
-  { id: 7, es: 'Oficina', en: 'Office' },
-  { id: 10, es: 'Terreno', en: 'Land' },
-];
+import { trackOkrActivity } from '@/lib/okr-tracker';
+import { PROPERTY_TYPES_LIST } from '@/lib/constants/property-constants';
 
 const AMENITY_FIELDS = [
   { key: 'pool_private', es: 'Piscina', en: 'Pool' },
@@ -62,8 +53,11 @@ function SectionTitle({ icon, title, subtitle }) {
 
 export default function NuevaPropiedadClient({ editId, initialAcms, initialForm }) {
   const router = useRouter();
-  const { user, profile } = useAuth();
+  const { user, profile, isBroker } = useAuth();
   const { t, lang } = useApp();
+
+  // Lock contact fields after broker approval (agents cannot change owner info)
+  const contactLocked = editId && !isBroker && initialForm?._status && ['approved', 'published', 'sold'].includes(initialForm._status);
   const [loading, setLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [form, setForm] = useState(initialForm || INITIAL_FORM);
@@ -126,31 +120,38 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
         year_built: form.year_built ? Number(form.year_built) : null,
       };
 
+      // Defense-in-depth: strip contact fields if locked
+      if (contactLocked) {
+        delete payload.owner_name;
+        delete payload.owner_phones;
+        delete payload.owner_email;
+      }
+      // Remove internal _status flag from payload
+      delete payload._status;
+
       let resultId;
       if (editId) {
         // Update existing property
-        const { error } = await supabase.from('properties').update(payload).eq('id', editId);
-        if (error) throw error;
+        await updateProperty(editId, payload);
         resultId = editId;
         // Auto-update milestones on status change
         if (statusOverride !== 'draft' && statusOverride !== 'paused' && statusOverride !== 'cancelled') {
-          await supabase.from('listing_milestones').upsert({
+          await upsertListingMilestone({
             property_id: editId,
             agent_id: user?.id,
             submitted_at: new Date().toISOString(),
-          }, { onConflict: 'property_id' });
+          });
         }
         if (payload.listing_agreement) {
-          await supabase.from('listing_milestones').upsert({
+          await upsertListingMilestone({
             property_id: editId,
             agent_id: user?.id,
             authorization_signed_at: new Date().toISOString(),
-          }, { onConflict: 'property_id' });
+          });
         }
       } else {
         // Create new property
-        const { data, error } = await supabase.from('properties').insert([payload]).select().single();
-        if (error) throw error;
+        const data = await insertProperty(payload);
         resultId = data.id;
         // Auto-create milestone row
         const milestonePayload = {
@@ -160,7 +161,7 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
         };
         if (statusOverride !== 'draft' && statusOverride !== 'paused' && statusOverride !== 'cancelled') milestonePayload.submitted_at = new Date().toISOString();
         if (payload.listing_agreement) milestonePayload.authorization_signed_at = new Date().toISOString();
-        await supabase.from('listing_milestones').insert([milestonePayload]);
+        await upsertListingMilestone(milestonePayload);
 
         // Auto-create Google Drive Folder for Photos in background
         try {
@@ -171,6 +172,11 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
           });
         } catch (e) {
           console.error('Failed to trigger Drive folder creation:', e);
+        }
+
+        // Track OKR if submitted for approval
+        if (statusOverride === 'pending_approval' || statusOverride === 'published') {
+          await trackOkrActivity('captaciones');
         }
       }
       router.push(`/propiedades/${resultId}`);
@@ -250,7 +256,7 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
                   <div>
                     <label className={labelCls}>{lang === 'en' ? 'Property Type' : 'Tipo de Propiedad'}</label>
                     <select value={form.property_type_id} onChange={e => setNum('property_type_id', e.target.value)} className={inputCls}>
-                      {PROPERTY_TYPES.map(pt => (<option key={pt.id} value={pt.id}>{lang === 'en' ? pt.en : pt.es}</option>))}
+                      {PROPERTY_TYPES_LIST.map(pt => (<option key={pt.id} value={pt.id}>{lang === 'en' ? pt.en : pt.es}</option>))}
                     </select>
                   </div>
                   <div>
@@ -280,18 +286,29 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
 
                 <SectionTitle icon="👤" title={lang === 'en' ? 'Owner Information' : 'Información del Propietario'} subtitle={lang === 'en' ? 'Required for broker approval' : 'Requerido para aprobación del broker'} />
 
+                {contactLocked && (
+                  <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl flex items-start gap-2">
+                    <span className="text-base mt-0.5">🔒</span>
+                    <p className="text-xs text-amber-700 dark:text-amber-400">
+                      {lang === 'en'
+                        ? 'Contact information is locked after broker approval. Contact the office to request changes.'
+                        : 'La información de contacto está bloqueada después de la aprobación del broker. Contacta a la oficina para solicitar cambios.'}
+                    </p>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Owner Name *' : 'Nombre del Propietario *'}</label>
-                    <input value={form.owner_name} onChange={e => set('owner_name', e.target.value)} className={inputCls} placeholder="Juan Pérez" />
+                    <label className={labelCls}>{lang === 'en' ? 'Owner Name *' : 'Nombre del Propietario *'}{contactLocked ? ' 🔒' : ''}</label>
+                    <input value={form.owner_name} onChange={e => set('owner_name', e.target.value)} className={`${inputCls}${contactLocked ? ' opacity-60 cursor-not-allowed' : ''}`} placeholder="Juan Pérez" disabled={contactLocked} readOnly={contactLocked} />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Owner Phone' : 'Teléfono del Propietario'}</label>
-                    <input value={form.owner_phones} onChange={e => set('owner_phones', e.target.value)} className={inputCls} placeholder="+506 8888 8888" />
+                    <label className={labelCls}>{lang === 'en' ? 'Owner Phone' : 'Teléfono del Propietario'}{contactLocked ? ' 🔒' : ''}</label>
+                    <input value={form.owner_phones} onChange={e => set('owner_phones', e.target.value)} className={`${inputCls}${contactLocked ? ' opacity-60 cursor-not-allowed' : ''}`} placeholder="+506 8888 8888" disabled={contactLocked} readOnly={contactLocked} />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Owner Email' : 'Email del Propietario'}</label>
-                    <input type="email" value={form.owner_email} onChange={e => set('owner_email', e.target.value)} className={inputCls} placeholder="owner@email.com" />
+                    <label className={labelCls}>{lang === 'en' ? 'Owner Email' : 'Email del Propietario'}{contactLocked ? ' 🔒' : ''}</label>
+                    <input type="email" value={form.owner_email} onChange={e => set('owner_email', e.target.value)} className={`${inputCls}${contactLocked ? ' opacity-60 cursor-not-allowed' : ''}`} placeholder="owner@email.com" disabled={contactLocked} readOnly={contactLocked} />
                   </div>
                   <div className="flex items-center gap-3 pt-6">
                     <button type="button" onClick={() => set('listing_agreement', !form.listing_agreement)} className={`w-10 h-6 rounded-full transition-colors relative ${form.listing_agreement ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}>

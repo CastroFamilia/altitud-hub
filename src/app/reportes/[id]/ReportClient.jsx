@@ -2,39 +2,45 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 
 /* ═══════════════════════════════════════════════════════════════
    DEVELOPMENT PERFORMANCE REPORT — Public shareable page
-   URL: /reportes/[id]?period=month&sections=traffic,funnel,sales&lang=es&commentary=...
+   URL: /reportes/[id]?period=month&sections=traffic,funnel,sales&lang=es&commentary=...&agent=...
+   Data: fetched from /api/reportes/[id] (no client-side Supabase key exposed)
    ═══════════════════════════════════════════════════════════════ */
 
 const LABELS = {
   es: {
     title: 'Reporte de Rendimiento', subtitle: 'Marketing y resultados comerciales',
     prepared: 'Preparado por', period: 'Período', generated: 'Generado',
-    views: 'Vistas', unique: 'Visitantes Únicos', avgTime: 'Tiempo Prom.',
-    funnelViews: 'Vistas Página', funnelInquiries: 'Consultas', funnelVisits: 'Visitas Sitio',
+    views: 'Vistas Totales', unique: 'Visitantes Únicos', funnelViews: 'Vistas Página',
+    funnelInquiries: 'Consultas', funnelVisits: 'Visitas Sitio',
     funnelReservations: 'Reservas', funnelSales: 'Ventas', conversion: 'Conversión',
-    topListings: 'Top Listados', trafficSources: 'Fuentes de Tráfico', devices: 'Dispositivos',
-    resActive: 'Reservas Activas', resAmount: 'Monto Total', salesClosed: 'Ventas Cerradas',
+    topListings: 'Propiedades Más Vistas', trafficSources: 'Fuentes de Tráfico',
+    devices: 'Dispositivos', resActive: 'Reservas Activas', salesClosed: 'Ventas Cerradas',
     salesVolume: 'Volumen Total', property: 'Propiedad', date: 'Fecha', price: 'Precio',
     buyer: 'Comprador', commentary: 'Comentarios del Agente', noData: 'Sin datos para este período',
-    confidential: 'Confidencial — RE/MAX Altitud', downloadPdf: '📄 Descargar PDF',
+    confidential: 'Confidencial — RE/MAX Altitud', downloadPdf: 'Descargar PDF',
+    shareLink: 'Copiar Link', linkCopied: '¡Copiado!',
     week: 'Esta Semana', month: 'Este Mes', '30d': 'Últimos 30 días', ytd: 'Año (YTD)',
+    loading: 'Cargando reporte...', notFound: 'Desarrollo no encontrado.',
+    trafficTitle: 'Tráfico y Alcance', funnelTitle: 'Embudo de Conversión',
   },
   en: {
     title: 'Performance Report', subtitle: 'Marketing & commercial results',
     prepared: 'Prepared by', period: 'Period', generated: 'Generated',
-    views: 'Views', unique: 'Unique Visitors', avgTime: 'Avg. Time',
-    funnelViews: 'Page Views', funnelInquiries: 'Inquiries', funnelVisits: 'Site Visits',
+    views: 'Total Views', unique: 'Unique Visitors', funnelViews: 'Page Views',
+    funnelInquiries: 'Inquiries', funnelVisits: 'Site Visits',
     funnelReservations: 'Reservations', funnelSales: 'Sales', conversion: 'Conversion',
-    topListings: 'Top Listings', trafficSources: 'Traffic Sources', devices: 'Devices',
-    resActive: 'Active Reservations', resAmount: 'Total Amount', salesClosed: 'Closed Sales',
+    topListings: 'Top Viewed Properties', trafficSources: 'Traffic Sources',
+    devices: 'Devices', resActive: 'Active Reservations', salesClosed: 'Closed Sales',
     salesVolume: 'Total Volume', property: 'Property', date: 'Date', price: 'Price',
     buyer: 'Buyer', commentary: 'Agent Commentary', noData: 'No data for this period',
-    confidential: 'Confidential — RE/MAX Altitud', downloadPdf: '📄 Download PDF',
+    confidential: 'Confidential — RE/MAX Altitud', downloadPdf: 'Download PDF',
+    shareLink: 'Copy Link', linkCopied: 'Copied!',
     week: 'This Week', month: 'This Month', '30d': 'Last 30 Days', ytd: 'Year to Date',
+    loading: 'Loading report...', notFound: 'Development not found.',
+    trafficTitle: 'Traffic & Reach', funnelTitle: 'Conversion Funnel',
   },
 };
 
@@ -44,24 +50,17 @@ function getPeriodRange(period) {
   let start;
   switch (period) {
     case 'week': {
-      const d = new Date(now);
-      d.setDate(d.getDate() - d.getDay()); // start of week (Sunday)
-      start = d.toISOString().split('T')[0];
-      break;
+      const d = new Date(now); d.setDate(d.getDate() - d.getDay());
+      start = d.toISOString().split('T')[0]; break;
     }
-    case 'month': {
-      start = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-      break;
-    }
+    case 'month':
+      start = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`; break;
     case '30d': {
       const d = new Date(now); d.setDate(d.getDate() - 30);
-      start = d.toISOString().split('T')[0];
-      break;
+      start = d.toISOString().split('T')[0]; break;
     }
-    case 'ytd': {
-      start = `${now.getFullYear()}-01-01`;
-      break;
-    }
+    case 'ytd':
+      start = `${now.getFullYear()}-01-01`; break;
     default: {
       const d = new Date(now); d.setDate(d.getDate() - 30);
       start = d.toISOString().split('T')[0];
@@ -70,7 +69,7 @@ function getPeriodRange(period) {
   return { start, end };
 }
 
-export default function ReportPage({ params }) {
+export default function ReportClient({ params }) {
   const { id } = params;
   const searchParams = useSearchParams();
   const lang = searchParams.get('lang') || 'es';
@@ -82,44 +81,16 @@ export default function ReportPage({ params }) {
   const L = LABELS[lang] || LABELS.es;
   const { start, end } = getPeriodRange(period);
 
-  const [dev, setDev] = useState(null);
-  const [dailyStats, setDailyStats] = useState([]);
-  const [rawViews, setRawViews] = useState([]);
-  const [inquiries, setInquiries] = useState([]);
-  const [reservations, setReservations] = useState([]);
-  const [sales, setSales] = useState([]);
-  const [properties, setProperties] = useState([]);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
-        // Fetch development
-        const { data: devData } = await supabase
-          .from('developments').select('*').eq('id', id).single();
-        setDev(devData);
-        if (!devData) { setLoading(false); return; }
-
-        // Fetch analytics
-        const [{ data: eventsData }, { data: inq }, { data: props }] = await Promise.all([
-          supabase.from('page_events').select('*')
-            .eq('development_id', id).gte('created_at', start + 'T00:00:00Z').lte('created_at', end + 'T23:59:59Z')
-            .order('created_at', { ascending: false }).limit(5000),
-          supabase.from('property_inquiries').select('*')
-            .eq('development_id', id).gte('created_at', start + 'T00:00:00Z')
-            .order('created_at', { ascending: false }),
-          supabase.from('properties').select('id, name, listing_title_es, listing_title_en, status, sold_price, sold_date, buyer_name, price')
-            .eq('development_id', id),
-        ]);
-
-        setRawViews(eventsData || []); // Reusing rawViews for events
-        setInquiries(inq || []);
-        setProperties(props || []);
-
-        // Split properties into reservations vs sales
-        const allProps = props || [];
-        setReservations(allProps.filter(p => ['pending_approval', 'approved'].includes(p.status)));
-        setSales(allProps.filter(p => p.status === 'sold' && p.sold_date >= start));
+        const res = await fetch(`/api/reportes/${id}?start=${start}&end=${end}`);
+        const json = await res.json();
+        if (json.success) setData(json.data);
       } catch (err) {
         console.error('Report load error:', err);
       } finally {
@@ -129,180 +100,154 @@ export default function ReportPage({ params }) {
     load();
   }, [id, start, end]);
 
-  // ── Computed Metrics ──
-  const metrics = useMemo(() => {
-    const pageViews = rawViews.filter(e => e.event_type === 'page_view');
-    const totalViews = pageViews.length;
-    const totalUnique = Math.max(Math.round(totalViews * 0.65), 1); // Approximation since we don't track sessions yet
-    const avgDuration = 120; // 2 mins approx
-    return { totalViews, totalUnique, avgDuration };
-  }, [rawViews]);
-
-  const topListings = useMemo(() => {
-    const counts = {};
-    rawViews.filter(e => e.event_type === 'listing_click').forEach(e => {
-      if (!e.property_id) return;
-      counts[e.property_id] = (counts[e.property_id] || 0) + 1;
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
     });
-    return Object.entries(counts).sort(([, a], [, b]) => b - a).slice(0, 8).map(([propId, views]) => {
-      const prop = properties.find(p => p.id === propId);
-      return { id: propId, views, name: prop ? (lang === 'es' ? prop.listing_title_es || prop.name : prop.listing_title_en || prop.name) : 'Unknown' };
-    });
-  }, [rawViews, properties, lang]);
+  };
 
-  const topReferrers = useMemo(() => {
-    const counts = {};
-    rawViews.filter(e => e.event_type === 'page_view').forEach(v => {
-      if (!v.referrer) return;
-      try { const host = new URL(v.referrer).hostname.replace('www.', ''); counts[host] = (counts[host] || 0) + 1; }
-      catch { counts[v.referrer] = (counts[v.referrer] || 0) + 1; }
-    });
-    const totalViews = Math.max(rawViews.filter(e => e.event_type === 'page_view').length, 1);
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6)
-      .map(([source, count]) => ({ source, count, pct: Math.round((count / totalViews) * 100) }));
-  }, [rawViews]);
+  // Chart data
+  const chartData = useMemo(() => {
+    if (!data) return [];
+    const days = [];
+    const s = new Date(start + 'T12:00:00');
+    const e = new Date(end + 'T12:00:00');
+    for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0];
+      days.push({ date: dateStr, views: data.dailyMap?.[dateStr] || 0 });
+    }
+    return days;
+  }, [data, start, end]);
 
-  const deviceBreakdown = useMemo(() => {
-    const counts = { desktop: 0, mobile: 0, tablet: 0 };
-    rawViews.forEach(v => { 
-      const device = v.event_meta?.device_type;
-      if (device && counts[device] !== undefined) counts[device]++; 
-    });
-    const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
-    return Object.entries(counts).filter(([, c]) => c > 0)
-      .map(([type, count]) => ({ type, count, pct: Math.round((count / total) * 100) }));
-  }, [rawViews]);
+  const maxChart = useMemo(() => Math.max(...chartData.map(d => d.views), 1), [chartData]);
 
-  const salesVolume = sales.reduce((s, p) => s + (Number(p.sold_price) || 0), 0);
-
-  const formatDuration = (s) => s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
   const formatDate = (d) => new Date(d).toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const formatCurrency = (n) => `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 0 })}`;
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="animate-spin w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-[#003DA5] flex items-center justify-center animate-pulse">
+          <span className="text-white text-xs font-black">RE</span>
+        </div>
+        <p className="text-slate-400 text-sm font-medium">{L.loading}</p>
       </div>
     );
   }
 
-  if (!dev) {
+  if (!data?.dev) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-slate-400 text-lg">{L.noData}</p>
+        <p className="text-slate-400 text-lg">{L.notFound}</p>
       </div>
     );
   }
 
-  // Chart data
-  const chartDays = [];
-  const s = new Date(start + 'T12:00:00');
-  const e = new Date(end + 'T12:00:00');
-  for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
-    chartDays.push(d.toISOString().split('T')[0]);
-  }
-  const statsByDate = {};
-  rawViews.filter(ev => ev.event_type === 'page_view').forEach(ev => {
-    const dateStr = ev.created_at.split('T')[0];
-    if (!statsByDate[dateStr]) statsByDate[dateStr] = 0;
-    statsByDate[dateStr] += 1;
-  });
-  const chartData = chartDays.map(date => ({ date, views: statsByDate[date] || 0 }));
-  const maxChart = Math.max(...chartData.map(d => d.views), 1);
+  const { dev, metrics, topReferrers, deviceBreakdown, topListings, inquiries, reservations, sales, salesVolume } = data;
 
-  // Funnel data
-  const siteVisitsCount = inquiries.filter(i => ['site_visit', 'negotiation', 'converted'].includes(i.status)).length;
+  const siteVisitsCount = (inquiries || []).filter(i => ['site_visit', 'negotiation', 'converted'].includes(i.status)).length;
   const funnelSteps = [
     { label: L.funnelViews, value: metrics.totalViews, color: '#003DA5' },
-    { label: L.funnelInquiries, value: inquiries.length, color: '#2563eb' },
+    { label: L.funnelInquiries, value: (inquiries || []).length, color: '#2563eb' },
     { label: L.funnelVisits, value: siteVisitsCount, color: '#8b5cf6' },
-    { label: L.funnelReservations, value: reservations.length, color: '#f59e0b' },
-    { label: L.funnelSales, value: sales.length, color: '#10b981' },
+    { label: L.funnelReservations, value: (reservations || []).length, color: '#f59e0b' },
+    { label: L.funnelSales, value: (sales || []).length, color: '#10b981' },
   ];
   const funnelMax = Math.max(...funnelSteps.map(s => s.value), 1);
 
   return (
     <div className="report-page min-h-screen bg-white text-slate-900" style={{ fontFamily: "'Inter', sans-serif" }}>
-      {/* ── Print Button (hidden in print) ── */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        @media print {
+          .no-print { display: none !important; }
+          .page-break-before { page-break-before: always; }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+        .stat-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,61,165,0.1); }
+      `}</style>
+
+      {/* ── Action Buttons (hidden in print) ── */}
       <div className="no-print fixed top-4 right-4 z-50 flex gap-2">
-        <button onClick={() => window.print()}
-          className="bg-[#003DA5] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-[#002d7a] transition-all">
-          {L.downloadPdf}
+        <button
+          onClick={handleCopyLink}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg transition-all border ${copied ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-700 border-slate-200 hover:border-[#003DA5] hover:text-[#003DA5]'}`}
+        >
+          {copied ? `✓ ${L.linkCopied}` : `🔗 ${L.shareLink}`}
+        </button>
+        <button
+          onClick={() => window.print()}
+          className="bg-[#003DA5] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-[#002d7a] transition-all"
+        >
+          📄 {L.downloadPdf}
         </button>
       </div>
 
       {/* ── Header ── */}
-      <div className="bg-gradient-to-r from-[#003DA5] to-[#001d52] text-white px-8 py-10 print:py-6">
+      <div className="bg-gradient-to-br from-[#003DA5] via-[#004fcf] to-[#001d52] text-white px-8 py-12 print:py-8">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-2xl font-black">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-14 h-14 bg-white/15 backdrop-blur rounded-2xl flex items-center justify-center text-2xl font-black border border-white/20">
               RE
             </div>
             <div>
               <h1 className="text-2xl font-black uppercase tracking-wide">{L.title}</h1>
-              <p className="text-blue-200 text-sm">{L.subtitle}</p>
+              <p className="text-blue-200 text-sm mt-0.5">{L.subtitle}</p>
             </div>
           </div>
 
-          <div className="bg-white/10 rounded-2xl p-5 mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div>
-              <p className="text-blue-300 text-[10px] uppercase font-bold tracking-widest">Desarrollo</p>
-              <p className="font-black text-lg">{dev.name}</p>
-            </div>
-            <div>
-              <p className="text-blue-300 text-[10px] uppercase font-bold tracking-widest">{L.period}</p>
-              <p className="font-bold">{L[period] || period}</p>
-              <p className="text-xs text-blue-200">{start} → {end}</p>
-            </div>
-            <div>
-              <p className="text-blue-300 text-[10px] uppercase font-bold tracking-widest">{L.prepared}</p>
-              <p className="font-bold">{agentName || 'RE/MAX Altitud'}</p>
-            </div>
-            <div>
-              <p className="text-blue-300 text-[10px] uppercase font-bold tracking-widest">{L.generated}</p>
-              <p className="font-bold">{formatDate(new Date())}</p>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: 'Desarrollo', value: dev.name },
+              { label: L.period, value: L[period] || period, sub: `${start} → ${end}` },
+              { label: L.prepared, value: agentName || 'RE/MAX Altitud' },
+              { label: L.generated, value: formatDate(new Date()) },
+            ].map((item, i) => (
+              <div key={i} className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/15">
+                <p className="text-blue-300 text-[9px] uppercase font-black tracking-widest mb-1">{item.label}</p>
+                <p className="font-black text-base leading-tight">{item.value}</p>
+                {item.sub && <p className="text-blue-200 text-[10px] mt-0.5">{item.sub}</p>}
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-8 py-8 space-y-8 print:space-y-6">
+      <div className="max-w-4xl mx-auto px-8 py-10 space-y-10 print:space-y-6">
 
         {/* ── Traffic Overview ── */}
         {sections.includes('traffic') && (
           <section>
-            <h2 className="text-lg font-black uppercase tracking-widest text-[#003DA5] mb-4 flex items-center gap-2">
-              <span>📊</span> {L.views}
-            </h2>
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <SectionTitle icon="📊" label={L.trafficTitle} />
+            <div className="grid grid-cols-2 gap-4 mb-6">
               {[
-                { label: L.views, val: metrics.totalViews.toLocaleString(), color: 'text-slate-900' },
-                { label: L.unique, val: metrics.totalUnique.toLocaleString(), color: 'text-blue-600' },
-                { label: L.avgTime, val: formatDuration(metrics.avgDuration), color: 'text-emerald-600' },
+                { label: L.views, val: metrics.totalViews.toLocaleString(), color: 'text-[#003DA5]', bg: 'bg-blue-50', border: 'border-blue-100' },
+                { label: L.unique, val: metrics.uniqueVisitors.toLocaleString(), color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100' },
               ].map((s, i) => (
-                <div key={i} className="bg-slate-50 rounded-2xl p-5 text-center border border-slate-100">
-                  <p className="text-[9px] uppercase font-black tracking-widest text-slate-400 mb-1">{s.label}</p>
-                  <p className={`text-3xl font-black ${s.color}`}>{s.val}</p>
+                <div key={i} className={`stat-card ${s.bg} rounded-2xl p-6 text-center border ${s.border}`}>
+                  <p className="text-[9px] uppercase font-black tracking-widest text-slate-400 mb-2">{s.label}</p>
+                  <p className={`text-4xl font-black ${s.color}`}>{s.val}</p>
                 </div>
               ))}
             </div>
 
-            {/* Bar chart */}
+            {/* Bar Chart */}
             {chartData.length > 0 && (
-              <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-                <div className="flex items-end gap-[2px] h-28">
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                <div className="flex items-end gap-[2px] h-32">
                   {chartData.map((d, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center">
                       <div
-                        className="w-full bg-gradient-to-t from-[#003DA5] to-[#2563eb] rounded-sm"
-                        style={{ height: `${Math.max((d.views / maxChart) * 100, 2)}%`, minHeight: '2px' }}
+                        className="w-full bg-gradient-to-t from-[#003DA5] to-[#4f8ef7] rounded-sm transition-all duration-500"
+                        style={{ height: `${Math.max((d.views / maxChart) * 100, 2)}%`, minHeight: '2px', opacity: d.views === 0 ? 0.15 : 1 }}
                         title={`${d.date}: ${d.views}`}
                       />
                     </div>
                   ))}
                 </div>
-                <div className="flex justify-between mt-2 text-[8px] text-slate-400 font-bold">
+                <div className="flex justify-between mt-2 text-[9px] text-slate-400 font-bold">
                   <span>{chartData[0]?.date?.slice(5)}</span>
                   <span>{chartData[chartData.length - 1]?.date?.slice(5)}</span>
                 </div>
@@ -314,16 +259,14 @@ export default function ReportPage({ params }) {
         {/* ── Lead Funnel ── */}
         {sections.includes('funnel') && (
           <section className="page-break-before">
-            <h2 className="text-lg font-black uppercase tracking-widest text-[#003DA5] mb-4 flex items-center gap-2">
-              <span>🔄</span> {L.conversion}
-            </h2>
+            <SectionTitle icon="🔄" label={L.funnelTitle} />
             <div className="space-y-3">
               {funnelSteps.map((step, i) => (
                 <div key={i} className="flex items-center gap-4">
-                  <span className="w-28 text-xs font-bold text-slate-600 text-right">{step.label}</span>
-                  <div className="flex-1 h-8 bg-slate-100 rounded-lg overflow-hidden relative">
+                  <span className="w-32 text-xs font-bold text-slate-600 text-right shrink-0">{step.label}</span>
+                  <div className="flex-1 h-9 bg-slate-100 rounded-xl overflow-hidden relative">
                     <div
-                      className="h-full rounded-lg transition-all duration-700 flex items-center justify-end pr-3"
+                      className="h-full rounded-xl transition-all duration-700 flex items-center justify-end pr-3"
                       style={{ width: `${Math.max((step.value / funnelMax) * 100, 5)}%`, backgroundColor: step.color }}
                     >
                       <span className="text-xs font-black text-white drop-shadow-sm">{step.value}</span>
@@ -332,30 +275,30 @@ export default function ReportPage({ params }) {
                 </div>
               ))}
             </div>
-            {metrics.totalViews > 0 && inquiries.length > 0 && (
-              <p className="text-sm text-slate-500 mt-3">
-                {L.conversion}: <strong className="text-emerald-600">{((inquiries.length / metrics.totalViews) * 100).toFixed(1)}%</strong> ({L.funnelViews} → {L.funnelInquiries})
+            {metrics.totalViews > 0 && (inquiries || []).length > 0 && (
+              <p className="text-sm text-slate-500 mt-4">
+                {L.conversion}: <strong className="text-emerald-600">{(((inquiries || []).length / metrics.totalViews) * 100).toFixed(1)}%</strong>
               </p>
             )}
           </section>
         )}
 
         {/* ── Top Listings ── */}
-        {sections.includes('listings') && topListings.length > 0 && (
+        {sections.includes('listings') && (topListings || []).length > 0 && (
           <section>
-            <h2 className="text-lg font-black uppercase tracking-widest text-[#003DA5] mb-4 flex items-center gap-2">
-              <span>🏆</span> {L.topListings}
-            </h2>
+            <SectionTitle icon="🏆" label={L.topListings} />
             <div className="space-y-2">
-              {topListings.map((item, i) => (
-                <div key={item.id} className="flex items-center gap-3">
-                  <span className={`text-sm font-black w-6 text-right ${i < 3 ? 'text-amber-500' : 'text-slate-400'}`}>{i + 1}.</span>
-                  <span className="flex-1 text-sm font-bold text-slate-700 truncate">{item.name}</span>
-                  <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
+              {(topListings || []).map((item, i) => (
+                <div key={item.id} className="flex items-center gap-3 py-2">
+                  <span className={`text-sm font-black w-7 text-right shrink-0 ${i < 3 ? 'text-amber-500' : 'text-slate-300'}`}>{i + 1}.</span>
+                  <span className="flex-1 text-sm font-semibold text-slate-700 truncate">
+                    {lang === 'es' ? item.title_es : item.title_en}
+                  </span>
+                  <div className="w-36 h-2 bg-slate-100 rounded-full overflow-hidden shrink-0">
                     <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
-                      style={{ width: `${(item.views / (topListings[0]?.views || 1)) * 100}%` }} />
+                      style={{ width: `${((topListings[0]?.views || 1) > 0 ? (item.views / topListings[0].views) : 0) * 100}%` }} />
                   </div>
-                  <span className="text-sm font-black text-slate-900 w-12 text-right">{item.views}</span>
+                  <span className="text-sm font-black text-slate-900 w-10 text-right shrink-0">{item.views}</span>
                 </div>
               ))}
             </div>
@@ -363,15 +306,14 @@ export default function ReportPage({ params }) {
         )}
 
         {/* ── Traffic Sources ── */}
-        {sections.includes('sources') && topReferrers.length > 0 && (
+        {sections.includes('sources') && (topReferrers || []).length > 0 && (
           <section>
-            <h2 className="text-lg font-black uppercase tracking-widest text-[#003DA5] mb-4 flex items-center gap-2">
-              <span>🔗</span> {L.trafficSources}
-            </h2>
+            <SectionTitle icon="🔗" label={L.trafficSources} />
             <div className="grid grid-cols-2 gap-2">
-              {topReferrers.map((r, i) => (
+              {(topReferrers || []).map((r, i) => (
                 <div key={i} className="flex items-center gap-3 bg-slate-50 rounded-xl p-3 border border-slate-100">
-                  <span className="text-xs text-slate-500 truncate flex-1">{r.source}</span>
+                  <div className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
+                  <span className="text-xs text-slate-600 truncate flex-1 font-medium">{r.source}</span>
                   <span className="text-xs font-black text-slate-900">{r.pct}%</span>
                 </div>
               ))}
@@ -380,17 +322,15 @@ export default function ReportPage({ params }) {
         )}
 
         {/* ── Devices ── */}
-        {sections.includes('devices') && deviceBreakdown.length > 0 && (
+        {sections.includes('devices') && (deviceBreakdown || []).length > 0 && (
           <section>
-            <h2 className="text-lg font-black uppercase tracking-widest text-[#003DA5] mb-4 flex items-center gap-2">
-              <span>📱</span> {L.devices}
-            </h2>
+            <SectionTitle icon="📱" label={L.devices} />
             <div className="flex gap-4">
-              {deviceBreakdown.map((d, i) => (
-                <div key={i} className="flex-1 bg-slate-50 rounded-2xl p-5 text-center border border-slate-100">
-                  <p className="text-2xl mb-1">{d.type === 'mobile' ? '📱' : d.type === 'desktop' ? '🖥️' : '📋'}</p>
+              {(deviceBreakdown || []).map((d, i) => (
+                <div key={i} className="flex-1 bg-slate-50 rounded-2xl p-5 text-center border border-slate-100 stat-card">
+                  <p className="text-3xl mb-2">{d.type === 'mobile' ? '📱' : d.type === 'desktop' ? '🖥️' : d.type === 'tablet' ? '📋' : '❓'}</p>
                   <p className="text-2xl font-black text-slate-900">{d.pct}%</p>
-                  <p className="text-[9px] uppercase font-bold text-slate-400 tracking-widest">{d.type}</p>
+                  <p className="text-[9px] uppercase font-bold text-slate-400 tracking-widest mt-1">{d.type}</p>
                 </div>
               ))}
             </div>
@@ -400,11 +340,9 @@ export default function ReportPage({ params }) {
         {/* ── Reservations ── */}
         {sections.includes('reservations') && (
           <section className="page-break-before">
-            <h2 className="text-lg font-black uppercase tracking-widest text-[#003DA5] mb-4 flex items-center gap-2">
-              <span>📋</span> {L.resActive}
-            </h2>
-            {reservations.length === 0 ? (
-              <p className="text-sm text-slate-400 italic">{L.noData}</p>
+            <SectionTitle icon="📋" label={L.resActive} />
+            {(reservations || []).length === 0 ? (
+              <EmptyState label={L.noData} />
             ) : (
               <div className="border border-slate-200 rounded-2xl overflow-hidden">
                 <table className="w-full text-sm">
@@ -415,9 +353,9 @@ export default function ReportPage({ params }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {reservations.map(r => (
-                      <tr key={r.id} className="border-t border-slate-100">
-                        <td className="p-3 font-bold text-slate-700">{lang === 'es' ? r.listing_title_es || r.name : r.listing_title_en || r.name}</td>
+                    {(reservations || []).map(r => (
+                      <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                        <td className="p-3 font-semibold text-slate-700">{lang === 'es' ? r.name_es : r.name_en}</td>
                         <td className="p-3 text-right font-black text-slate-900">{formatCurrency(r.price || 0)}</td>
                       </tr>
                     ))}
@@ -431,19 +369,17 @@ export default function ReportPage({ params }) {
         {/* ── Sales ── */}
         {sections.includes('sales') && (
           <section>
-            <h2 className="text-lg font-black uppercase tracking-widest text-[#003DA5] mb-4 flex items-center gap-2">
-              <span>💰</span> {L.salesClosed}
-            </h2>
-            {sales.length === 0 ? (
-              <p className="text-sm text-slate-400 italic">{L.noData}</p>
+            <SectionTitle icon="💰" label={L.salesClosed} />
+            {(sales || []).length === 0 ? (
+              <EmptyState label={L.noData} />
             ) : (
               <>
                 <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="bg-emerald-50 rounded-2xl p-5 text-center border border-emerald-100">
+                  <div className="bg-emerald-50 rounded-2xl p-5 text-center border border-emerald-100 stat-card">
                     <p className="text-[9px] uppercase font-black text-emerald-600 tracking-widest mb-1">{L.salesClosed}</p>
-                    <p className="text-3xl font-black text-emerald-700">{sales.length}</p>
+                    <p className="text-4xl font-black text-emerald-700">{(sales || []).length}</p>
                   </div>
-                  <div className="bg-emerald-50 rounded-2xl p-5 text-center border border-emerald-100">
+                  <div className="bg-emerald-50 rounded-2xl p-5 text-center border border-emerald-100 stat-card">
                     <p className="text-[9px] uppercase font-black text-emerald-600 tracking-widest mb-1">{L.salesVolume}</p>
                     <p className="text-3xl font-black text-emerald-700">{formatCurrency(salesVolume)}</p>
                   </div>
@@ -458,11 +394,11 @@ export default function ReportPage({ params }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {sales.map(s => (
-                        <tr key={s.id} className="border-t border-slate-100">
-                          <td className="p-3 font-bold text-slate-700">{lang === 'es' ? s.listing_title_es || s.name : s.listing_title_en || s.name}</td>
+                      {(sales || []).map(s => (
+                        <tr key={s.id} className="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                          <td className="p-3 font-semibold text-slate-700">{lang === 'es' ? s.name_es : s.name_en}</td>
                           <td className="p-3 text-right font-black text-emerald-700">{formatCurrency(s.sold_price || 0)}</td>
-                          <td className="p-3 text-right text-slate-500">{s.sold_date ? formatDate(s.sold_date) : '—'}</td>
+                          <td className="p-3 text-right text-slate-500 text-xs">{s.sold_date ? formatDate(s.sold_date) : '—'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -476,9 +412,7 @@ export default function ReportPage({ params }) {
         {/* ── Commentary ── */}
         {sections.includes('commentary') && commentary && (
           <section className="page-break-before">
-            <h2 className="text-lg font-black uppercase tracking-widest text-[#003DA5] mb-4 flex items-center gap-2">
-              <span>💬</span> {L.commentary}
-            </h2>
+            <SectionTitle icon="💬" label={L.commentary} />
             <div className="bg-blue-50 rounded-2xl p-6 border border-blue-100 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
               {decodeURIComponent(commentary)}
             </div>
@@ -491,6 +425,25 @@ export default function ReportPage({ params }) {
           <p className="text-[9px] text-slate-300 mt-1">{L.generated}: {new Date().toISOString().split('T')[0]}</p>
         </footer>
       </div>
+    </div>
+  );
+}
+
+/* ── Sub-components ── */
+function SectionTitle({ icon, label }) {
+  return (
+    <h2 className="text-base font-black uppercase tracking-widest text-[#003DA5] mb-5 flex items-center gap-2.5">
+      <span className="text-xl">{icon}</span>
+      {label}
+      <div className="flex-1 h-px bg-blue-100 ml-2" />
+    </h2>
+  );
+}
+
+function EmptyState({ label }) {
+  return (
+    <div className="bg-slate-50 rounded-2xl p-8 text-center border border-slate-100">
+      <p className="text-sm text-slate-400 italic">{label}</p>
     </div>
   );
 }

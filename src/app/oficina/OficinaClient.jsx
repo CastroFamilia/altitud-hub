@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useApp } from '@/lib/context';
+import { getNewsletterSubscribers } from '@/lib/dal/contacts';
 import TopNav from '@/components/layout/TopNav';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PropertyApprovalTab from '@/components/oficina/PropertyApprovalTab';
+import OfficePortfolioSection from '@/components/oficina/OfficePortfolioSection';
 import ListingVelocityPanel from '@/components/oficina/ListingVelocityPanel';
 import LeadManagementTab from '@/components/oficina/LeadManagementTab';
 import AgentDataImportTab from '@/components/oficina/AgentDataImportTab';
@@ -16,7 +18,11 @@ import OfficeFinanceTab from '@/components/oficina/OfficeFinanceTab';
 import EstadoCuentaTab from '@/components/oficina/EstadoCuentaTab';
 import EventsAttendanceTab from '@/components/oficina/EventsAttendanceTab';
 import IntegrationSettingsTab from '@/components/oficina/IntegrationSettingsTab';
+import PortalRegistryTab from '@/components/oficina/PortalRegistryTab';
+import SyndicationDeskTab from '@/components/oficina/SyndicationDeskTab';
+import ReConnectSyncTab from '@/components/oficina/ReConnectSyncTab';
 import DashboardTab from '@/components/oficina/DashboardTab';
+import OfficePlanTab from '@/components/oficina/OfficePlanTab';
 import AgentEditModal from '@/components/oficina/AgentEditModal';
 import Image from 'next/image';
 
@@ -41,6 +47,12 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
   const [milestones, setMilestones] = useState(initialMilestones);
   const [events, setEvents] = useState(initialEvents);
   const [attendance, setAttendance] = useState(initialAttendance);
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [povertyLineVal, setPovertyLineVal] = useState(1000);
+  const [savingPovertyLine, setSavingPovertyLine] = useState(false);
+  const [splitTiers, setSplitTiers] = useState(['45/55', '60/40', '80/20']);
+  const [savingSplits, setSavingSplits] = useState(false);
+  const [newSplitAgentPct, setNewSplitAgentPct] = useState('');
   
   // Modals
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -48,6 +60,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
   
   const [inviteForm, setInviteForm] = useState({
     apiAgent: null,
+    full_name: '',
     email: '',
     role: 'agent',
     team_id: '',
@@ -55,56 +68,133 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
   const [inviting, setInviting] = useState(false);
   const [agentSearchQuery, setAgentSearchQuery] = useState('');
 
-  // Redirect non-brokers to dashboard
+  // Custom Sleek UI Notifications & Dialogs
+  const [toast, setToast] = useState(null);
+  const [confirmConfig, setConfirmConfig] = useState(null); // { message: '', onConfirm: () => void }
+
+  const triggerToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(prev => prev && prev.message === message ? null : prev);
+    }, 4500);
+  };
+
+  // Redirect unauthorized users to dashboard
   useEffect(() => {
-    if (profile && !isBroker) {
-      router.push('/');
+    if (profile) {
+      const isAuthorized = isBroker || profile.role === 'office_assistant' || profile.role === 'admin';
+      if (!isAuthorized) {
+        router.push('/');
+      }
     }
   }, [profile, isBroker, router]);
 
-  // Load data
-  const loadData = useCallback(async () => {
-     
-    setMounted(true);
-    setLoading(true);
+
+  // Fetch API agents when office changes
+  useEffect(() => {
+    const fetchApiAgents = async () => {
+      try {
+        const agentsRes = await fetch(`/api/agents-feed?office=${selectedOffice}`);
+        const agentsData = await agentsRes.json();
+        setApiAgents(agentsData.agents || []);
+      } catch (err) {
+        console.error('Failed to load API agents', err);
+      }
+    };
+    fetchApiAgents();
+  }, [selectedOffice]);
+
+  // Fetch configurations when office changes
+  useEffect(() => {
+    const fetchConfigs = async () => {
+      try {
+        const { data: povertyData, error: povertyError } = await supabase
+          .from('office_config')
+          .select('config_value')
+          .eq('office', selectedOffice)
+          .eq('config_key', 'poverty_line')
+          .maybeSingle();
+        if (!povertyError && povertyData?.config_value?.amount) {
+          setPovertyLineVal(Number(povertyData.config_value.amount));
+        } else {
+          setPovertyLineVal(1000);
+        }
+
+        const { data: splitData, error: splitError } = await supabase
+          .from('office_config')
+          .select('config_value')
+          .eq('office', selectedOffice)
+          .eq('config_key', 'split_tiers')
+          .maybeSingle();
+        if (!splitError && splitData?.config_value) {
+          setSplitTiers(splitData.config_value);
+        } else {
+          setSplitTiers(['45/55', '60/40', '80/20']);
+        }
+      } catch (err) {
+        console.error('Failed to load configs:', err);
+      }
+    };
+    fetchConfigs();
+  }, [selectedOffice, supabase]);
+
+  const handleSavePovertyLine = async () => {
+    setSavingPovertyLine(true);
     try {
-      // Fetch profiles
-      const profilesRes = await fetch('/api/profile?all=true');
-      const profilesData = await profilesRes.json();
-      const loadedProfiles = profilesData.profiles || [];
-      setProfiles(loadedProfiles);
+      const { error } = await supabase
+        .from('office_config')
+        .upsert({
+          office: selectedOffice,
+          config_key: 'poverty_line',
+          config_value: { amount: Number(povertyLineVal), currency: 'USD', description: 'Minimum monthly earnings target' }
+        }, { onConflict: 'office,config_key' });
 
-      // Fetch teams
-      const { data: teamsData } = await supabase.from('teams').select('*');
-      setTeams(teamsData || []);
-
-      // Fetch API agents
-      const agentsRes = await fetch(`/api/agents-feed?office=${selectedOffice}`);
-      const agentsData = await agentsRes.json();
-      setApiAgents(agentsData.agents || []);
-
-      // Fetch listing milestones for velocity analytics
-      const { data: msData } = await supabase
-        .from('listing_milestones')
-        .select('*');
-      setMilestones(msData || []);
+      if (error) throw error;
+      triggerToast('Línea de pobreza guardada con éxito', 'success');
     } catch (err) {
-      console.error('Load error:', err);
+      console.error(err);
+      triggerToast('Error al guardar la línea de pobreza: ' + err.message, 'error');
     } finally {
-      setLoading(false);
+      setSavingPovertyLine(false);
     }
-  }, [supabase, selectedOffice]);
+  };
 
-     
-  useEffect(() => { 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadData(); 
-  }, [loadData]);
+  const handleSaveSplits = async (newSplits) => {
+    setSavingSplits(true);
+    try {
+      const { error } = await supabase
+        .from('office_config')
+        .upsert({
+          office: selectedOffice,
+          config_key: 'split_tiers',
+          config_value: newSplits
+        }, { onConflict: 'office,config_key' });
+
+      if (error) throw error;
+      setSplitTiers(newSplits);
+      triggerToast('Tiers de split comisional guardados con éxito', 'success');
+    } catch (err) {
+      console.error(err);
+      triggerToast('Error al guardar splits: ' + err.message, 'error');
+    } finally {
+      setSavingSplits(false);
+    }
+  };
 
   // Filter profiles by office and search query
   const officeProfiles = profiles.filter(p => p.office === selectedOffice);
   const activeProfiles = officeProfiles.filter(p => p.status === 'active');
   const invitedProfiles = officeProfiles.filter(p => p.status === 'invited');
+
+  // Filter properties by office
+  const officeProperties = useMemo(() => {
+    return initialProperties.filter(p => {
+      const propOffice = p.office_code?.toLowerCase()?.includes('cero') || p.office_code === 'R0700151' ? 'cero' : 'altitud';
+      const agentProfile = profiles.find(prof => prof.auth_user_id === p.agent_id);
+      const office = agentProfile ? agentProfile.office : propOffice;
+      return office === selectedOffice;
+    });
+  }, [initialProperties, selectedOffice, profiles]);
 
   const filteredOfficeProfiles = officeProfiles.filter(p => 
     !agentSearchQuery || 
@@ -117,49 +207,58 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
   const activeCount = activeProfiles.length;
   const teamLeaders = officeProfiles.filter(p => p.role === 'team_leader').length;
 
-  // Handle Quick Approve
-  const handleApproveAgent = async (agent) => {
+  // Handle Quick Approve / Save as Draft
+  const handleApproveAgent = async (agent, status = 'invited') => {
     if (!agent.email) {
-      alert(t('ofc_agent_no_email'));
+      triggerToast(t('ofc_agent_no_email'), 'error');
       return;
     }
     
-    // Check if it's a valid remax-altitud.cr email or prompt
-    const confirmEmail = confirm(t('ofc_confirm_approve').replace('{name}', agent.name).replace('{email}', agent.email));
-    if (!confirmEmail) return;
+    const isDraft = status === 'draft';
+    const confirmMsg = isDraft 
+      ? `¿Estás seguro de que deseas guardar a ${agent.name} (${agent.email}) como borrador silencioso?\n\nNo se enviará ningún correo y sus datos quedarán registrados.`
+      : t('ofc_confirm_approve').replace('{name}', agent.name).replace('{email}', agent.email);
 
-    setInviting(true);
-    try {
-      const res = await fetch('/api/invite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: agent.email,
-          full_name: agent.name,
-          role: 'agent', // Default role is agent/junior
-          team_id: null,
-          remax_agent_id: agent.id,
-          remax_agent_name: agent.name,
-          office: selectedOffice,
-          avatar_url: agent.photo,
-          phone: agent.phone,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        loadData();
-      } else {
-        alert(data.error || t('ofc_approve_error'));
+    setConfirmConfig({
+      message: confirmMsg,
+      onConfirm: async () => {
+        setConfirmConfig(null);
+        setInviting(true);
+        try {
+          const res = await fetch('/api/invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: agent.email,
+              full_name: agent.name,
+              role: 'agent', // Default role is agent/junior
+              team_id: null,
+              remax_agent_id: agent.id,
+              remax_agent_name: agent.name,
+              office: selectedOffice,
+              avatar_url: agent.photo,
+              phone: agent.phone,
+              status,
+            }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            triggerToast(isDraft ? `Agente ${agent.name} guardado como borrador` : `Invitación enviada a ${agent.name}`, 'success');
+            router.refresh();
+          } else {
+            triggerToast(data.error || (isDraft ? 'Error al guardar borrador' : t('ofc_approve_error')), 'error');
+          }
+        } catch (err) {
+          triggerToast('Error: ' + err.message, 'error');
+        } finally {
+          setInviting(false);
+        }
       }
-    } catch (err) {
-      alert('Error: ' + err.message);
-    } finally {
-      setInviting(false);
-    }
+    });
   };
 
   // Handle Manual Invite
-  const handleManualInvite = async () => {
+  const handleManualInvite = async (status = 'invited') => {
     if (!inviteForm.email || !inviteForm.full_name) return;
     setInviting(true);
     try {
@@ -176,20 +275,105 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
           office: selectedOffice,
           avatar_url: null,
           phone: null,
+          status,
         }),
       });
       const data = await res.json();
       if (data.success) {
         setShowInviteModal(false);
-        setInviteForm({ full_name: '', email: '', role: 'agent', team_id: '' });
-        loadData();
+        setInviteForm({ apiAgent: null, full_name: '', email: '', role: 'agent', team_id: '' });
+        triggerToast(status === 'draft' ? `Agente guardado como borrador` : `Invitación enviada exitosamente`, 'success');
+        router.refresh();
       } else {
-        alert(data.error || t('ofc_invite_error'));
+        triggerToast(data.error || t('ofc_invite_error'), 'error');
       }
     } catch (err) {
-      alert('Error: ' + err.message);
+      triggerToast('Error: ' + err.message, 'error');
     } finally {
       setInviting(false);
+    }
+  };
+
+  // Handle Promote Draft Agent to Invited
+  const handleInviteDraftAgent = async (agent) => {
+    const confirmMsg = `¿Estás seguro de que deseas enviar la invitación de acceso oficial a ${agent.full_name} (${agent.email})?\n\nEsto enviará el correo electrónico de bienvenida de Supabase.`;
+    
+    setConfirmConfig({
+      message: confirmMsg,
+      onConfirm: async () => {
+        setConfirmConfig(null);
+        setInviting(true);
+        try {
+          const res = await fetch('/api/invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: agent.email,
+              full_name: agent.full_name,
+              role: agent.role,
+              team_id: agent.team_id || null,
+              remax_agent_id: agent.remax_agent_id || null,
+              remax_agent_name: agent.remax_agent_name || null,
+              office: agent.office,
+              avatar_url: agent.avatar_url || null,
+              phone: agent.phone || null,
+              status: 'invited', // Promote to invited & send email
+            }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            triggerToast(`¡Invitación oficial enviada exitosamente a ${agent.full_name}!`, 'success');
+            router.refresh();
+          } else {
+            triggerToast(data.error || 'Error al enviar invitación', 'error');
+          }
+        } catch (err) {
+          triggerToast('Error: ' + err.message, 'error');
+        } finally {
+          setInviting(false);
+        }
+      }
+    });
+  };
+
+  // Download Newsletter CSV — all opted-in contacts across the office
+  const handleExportNewsletterCSV = async () => {
+    setNewsletterLoading(true);
+    try {
+      const data = await getNewsletterSubscribers(supabase);
+      if (!data || data.length === 0) {
+        alert('No hay contactos suscritos al newsletter todavía.');
+        return;
+      }
+
+      const headers = ['Nombre', 'Apellidos', 'Correo', 'Telefono', 'Perfil', 'Idioma'];
+      const csvRows = data.map(c => {
+        const typeStr = Array.isArray(c.type) ? c.type.join(', ') : (c.type || '');
+        return [
+          c.first_name || '',
+          c.last_name || '',
+          c.email || '',
+          c.phone || '',
+          typeStr,
+          c.primary_language || ''
+        ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
+      });
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...csvRows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Newsletter_ALTITUD_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Newsletter export error:', err);
+      alert('Error al exportar el newsletter: ' + err.message);
+    } finally {
+      setNewsletterLoading(false);
     }
   };
 
@@ -203,13 +387,32 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
       });
       const data = await res.json();
       if (data.success) {
-        loadData();
+        router.refresh();
         setEditingProfile(null);
       }
     } catch (err) {
       console.error('Update error:', err);
     }
   };
+
+  // Impersonation Handlers
+  const handleImpersonate = (agentId) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('impersonated_id', agentId);
+      document.cookie = `impersonated_id=${agentId}; path=/; max-age=31536000; SameSite=Lax`;
+      window.location.reload(); 
+    }
+  };
+
+  const handleStopImpersonate = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('impersonated_id');
+      document.cookie = 'impersonated_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+      window.location.reload();
+    }
+  };
+
+  const isImpersonating = typeof window !== 'undefined' ? !!localStorage.getItem('impersonated_id') : false;
 
   // Already-invited agent emails/IDs
   const registeredEmails = new Set(profiles.map(p => p.email.toLowerCase()));
@@ -254,8 +457,6 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
                 </button>
               ))}
             </div>
-            
-
           </div>
 
           {/* ── Tab Navigation removed, moved to sidebar ── */}
@@ -365,23 +566,125 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
               <p className="text-xs text-slate-400 mb-6">
                 {t('ofc_leads_desc')}
               </p>
-              <LeadManagementTab profiles={profiles} initialLeads={initialInquiries} initialSources={initialLeadSources} initialCommunications={initialCommunications} initialFollowUps={initialFollowUps} />
+              <LeadManagementTab profiles={profiles} initialLeads={initialInquiries} initialSources={initialLeadSources} initialCommunications={initialCommunications} initialFollowUps={initialFollowUps} properties={initialProperties} />
             </div>
           ) : activeTab === 'importar' ? (
             <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
               <AgentDataImportTab profiles={profiles} />
             </div>
           ) : activeTab === 'propiedades' ? (
-            <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
-              <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4">{t('ofc_property_approval')}</h3>
-              <PropertyApprovalTab />
+            <div className="space-y-8">
+              {/* Portfolio Intelligence — same view agents see but for all office properties */}
+              <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
+                <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                  <span>📊</span> {lang === 'en' ? 'Office Portfolio' : 'Cartera de la Oficina'}
+                </h3>
+                <OfficePortfolioSection properties={officeProperties} profiles={profiles} lang={lang} />
+              </div>
+              {/* Approval Workflow */}
+              <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
+                <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4">{t('ofc_property_approval')}</h3>
+                <PropertyApprovalTab selectedOffice={selectedOffice} />
+              </div>
             </div>
           ) : activeTab === 'integraciones' ? (
             <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
               <IntegrationSettingsTab officeId={selectedOffice} />
             </div>
+          ) : activeTab === 'portales' ? (
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
+              <PortalRegistryTab />
+            </div>
+          ) : activeTab === 'syndication' ? (
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
+              <SyndicationDeskTab properties={initialProperties} profiles={profiles} />
+            </div>
+          ) : activeTab === 'reconnect-sync' ? (
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
+              <ReConnectSyncTab properties={initialProperties} profiles={profiles} />
+            </div>
+          ) : activeTab === 'newsletter' ? (
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6 lg:p-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-100 dark:border-slate-700 pb-6 mb-6">
+                <div>
+                  <h3 className="text-xl font-black italic text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>📩</span> Newsletter de la Oficina
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-bold">
+                    Exporta la lista de contactos suscritos a campañas y boletines informativos.
+                  </p>
+                </div>
+              </div>
+              <div className="max-w-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-700/30 rounded-3xl p-6 lg:p-8 flex flex-col md:flex-row items-center gap-6">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <h4 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">Exportar Suscriptores</h4>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Genera un archivo CSV con todos los contactos de la oficina que tienen activa la opción de recibir el boletín de noticias de RE/MAX ALTITUD.
+                  </p>
+                </div>
+                <button
+                  id="btn-download-newsletter-tab"
+                  onClick={handleExportNewsletterCSV}
+                  disabled={newsletterLoading}
+                  className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
+                >
+                  {newsletterLoading ? (
+                    <>
+                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                      Descargar CSV
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           ) : activeTab === 'equipo' ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="space-y-8">
+              {/* ── Impersonation Bar ── */}
+              {isBroker && (
+                <div className="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-2xl p-4 shadow-lg border border-purple-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🎭</span>
+                    <div>
+                      <h3 className="text-sm font-black italic text-white">{t('ofc_impersonate_mode')}</h3>
+                      <p className="text-[10px] text-purple-200">{t('ofc_impersonate_desc')}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <select 
+                      className="bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      onChange={(e) => {
+                        if(e.target.value) handleImpersonate(e.target.value);
+                      }}
+                      value={typeof window !== 'undefined' ? localStorage.getItem('impersonated_id') || "" : ""}
+                    >
+                      <option value="" disabled className="text-slate-900">Seleccionar Agente...</option>
+                      {officeProfiles.filter(p => p.role !== 'broker').map(p => (
+                        <option key={p.id} value={p.id} className="text-slate-900">{p.full_name}</option>
+                      ))}
+                    </select>
+                    {isImpersonating && (
+                      <button 
+                        onClick={handleStopImpersonate}
+                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all"
+                      >
+                        Detener
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
             
             {/* ── Left Column: Approvals & Roster ── */}
@@ -420,13 +723,25 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
                             <p className="text-[10px] text-slate-400">{agent.email || t('ofc_no_email_label')}</p>
                           </div>
                         </div>
-                        <button
-                          onClick={() => handleApproveAgent(agent)}
-                          disabled={inviting || !agent.email}
-                          className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50"
-                        >
-                          {t('ofc_approve')}
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleApproveAgent(agent, 'draft')}
+                            disabled={inviting || !agent.email}
+                            className="bg-slate-500 dark:bg-slate-700 hover:bg-slate-600 dark:hover:bg-slate-600 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50 flex items-center gap-1"
+                            title="Guardar silenciosamente sin invitar"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                            Borrador
+                          </button>
+                          <button
+                            onClick={() => handleApproveAgent(agent, 'invited')}
+                            disabled={inviting || !agent.email}
+                            className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50 flex items-center gap-1"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 19v-8.93a2 2 0 01.89-1.664l8-5.333a2 2 0 012.22 0l8 5.333A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5m0 0L12 12.75l-2.25 1.75m4.5 0L12 12.75"></path></svg>
+                            {t('ofc_approve')}
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -488,11 +803,36 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
                       <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${
                         p.role === 'broker' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
                         : p.role === 'team_leader' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                        : p.role === 'agent' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'
                         : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
                       }`}>
-                        {p.role === 'broker' ? t('ofc_role_admin') : p.role === 'team_leader' ? t('ofc_role_leader') : t('ofc_role_junior')}
+                        {p.role === 'broker' ? t('ofc_role_admin') 
+                          : p.role === 'team_leader' ? t('ofc_role_leader') 
+                          : p.role === 'agent' ? t('ofc_role_agent') 
+                          : t('ofc_role_junior')}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-medium w-24 truncate text-right">
+                      <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${
+                        p.status === 'active' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
+                        : p.status === 'invited' ? 'bg-amber-100 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400'
+                        : p.status === 'disabled' ? 'bg-rose-100 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400'
+                        : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                      }`}>
+                        {p.status === 'active' ? 'Activo' 
+                         : p.status === 'invited' ? 'Invitado' 
+                         : p.status === 'disabled' ? 'Baja' 
+                         : 'Borrador'}
+                      </span>
+                      {p.status === 'draft' && (
+                        <button
+                          onClick={() => handleInviteDraftAgent(p)}
+                          className="bg-nexus-blue hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/10 transition-all flex items-center gap-1 shrink-0"
+                          title="Enviar correo de invitación oficial de Supabase"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 19v-8.93a2 2 0 01.89-1.664l8-5.333a2 2 0 012.22 0l8 5.333A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5m0 0L12 12.75l-2.25 1.75m4.5 0L12 12.75"></path></svg>
+                          Invitar
+                        </button>
+                      )}
+                      <span className="text-[10px] text-slate-400 font-medium w-20 truncate text-right">
                         {p.teams?.name || t('ofc_manual_no_team')}
                       </span>
                       {p.role !== 'broker' && (
@@ -512,8 +852,113 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
 
             </div>
 
-            {/* ── Right Column: Teams ── */}
+            {/* ── Right Column: Teams & Settings ── */}
             <div className="space-y-8">
+
+              {/* ── Configuración de Línea de Pobreza ── */}
+              <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+                <div>
+                  <h3 className="text-lg font-black italic text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>📏</span> Línea de Pobreza
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Monto mensual fijo que los agentes necesitan para sobrevivir.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                    <input 
+                      type="number"
+                      value={povertyLineVal}
+                      onChange={(e) => setPovertyLineVal(Number(e.target.value))}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-8 pr-4 py-3 text-lg font-black italic text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-nexus-blue"
+                      placeholder="1000"
+                    />
+                  </div>
+                  <button
+                    onClick={handleSavePovertyLine}
+                    disabled={savingPovertyLine}
+                    className="bg-nexus-blue hover:bg-blue-700 disabled:opacity-50 text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all whitespace-nowrap"
+                  >
+                    {savingPovertyLine ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
+              </div>
+
+              {/* ── Configuración de Splits de Comisión ── */}
+              <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+                <div>
+                  <h3 className="text-lg font-black italic text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>⚖️</span> Splits de Comisión
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Define los tiers comisionales disponibles en tu oficina.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  {splitTiers.map(tier => {
+                    const agentPct = tier.split('/')[0];
+                    return (
+                      <div key={tier} className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 px-4 py-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                          Agentes {agentPct}% <span className="text-[10px] text-slate-400 font-normal">({tier})</span>
+                        </span>
+                        <button
+                          onClick={() => {
+                            const updated = splitTiers.filter(t => t !== tier);
+                            handleSaveSplits(updated);
+                          }}
+                          className="text-[10px] font-black uppercase text-red-500 hover:text-red-700 transition-colors p-1"
+                          title="Eliminar split"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+                  <div className="relative flex-1">
+                    <input 
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={newSplitAgentPct}
+                      onChange={(e) => setNewSplitAgentPct(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-nexus-blue"
+                      placeholder="Ej. 70"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">% Agente</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const pct = Number(newSplitAgentPct);
+                      if (isNaN(pct) || pct < 0 || pct > 100 || newSplitAgentPct === '') {
+                        triggerToast('Por favor introduce un porcentaje válido entre 0 y 100', 'error');
+                        return;
+                      }
+                      const newSplitStr = `${pct}/${100 - pct}`;
+                      if (splitTiers.includes(newSplitStr)) {
+                        triggerToast('Este split ya existe', 'error');
+                        return;
+                      }
+                      const updated = [...splitTiers, newSplitStr];
+                      updated.sort((a, b) => Number(b.split('/')[0]) - Number(a.split('/')[0]));
+                      handleSaveSplits(updated);
+                      setNewSplitAgentPct('');
+                    }}
+                    disabled={savingSplits}
+                    className="bg-slate-800 dark:bg-slate-700 hover:bg-slate-950 dark:hover:bg-slate-600 disabled:opacity-50 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap"
+                  >
+                    + Agregar
+                  </button>
+                </div>
+              </div>
+
+              {/* ── Teams card ── */}
               <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 p-6">
                 <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4">{t('ofc_teams_title')}</h3>
                 {teams.filter(t => t.office === selectedOffice).length === 0 ? (
@@ -565,12 +1010,30 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
               </div>
             </div>
 
+            </div>
           </div>
+          ) : (activeTab === 'plan' || activeTab === 'plan-vs-logrado') ? (
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6 lg:p-8">
+              <OfficePlanTab 
+                t={t}
+                profiles={profiles}
+                properties={initialProperties}
+                reservations={initialReservations}
+                commissions={initialCommissions}
+                inquiries={initialInquiries}
+                communications={initialCommunications}
+                selectedOffice={selectedOffice}
+                milestones={milestones}
+                editMode={activeTab === 'plan'}
+                povertyLine={povertyLineVal}
+              />
+            </div>
           ) : (
             <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6 lg:p-8">
                <DashboardTab 
                  profiles={profiles}
                  teams={teams}
+                 properties={initialProperties}
                  inquiries={initialInquiries}
                  expenses={initialExpenses}
                  categories={initialCategories}
@@ -578,6 +1041,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
                  reservations={initialReservations}
                  selectedOffice={selectedOffice}
                  loading={loading}
+                 povertyLine={povertyLineVal}
                />
             </div>
           )}
@@ -622,16 +1086,18 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
 
             <div>
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">{t('ofc_manual_role')}</label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {[
-                  { key: 'agent', label: t('ofc_role_junior') },
+                  { key: 'agent', label: t('ofc_role_agent') },
+                  { key: 'junior', label: t('ofc_role_junior') },
                   { key: 'team_leader', label: t('ofc_role_leader') },
                   { key: 'broker', label: t('ofc_role_admin') },
                 ].map(r => (
                   <button
                     key={r.key}
+                    type="button"
                     onClick={() => setInviteForm(prev => ({ ...prev, role: r.key }))}
-                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                    className={`flex-1 min-w-[80px] py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
                       inviteForm.role === r.key
                         ? 'bg-nexus-blue text-white border-nexus-blue'
                         : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'
@@ -659,19 +1125,28 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
               </div>
             )}
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 onClick={() => setShowInviteModal(false)}
-                className="flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-500 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors"
+                className="flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-500 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
               >
                 {t('ofc_manual_cancel')}
               </button>
               <button
-                onClick={handleManualInvite}
+                onClick={() => handleManualInvite('draft')}
                 disabled={!inviteForm.email || !inviteForm.full_name || inviting}
-                className="flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest bg-nexus-blue text-white shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:opacity-50"
+                className="flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest bg-slate-500 hover:bg-slate-600 text-white shadow-xl shadow-slate-500/10 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
-                {inviting ? t('ofc_manual_processing') : t('ofc_manual_create')}
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                Guardar Borrador
+              </button>
+              <button
+                onClick={() => handleManualInvite('invited')}
+                disabled={!inviteForm.email || !inviteForm.full_name || inviting}
+                className="flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest bg-nexus-blue text-white shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 19v-8.93a2 2 0 01.89-1.664l8-5.333a2 2 0 012.22 0l8 5.333A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5m0 0L12 12.75l-2.25 1.75m4.5 0L12 12.75"></path></svg>
+                Invitar Agente
               </button>
             </div>
           </div>
@@ -682,12 +1157,78 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
       {editingProfile && (
         <AgentEditModal 
           profile={editingProfile}
+          profiles={profiles}
           teams={teams}
           selectedOffice={selectedOffice}
           onClose={() => setEditingProfile(null)}
           onUpdateProfile={handleUpdateProfile}
+          onOffboardComplete={() => {
+            setEditingProfile(null);
+            router.refresh();
+          }}
           t={t}
+          splitTiers={splitTiers}
         />
+      )}
+
+      {/* ═══ CUSTOM SLEEK TOAST NOTIFICATION ═══ */}
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl border backdrop-blur-xl animate-fade-in transition-all duration-300 max-w-sm border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-100">
+          <div className="flex items-center gap-3">
+            {toast.type === 'success' ? (
+              <div className="w-8 h-8 rounded-full bg-emerald-500/10 dark:bg-emerald-500/25 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+              </div>
+            ) : toast.type === 'error' ? (
+              <div className="w-8 h-8 rounded-full bg-red-500/10 dark:bg-red-500/25 flex items-center justify-center text-red-600 dark:text-red-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </div>
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-blue-500/10 dark:bg-blue-500/25 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+            )}
+            <p className="text-xs font-bold tracking-wide leading-relaxed uppercase">{toast.message}</p>
+          </div>
+          <button 
+            onClick={() => setToast(null)}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors ml-auto p-1"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+      )}
+
+      {/* ═══ CUSTOM PREMIUM CONFIRMATION MODAL ═══ */}
+      {confirmConfig && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setConfirmConfig(null)}></div>
+          <div className="relative bg-white dark:bg-slate-800 rounded-[32px] shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md p-8 space-y-6 animate-scale-up" onClick={e => e.stopPropagation()}>
+            <div className="text-center space-y-4">
+              <div className="mx-auto w-12 h-12 rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center text-amber-500">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              </div>
+              <h3 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white">{t('ofc_confirm_action')}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 whitespace-pre-line leading-relaxed font-semibold uppercase tracking-wide px-2">
+                {confirmConfig.message}
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setConfirmConfig(null)}
+                className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmConfig.onConfirm}
+                className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-nexus-blue text-white shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

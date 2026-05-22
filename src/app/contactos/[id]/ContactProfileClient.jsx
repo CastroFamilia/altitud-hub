@@ -3,12 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context';
-import { supabase } from '@/lib/supabase';
+import { updateContact } from '@/lib/dal/contacts';
+import { insertPropertyInquiry, insertProperty, updateProperty } from '@/lib/dal/properties';
 import { useAuth } from '@/lib/auth-context';
 import TopNav from '@/components/layout/TopNav';
 import Link from 'next/link';
+import WhatsAppSendButton from '@/components/propiedades/WhatsAppSendButton';
+import { supabase } from '@/lib/supabase';
 
-export default function ContactProfileClient({ initialContact, initialProperties, initialAcms, initialInquiries }) {
+export default function ContactProfileClient({ initialContact, initialProperties, initialAcms, initialInquiries, initialReservations = [] }) {
   const router = useRouter();
   const { profile } = useAuth();
   const { t } = useApp();
@@ -17,7 +20,85 @@ export default function ContactProfileClient({ initialContact, initialProperties
   const [properties, setProperties] = useState(initialProperties || []);
   const [acms, setAcms] = useState(initialAcms || []);
   const [inquiries, setInquiries] = useState(initialInquiries || []);
+  const [reservations, setReservations] = useState(initialReservations || []);
   const [loading, setLoading] = useState(false);
+  const [updatingNewsletter, setUpdatingNewsletter] = useState(false);
+  const [updatingDdItemId, setUpdatingDdItemId] = useState(null);
+
+  // Update Due Diligence document status inline
+  const updateDdItemStatus = async (reservationId, itemId, currentStatus) => {
+    const statuses = ['pending', 'requested', 'in_progress', 'ready'];
+    const nextIndex = (statuses.indexOf(currentStatus) + 1) % statuses.length;
+    const nextStatus = statuses[nextIndex];
+    
+    setUpdatingDdItemId(itemId);
+    try {
+      const { error } = await supabase
+        .from('due_diligence_items')
+        .update({ 
+          status: nextStatus,
+          completed_date: nextStatus === 'ready' ? new Date().toISOString().split('T')[0] : null
+        })
+        .eq('id', itemId);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setReservations(prev => prev.map(res => {
+        if (res.id !== reservationId) return res;
+        return {
+          ...res,
+          due_diligence_items: res.due_diligence_items.map(item => {
+            if (item.id !== itemId) return item;
+            return {
+              ...item,
+              status: nextStatus,
+              completed_date: nextStatus === 'ready' ? new Date().toISOString().split('T')[0] : null
+            };
+          })
+        };
+      }));
+    } catch (err) {
+      console.error('Error updating due diligence status:', err);
+      alert('Error al actualizar el estado del documento: ' + err.message);
+    } finally {
+      setUpdatingDdItemId(null);
+    }
+  };
+
+  // Request Broker Help inline
+  const handleBrokerHelp = async (reservationId) => {
+    const note = prompt(t('neg_broker_help_note') || 'Describe en qué necesitas ayuda del Broker:');
+    if (note === null) return;
+    
+    try {
+      const { error } = await supabase
+        .from('office_reservations')
+        .update({
+          broker_help_requested: true,
+          broker_help_note: note,
+          broker_help_date: new Date().toISOString()
+        })
+        .eq('id', reservationId);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setReservations(prev => prev.map(res => {
+        if (res.id !== reservationId) return res;
+        return {
+          ...res,
+          broker_help_requested: true,
+          broker_help_note: note,
+          broker_help_date: new Date().toISOString()
+        };
+      }));
+      alert(t('neg_broker_help_sent') || 'Ayuda solicitada con éxito.');
+    } catch (err) {
+      console.error(err);
+      alert('Error: ' + err.message);
+    }
+  };
 
   // Inquiry Modal State
   const [showInquiryModal, setShowInquiryModal] = useState(false);
@@ -41,24 +122,32 @@ export default function ContactProfileClient({ initialContact, initialProperties
 
   // removed useEffect fetchContactData
 
+  const handleNewsletterToggle = async (newValue) => {
+    if (updatingNewsletter) return;
+    setUpdatingNewsletter(true);
+    try {
+      const updatedContact = await updateContact(contact.id, { newsletter_opt_in: newValue });
+      setContact(updatedContact);
+    } catch (err) {
+      console.error('Error updating newsletter opt-in:', err);
+      alert('Error al actualizar preferencia de newsletter.');
+    } finally {
+      setUpdatingNewsletter(false);
+    }
+  };
+
   const handleInquirySubmit = async (e) => {
     e.preventDefault();
     if (!inquiryForm.remax_property_id) return;
     
     setSubmittingInquiry(true);
     try {
-      const { data, error } = await supabase
-        .from('property_inquiries')
-        .insert([{
-          contact_id: contact?.id,
-          remax_property_id: inquiryForm.remax_property_id,
-          notes: inquiryForm.notes,
-          status: 'new'
-        }])
-        .select()
-        .single();
-        
-      if (error) throw error;
+      const data = await insertPropertyInquiry({
+        contact_id: contact?.id,
+        remax_property_id: inquiryForm.remax_property_id,
+        notes: inquiryForm.notes,
+        status: 'new'
+      });
       
       setInquiries([data, ...inquiries]);
       setShowInquiryModal(false);
@@ -88,20 +177,14 @@ export default function ContactProfileClient({ initialContact, initialProperties
       const driveData = await driveRes.json();
       if (!driveRes.ok) throw new Error(driveData.error || t('contact_prof_err_drive'));
 
-      const { data, error } = await supabase
-        .from('properties')
-        .insert([{
-          agent_id: profile?.id || null,
-          contact_id: contact?.id,
-          name: propertyForm.name,
-          property_type: propertyForm.property_type,
-          drive_folder_id: driveData.folderId,
-          drive_folder_url: driveData.folderUrl
-        }])
-        .select()
-        .single();
-        
-      if (error) throw error;
+      const data = await insertProperty({
+        agent_id: profile?.id || null,
+        contact_id: contact?.id,
+        name: propertyForm.name,
+        property_type: propertyForm.property_type,
+        drive_folder_id: driveData.folderId,
+        drive_folder_url: driveData.folderUrl
+      });
       
       setProperties([data, ...properties]);
       setShowPropertyModal(false);
@@ -143,18 +226,11 @@ export default function ContactProfileClient({ initialContact, initialProperties
       
       const { size_sqm, finca_number, plano_number } = extractData.data;
 
-      const { data: updatedProp, error } = await supabase
-        .from('properties')
-        .update({
-          size_sqm: size_sqm !== null ? size_sqm : property.size_sqm,
-          finca_number: finca_number || property.finca_number,
-          plano_number: plano_number || property.plano_number
-        })
-        .eq('id', property.id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const updatedProp = await updateProperty(property.id, {
+        size_sqm: size_sqm !== null ? size_sqm : property.size_sqm,
+        finca_number: finca_number || property.finca_number,
+        plano_number: plano_number || property.plano_number
+      });
       
       setProperties(properties.map(p => p.id === updatedProp.id ? updatedProp : p));
       alert(t('contact_prof_msg_olympia_prop'));
@@ -207,14 +283,7 @@ export default function ContactProfileClient({ initialContact, initialProperties
       if (extractedData.social_instagram) updates.social_instagram = extractedData.social_instagram;
       if (extractedData.social_linkedin) updates.social_linkedin = extractedData.social_linkedin;
 
-      const { data: updatedContact, error } = await supabase
-        .from('contacts')
-        .update(updates)
-        .eq('id', contact.id)
-        .select()
-        .single();
-        
-      if (error) throw error;
+      const updatedContact = await updateContact(contact.id, updates);
       
       setContact(updatedContact);
       setShowDumpModal(false);
@@ -314,8 +383,48 @@ export default function ContactProfileClient({ initialContact, initialProperties
                 </span>
               </div>
               
+              {/* Newsletter Opt-In Row */}
+              <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-dark-border">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('contact_newsletter_title')}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* NO button */}
+                  <button
+                    id={`newsletter-no-${contact.id}`}
+                    onClick={() => handleNewsletterToggle(false)}
+                    disabled={updatingNewsletter}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                      !contact.newsletter_opt_in
+                        ? 'bg-red-500 border-red-500 text-white shadow-md shadow-red-500/20'
+                        : 'bg-white dark:bg-dark-bg border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:border-red-300 hover:text-red-500'
+                    } disabled:opacity-60 disabled:cursor-not-allowed`}
+                  >
+                    {updatingNewsletter && !contact.newsletter_opt_in ? (
+                      <span className="flex items-center gap-1"><svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>No</span>
+                    ) : 'No'}
+                  </button>
+                  {/* YES button */}
+                  <button
+                    id={`newsletter-yes-${contact.id}`}
+                    onClick={() => handleNewsletterToggle(true)}
+                    disabled={updatingNewsletter}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                      contact.newsletter_opt_in
+                        ? 'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/20'
+                        : 'bg-white dark:bg-dark-bg border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:border-emerald-300 hover:text-emerald-600'
+                    } disabled:opacity-60 disabled:cursor-not-allowed`}
+                  >
+                    {updatingNewsletter && contact.newsletter_opt_in ? (
+                      <span className="flex items-center gap-1"><svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Sí</span>
+                    ) : 'Sí'}
+                  </button>
+                </div>
+              </div>
+
               {/* Action Buttons Row */}
-              <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-gray-100 dark:border-dark-border">
+              <div className="flex flex-wrap items-center gap-2 mt-3">
                 {contact.phone && (
                   <a href={`https://wa.me/${contact.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
@@ -590,6 +699,14 @@ export default function ContactProfileClient({ initialContact, initialProperties
                             {t('contact_prof_open_drive')}
                           </a>
                         )}
+                        {/* WhatsApp Quick-Send for this property */}
+                        <WhatsAppSendButton
+                          property={prop}
+                          contactPhone={contact?.phone || ''}
+                          contactName={`${contact?.first_name || ''} ${contact?.last_name || ''}`.trim()}
+                          variant="detail"
+                          lang="es"
+                        />
                       </div>
                       <button 
                         onClick={() => handleSyncProperty(prop)}
@@ -754,6 +871,234 @@ export default function ContactProfileClient({ initialContact, initialProperties
                 </div>
               )}
             </div>
+
+          {/* SECTION 4: TRANSACCIONES Y PIPELINE (Negocio Hub) */}
+          <div className="glass-panel p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{t('neg_title') || 'Mi Negocio'}</h3>
+                  <p className="text-xs text-gray-500">{t('neg_subtitle') || 'Administra tus reservas, negociaciones y due diligence'}</p>
+                </div>
+              </div>
+              
+              <Link 
+                href="/negocio" 
+                className="text-sm bg-brand-50 text-brand-600 dark:bg-brand-900/20 dark:text-brand-400 px-3 py-1.5 rounded-lg hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors shadow-sm font-bold"
+              >
+                {t('neg_title') || 'Ir a Negocio'} →
+              </Link>
+            </div>
+
+            {reservations.length === 0 ? (
+              <div className="text-center py-8 bg-slate-50 dark:bg-dark-bg rounded-xl border border-dashed border-gray-200 dark:border-dark-border">
+                <p className="text-gray-500 dark:text-gray-400 text-sm">Este contacto no tiene transacciones o reservas vinculadas en el pipeline.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {reservations.map(res => {
+                  const ddItems = res.due_diligence_items || [];
+                  const readyItems = ddItems.filter(i => i.status === 'ready').length;
+                  const totalItems = ddItems.length;
+                  const progressPct = totalItems > 0 ? Math.round((readyItems / totalItems) * 100) : 0;
+
+                  return (
+                    <div key={res.id} className="border border-gray-200 dark:border-dark-border rounded-2xl p-6 bg-white dark:bg-white/5 relative hover:shadow-md transition-shadow">
+                      
+                      {/* Top Meta info */}
+                      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 pb-4 border-b border-gray-100 dark:border-white/5 mb-4">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                            <h4 className="font-bold text-gray-900 dark:text-white text-lg">{res.property_address || t('neg_no_address')}</h4>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-800 dark:bg-white/10 dark:text-slate-300">
+                              {res.type}
+                            </span>
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                              res.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' :
+                              res.status === 'signed' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' :
+                              res.status === 'closed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' :
+                              'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
+                            }`}>
+                              {res.status === 'pending' ? t('res_status_pending') :
+                               res.status === 'signed' ? t('res_status_signed') :
+                               res.status === 'closed' ? t('res_status_closed') : t('res_status_fallen')}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 flex items-center gap-2">
+                            <span>Lado: <span className="font-semibold text-gray-700 dark:text-gray-300">{res.side === 'listing' ? t('neg_side_listing') : res.side === 'buying' ? t('neg_side_buying') : t('neg_side_both')}</span></span>
+                            <span>•</span>
+                            <span>Creado: <span className="font-semibold text-gray-700 dark:text-gray-300">{new Date(res.created_at).toLocaleDateString()}</span></span>
+                          </p>
+                        </div>
+                        
+                        {/* Financial Metrics */}
+                        <div className="flex gap-4 self-start lg:self-auto flex-wrap">
+                          <div className="bg-slate-50 dark:bg-dark-bg px-3 py-1.5 rounded-xl border border-gray-100 dark:border-white/5">
+                            <span className="block text-[10px] text-gray-400 font-semibold uppercase">{t('neg_sale_price') || 'Precio de Venta'}</span>
+                            <span className="font-bold text-gray-800 dark:text-gray-200 text-sm">${Number(res.sale_price || 0).toLocaleString()}</span>
+                          </div>
+                          <div className="bg-slate-50 dark:bg-dark-bg px-3 py-1.5 rounded-xl border border-gray-100 dark:border-white/5">
+                            <span className="block text-[10px] text-gray-400 font-semibold uppercase">{t('res_amount') || 'Reserva'}</span>
+                            <span className="font-bold text-brand-600 dark:text-brand-400 text-sm">${Number(res.reservation_amount || 0).toLocaleString()}</span>
+                          </div>
+                          <div className="bg-slate-50 dark:bg-dark-bg px-3 py-1.5 rounded-xl border border-gray-100 dark:border-white/5">
+                            <span className="block text-[10px] text-gray-400 font-semibold uppercase">{t('neg_close_date') || 'Cierre'}</span>
+                            <span className="font-bold text-gray-800 dark:text-gray-200 text-sm">{res.expected_sign_date ? new Date(res.expected_sign_date).toLocaleDateString() : '--'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Broker Oversight alert box */}
+                      {res.broker_help_requested && (
+                        <div className="mb-5 p-4 rounded-xl border border-red-200 dark:border-red-900/30 bg-red-50/50 dark:bg-red-950/20 text-red-800 dark:text-red-300 relative overflow-hidden flex items-start gap-3">
+                          <span className="text-xl mt-0.5 shrink-0">🚨</span>
+                          <div className="flex-1 text-sm">
+                            <div className="font-bold uppercase tracking-wider text-xs mb-1">Ayuda del Broker Solicitada</div>
+                            <p className="italic text-gray-600 dark:text-gray-400">&quot;{res.broker_help_note || 'Sin nota específica.'}&quot;</p>
+                            {res.broker_help_date && (
+                              <span className="block text-[10px] text-red-500/80 dark:text-red-400/80 mt-2 font-medium">Solicitado el {new Date(res.broker_help_date).toLocaleString()}</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Due Diligence section */}
+                      <div className="mb-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                            📑 {t('neg_dd_title') || 'Due Diligence'} <span className="text-xs text-gray-400 font-normal">({t('neg_dd_progress_label') || 'documentos listos'} {readyItems} de {totalItems})</span>
+                          </span>
+                          <span className="text-sm font-black text-brand-600 dark:text-brand-400">{progressPct}%</span>
+                        </div>
+                        
+                        {/* Progress Bar */}
+                        <div className="w-full h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden mb-4">
+                          <div 
+                            className="h-full bg-brand-500 transition-all duration-500 rounded-full"
+                            style={{ width: `${progressPct}%` }}
+                          ></div>
+                        </div>
+
+                        {/* Due Diligence Document Checklist */}
+                        {totalItems === 0 ? (
+                          <div className="text-center py-4 bg-slate-50 dark:bg-dark-bg rounded-xl text-gray-500 italic text-xs">
+                            No hay checklist de Due Diligence definido para esta transacción.
+                          </div>
+                        ) : (
+                          <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
+                            {ddItems.map(item => {
+                              const isUpdating = updatingDdItemId === item.id;
+                              return (
+                                <div key={item.id} className="flex items-start md:items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/10 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors flex-col md:flex-row gap-3">
+                                  <div className="flex items-start gap-3">
+                                    <button
+                                      onClick={() => updateDdItemStatus(res.id, item.id, item.status)}
+                                      disabled={isUpdating}
+                                      className={`mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center border transition-all ${
+                                        item.status === 'ready' 
+                                          ? 'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/20' 
+                                          : item.status === 'in_progress' 
+                                          ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10 text-brand-500' 
+                                          : item.status === 'requested'
+                                          ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/10 text-amber-500'
+                                          : 'border-slate-300 dark:border-slate-600 hover:border-brand-400'
+                                      }`}
+                                      title="Haz clic para cambiar estado"
+                                    >
+                                      {isUpdating ? (
+                                        <svg className="animate-spin w-3 h-3 text-current" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                      ) : item.status === 'ready' ? (
+                                        <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                                      ) : null}
+                                    </button>
+                                    <div>
+                                      <p className="font-semibold text-gray-800 dark:text-gray-200 text-sm">{item.document_name || item.item_name}</p>
+                                      <p className="text-xs text-gray-500 mt-0.5">
+                                        {item.notes ? `${item.notes}` : ''}
+                                        {item.responsible && ` [Resp: ${item.responsible}]`}
+                                        {item.completed_date && ` • Completado: ${new Date(item.completed_date).toLocaleDateString()}`}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 self-stretch md:self-auto justify-between md:justify-end pl-8 md:pl-0">
+                                    {/* Interactive cycle button */}
+                                    <button 
+                                      onClick={() => updateDdItemStatus(res.id, item.id, item.status)}
+                                      disabled={isUpdating}
+                                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all ${
+                                        item.status === 'ready' 
+                                          ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' 
+                                          : item.status === 'in_progress' 
+                                          ? 'bg-brand-100 text-brand-700 border-brand-200 dark:bg-brand-500/10 dark:text-brand-400 dark:border-brand-500/20' 
+                                          : item.status === 'requested'
+                                          ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
+                                          : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/5'
+                                      }`}
+                                    >
+                                      {item.status === 'ready' ? t('neg_dd_status_ready') || 'Listo' 
+                                       : item.status === 'in_progress' ? t('neg_dd_status_in_progress') || 'En Camino' 
+                                       : item.status === 'requested' ? t('neg_dd_status_requested') || 'Pedido'
+                                       : t('neg_dd_status_pending') || 'Pendiente'}
+                                    </button>
+
+                                    {item.file_url && (
+                                      <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10 rounded-lg transition-colors" title="Abrir Documento">
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                      </a>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Bottom action row */}
+                      <div className="flex items-center justify-between border-t border-gray-100 dark:border-white/5 pt-4 mt-4 flex-wrap gap-3">
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleBrokerHelp(res.id)}
+                            disabled={res.broker_help_requested}
+                            className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all ${
+                              res.broker_help_requested 
+                                ? 'bg-red-50 text-red-500 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30' 
+                                : 'bg-white dark:bg-dark-bg text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all font-bold'
+                            }`}
+                          >
+                            {res.broker_help_requested ? '🚨 Ayuda Solicitada' : '🚨 Pedir Ayuda al Broker'}
+                          </button>
+
+                          <button 
+                            onClick={() => {
+                              const url = `${window.location.origin}/negocio/transaccion/${res.id}`;
+                              navigator.clipboard.writeText(url);
+                              alert('Deal Room link copied!');
+                            }}
+                            className="text-xs font-medium bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                          >
+                            🔗 {t('neg_share_deal_room') || 'Compartir Link'}
+                          </button>
+                        </div>
+
+                        <a 
+                          href={`/negocio/transaccion/${res.id}`} 
+                          className="text-xs font-bold text-white bg-gradient-to-r from-brand-500 to-purple-600 px-4 py-2 rounded-xl shadow-md hover:shadow-lg transition-all"
+                        >
+                          Entrar al Deal Room →
+                        </a>
+                      </div>
+
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
         </div>
       </div>

@@ -36,7 +36,7 @@ export async function PATCH(request) {
     }
 
     // Only allow safe fields to be updated
-    const allowedFields = ['role', 'team_id', 'status', 'full_name', 'phone', 'office', 'remax_agent_id', 'remax_agent_name', 'avatar_url', 'psicotest_url', 'psicotest_file_id', 'olympia_behavior_analysis'];
+    const allowedFields = ['role', 'team_id', 'status', 'full_name', 'phone', 'office', 'remax_agent_id', 'remax_agent_name', 'avatar_url', 'psicotest_url', 'psicotest_file_id', 'olympia_behavior_analysis', 'commission_split', 'monthly_fee', 'fee_start_date'];
     const safeUpdates = {};
     for (const key of allowedFields) {
       if (key in updates) safeUpdates[key] = updates[key];
@@ -80,7 +80,7 @@ export async function GET(request) {
       // Broker wants all profiles — RLS will filter appropriately
       const { data, error } = await supabase
         .from('profiles')
-        .select('*, teams(id, name)')
+        .select('*, teams:teams!profiles_team_id_fkey(id, name)')
         .order('full_name');
       
       if (error) {
@@ -92,7 +92,7 @@ export async function GET(request) {
     // Return own profile
     const { data, error } = await supabase
       .from('profiles')
-      .select('*, teams(id, name)')
+      .select('*, teams:teams!profiles_team_id_fkey(id, name)')
       .eq('auth_user_id', user.id)
       .single();
 

@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
+import { fetchOfficeProperties } from '@/lib/reconnect-api';
+import { getSearchById, getPropertiesForMatch, getAcmsForMatch, getPipelineForSearch } from '@/lib/dal/searches';
+import { RECONNECT_TYPE_MAP } from '@/lib/constants/property-constants';
 
 export async function GET(request) {
   try {
@@ -16,13 +19,13 @@ export async function GET(request) {
     if (!searchId) return NextResponse.json({ error: 'Missing search_id' }, { status: 400 });
 
     // Get the search criteria
-    const { data: searchData, error: searchError } = await supabase
-      .from('buyer_searches')
-      .select('*')
-      .eq('id', searchId)
-      .single();
+    let searchData;
+    try {
+      searchData = await getSearchById(searchId, supabase);
+    } catch (searchError) {
+      throw searchError;
+    }
 
-    if (searchError) throw searchError;
     if (!searchData) return NextResponse.json({ matches: [] });
 
     const tolerance = searchData.price_tolerance ? Number(searchData.price_tolerance) / 100 : 0; // percentage
@@ -31,32 +34,20 @@ export async function GET(request) {
     const priceMax = searchData.price_max ? searchData.price_max * (1 + tolerance) : 999999999;
 
     // Build Properties query with hard physical filters
-    let propsQuery = supabase
-      .from('properties')
-      .select('*, profiles!properties_agent_id_fkey(full_name, avatar_url, phone, email)')
-      .eq('property_type', searchData.property_type)
-      .neq('agent_id', user.id)
-      .gte('list_price', priceMin)
-      .lte('list_price', priceMax)
-      .in('status', ['Activa', 'En_captacion']);
-
-    if (searchData.min_bedrooms > 0) propsQuery = propsQuery.gte('bedrooms_total', searchData.min_bedrooms);
-    if (searchData.min_bathrooms > 0) propsQuery = propsQuery.gte('bathrooms_full', searchData.min_bathrooms);
-    if (searchData.min_sqm > 0) propsQuery = propsQuery.gte('construction_size', searchData.min_sqm);
-
-    const { data: properties, error: propertiesError } = await propsQuery;
-    if (propertiesError) throw propertiesError;
+    let properties = [];
+    try {
+      properties = await getPropertiesForMatch(searchData, user.id, supabase);
+    } catch (propertiesError) {
+      throw propertiesError;
+    }
 
     // Fetch ACMs that match basic types (ACMs lack physical attributes mostly, but we can return them)
-    const { data: acms, error: acmError } = await supabase
-      .from('acm_reports')
-      .select('*, profiles!acm_reports_user_id_fkey(full_name, avatar_url, phone, email)')
-      .eq('property_type', searchData.property_type)
-      .neq('user_id', user.id)
-      .gte('suggested_price', priceMin)
-      .lte('suggested_price', priceMax);
-
-    if (acmError) throw acmError;
+    let acms = [];
+    try {
+      acms = await getAcmsForMatch(searchData, user.id, supabase);
+    } catch (acmError) {
+      throw acmError;
+    }
 
     // --- JAVASCRIPT MATCHING & SCORING ---
     const zones = searchData.zones || [];
@@ -136,16 +127,89 @@ export async function GET(request) {
       });
     });
 
+    // ── RECONNECT Live Listings ──────────────────────────────────────
+    try {
+      const [altitudRes, ceroRes] = await Promise.all([
+        fetchOfficeProperties('altitud'),
+        fetchOfficeProperties('cero'),
+      ]);
+
+      const reconnectListings = [
+        ...(altitudRes.properties || []),
+        ...(ceroRes.properties || []),
+      ];
+
+      const tolerance = searchData.price_tolerance ? Number(searchData.price_tolerance) / 100 : 0;
+      const rPriceMin = searchData.price_min ? searchData.price_min * (1 - tolerance) : 0;
+      const rPriceMax = searchData.price_max ? searchData.price_max * (1 + tolerance) : 999_999_999;
+
+      for (const rp of reconnectListings) {
+        const hubType = RECONNECT_TYPE_MAP[rp.PropertyTypeId || rp.propertyTypeId];
+        if (!hubType || hubType !== searchData.property_type) continue;
+
+        const listingPrice = Number(rp.ListPrice || rp.listPrice || rp.Price || 0);
+        if (listingPrice > 0 && (listingPrice < rPriceMin || listingPrice > rPriceMax)) continue;
+
+        const titleEs = rp.ListingTitleES || rp.TitleES || rp.ListingTitle || rp.listingTitle || '';
+        const titleEn = rp.ListingTitleEN || rp.TitleEN || '';
+        const address = rp.UnparsedAddress || rp.unparsedAddress || rp.Address || '';
+        const listingId = String(rp.ListingId || rp.listingId || rp.Id || rp.id || '');
+
+        // Zone fuzzy match
+        if (zones.length > 0) {
+          const haystack = `${titleEs} ${titleEn} ${address}`.toLowerCase();
+          const zoneMatch = zones.some(z => {
+            const parts = z.toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+            return parts.some(part => haystack.includes(part));
+          });
+          if (!zoneMatch) continue;
+        }
+
+        // Scoring — RECONNECT listings get a solid base since they are live/active
+        let rScore = 60;
+        const haystack = `${titleEs} ${titleEn} ${address}`.toLowerCase();
+        if (mustHaves.length > 0) {
+          mustHaves.forEach(mh => { if (haystack.includes(mh.toLowerCase())) rScore += (25 / mustHaves.length); });
+        } else { rScore += 25; }
+        if (niceToHaves.length > 0) {
+          niceToHaves.forEach(nh => { if (haystack.includes(nh.toLowerCase())) rScore += (15 / niceToHaves.length); });
+        } else { rScore += 15; }
+
+        const imageUrl = rp.Photos?.[0]?.Url || rp.Photos?.[0]?.url || null;
+
+        matches.push({
+          id: `reconnect-${listingId}`,
+          match_id: listingId,
+          match_type: 'reconnect',
+          title: titleEs || titleEn,
+          name: titleEs || titleEn || 'Captación RECONNECT',
+          type: 'reconnect',
+          price: listingPrice,
+          location: address,
+          main_image_url: imageUrl,
+          reconnect_listing_id: listingId,
+          reconnect_listing_key: rp.ListingKey || rp.listingKey || null,
+          office_key: (altitudRes.properties || []).some(p => String(p.ListingId || p.listingId || p.Id || p.id) === listingId) ? 'altitud' : 'cero',
+          agent: { full_name: rp.AgentName || rp.agentName || rp.MemberName || null },
+          data: rp,
+          match_score: Math.round(rScore),
+        });
+      }
+    } catch (reconnectErr) {
+      // RECONNECT is optional — never block matches on API failure
+      console.warn('[matches] RECONNECT fetch skipped:', reconnectErr.message);
+    }
+
     // Sort by Match Score descending
     matches.sort((a, b) => b.match_score - a.match_score);
 
     // Fetch Pipeline for this search
-    const { data: pipeline, error: pipelineError } = await supabase
-      .from('buyer_search_pipeline')
-      .select('*')
-      .eq('search_id', searchId);
-
-    if (pipelineError) throw pipelineError;
+    let pipeline = [];
+    try {
+      pipeline = await getPipelineForSearch(searchId, supabase);
+    } catch (pipelineError) {
+      throw pipelineError;
+    }
 
     return NextResponse.json({ matches, pipeline: pipeline || [] });
   } catch (err) {

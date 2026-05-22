@@ -52,6 +52,19 @@ export default function SoporteClient({ initialTickets }) {
     return <div className="p-8 text-center text-red-500">Acceso denegado.</div>;
   }
 
+  const getCategoryBadge = (category) => {
+    switch (category) {
+      case 'location_request':
+        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">📍 Ubicación</span>;
+      case 'feature_request':
+        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">💡 Función</span>;
+      case 'other':
+        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">📋 Otro</span>;
+      default:
+        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">🐛 Bug</span>;
+    }
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'resolved':
@@ -86,6 +99,7 @@ export default function SoporteClient({ initialTickets }) {
                     <tr className="bg-gray-50 dark:bg-dark-bg/50 border-b border-gray-200 dark:border-dark-border">
                       <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Agente</th>
                       <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ticket</th>
+                      <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipo</th>
                       <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
                       <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
                       <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Acción</th>
@@ -94,7 +108,7 @@ export default function SoporteClient({ initialTickets }) {
                   <tbody className="divide-y divide-gray-100 dark:divide-dark-border">
                     {tickets.length === 0 ? (
                       <tr>
-                        <td colSpan="5" className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                        <td colSpan="6" className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                           No hay tickets registrados.
                         </td>
                       </tr>
@@ -112,6 +126,9 @@ export default function SoporteClient({ initialTickets }) {
                           <td className="px-4 py-3">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">{ticket.title}</div>
                             <div className="text-xs text-gray-500 truncate max-w-[200px]">{ticket.description}</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {getCategoryBadge(ticket.category)}
                           </td>
                           <td className="px-4 py-3">
                             {getStatusBadge(ticket.status)}
@@ -141,7 +158,10 @@ export default function SoporteClient({ initialTickets }) {
                 <div className="bg-white dark:bg-dark-panel rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border p-5 sticky top-6">
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Detalle del Ticket</h3>
-                    {getStatusBadge(selectedTicket.status)}
+                    <div className="flex items-center gap-2">
+                      {getCategoryBadge(selectedTicket.category)}
+                      {getStatusBadge(selectedTicket.status)}
+                    </div>
                   </div>
                   
                   <div className="mb-4">
@@ -171,6 +191,36 @@ export default function SoporteClient({ initialTickets }) {
                           <span className="bg-black/70 text-white text-xs px-2 py-1 rounded">Abrir imagen</span>
                         </div>
                       </a>
+                    </div>
+                  )}
+
+                  {/* Location Data Card for location_request tickets */}
+                  {selectedTicket.category === 'location_request' && selectedTicket.location_data && (
+                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 rounded-xl">
+                      <p className="text-xs font-bold text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        UBICACIÓN SOLICITADA
+                      </p>
+                      <div className="space-y-1 text-xs">
+                        {selectedTicket.location_data.provincia && (
+                          <div className="flex gap-2"><span className="text-gray-500 w-20 shrink-0">Provincia:</span><span className="font-medium text-gray-800 dark:text-gray-200">{selectedTicket.location_data.provincia}</span></div>
+                        )}
+                        {selectedTicket.location_data.canton && (
+                          <div className="flex gap-2"><span className="text-gray-500 w-20 shrink-0">Cantón:</span><span className="font-medium text-gray-800 dark:text-gray-200">{selectedTicket.location_data.canton}</span></div>
+                        )}
+                        {selectedTicket.location_data.distrito && (
+                          <div className="flex gap-2"><span className="text-gray-500 w-20 shrink-0">Distrito:</span><span className="font-medium text-gray-800 dark:text-gray-200">{selectedTicket.location_data.distrito}</span></div>
+                        )}
+                        {selectedTicket.location_data.barrio && (
+                          <div className="flex gap-2"><span className="text-gray-500 w-20 shrink-0">Barrio:</span><span className="font-medium text-gray-800 dark:text-gray-200">{selectedTicket.location_data.barrio}</span></div>
+                        )}
+                        {selectedTicket.location_data.nombre_lugar && (
+                          <div className="flex gap-2"><span className="text-gray-500 w-20 shrink-0">Lugar:</span><span className="font-bold text-blue-700 dark:text-blue-300">{selectedTicket.location_data.nombre_lugar}</span></div>
+                        )}
+                      </div>
                     </div>
                   )}
 

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useApp } from '@/lib/context';
+import { insertLeadCommunication, insertLeadFollowUp } from '@/lib/dal/contacts';
 
 const CHANNELS = [
   { key: 'whatsapp', icon: '💬', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800' },
@@ -42,17 +43,17 @@ export default function CommunicationPanel({ lead, agentId, communications = [],
         summary: form.summary.trim(),
         follow_up_date: form.follow_up_date || null,
       };
-      await supabase.from('lead_communications').insert(payload);
+      await insertLeadCommunication(payload, supabase);
 
       // If follow-up date was set, also create a follow-up reminder
       if (form.follow_up_date) {
-        await supabase.from('lead_follow_ups').insert({
+        await insertLeadFollowUp({
           inquiry_id: lead.id,
           agent_id: agentId || null,
           due_date: form.follow_up_date,
           note: form.summary.trim(),
           status: 'pending',
-        });
+        }, supabase);
         onFollowUpCreated?.();
       }
 

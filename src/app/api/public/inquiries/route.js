@@ -39,7 +39,6 @@ export async function OPTIONS(req) {
   return new NextResponse(null, { status: 204, headers: getCorsHeaders(req) });
 }
 
-// Auto-detect lead source from referrer
 function detectSource(referrer) {
   if (!referrer) return 'sitio_web';
   const r = referrer.toLowerCase();
@@ -48,8 +47,21 @@ function detectSource(referrer) {
   if (r.includes('google')) return 'google';
   if (r.includes('remax.com') || r.includes('remax.cr')) return 'remax_portal';
   if (r.includes('encuentra24')) return 'encuentra24';
+  if (r.includes('chozi')) return 'chozi';
+  if (r.includes('listglobally') || r.includes('properstar')) return 'listglobally';
   if (r.includes('zillow')) return 'zillow';
   return 'sitio_web';
+}
+
+// Maps source to a standard portal_name for SyndicationPanel
+function sourceToPortalName(source) {
+  const portalMap = {
+    'remax_portal': 'reconnect',
+    'encuentra24': 'encuentra24',
+    'chozi': 'chozi',
+    'listglobally': 'listglobally'
+  };
+  return portalMap[source] || null;
 }
 
 export async function POST(req) {
@@ -90,8 +102,12 @@ export async function POST(req) {
     }
 
     const source = detectSource(referrer);
+    const portal_name = sourceToPortalName(source);
 
     const inquiry = {
+      property_id: property_id || null,
+      development_id: development_id || null,
+      portal_name: portal_name,
       lead_name: lead_name || null,
       lead_email: lead_email || null,
       lead_phone: lead_phone || null,
@@ -116,6 +132,20 @@ export async function POST(req) {
         { error: 'Failed to save inquiry' },
         { status: 500, headers: corsHeaders }
       );
+    }
+
+    // Track OKR for the assigned agent
+    if (assignedAgentId) {
+      try {
+        await supabase.rpc('increment_okr_activity', {
+          p_profile_id: assignedAgentId,
+          p_date: new Date().toISOString().split('T')[0],
+          p_activity_key: 'consultas',
+          p_delta: 1
+        });
+      } catch (okrErr) {
+        console.error('Failed to increment OKR for lead:', okrErr);
+      }
     }
 
     return NextResponse.json(

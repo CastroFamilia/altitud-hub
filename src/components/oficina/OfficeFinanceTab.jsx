@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
+import { updateOfficeExpense, insertPettyCashTransaction } from '@/lib/dal/office';
 import Image from 'next/image';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -133,15 +134,15 @@ export default function OfficeFinanceTab({ expenses = [], categories = [], funds
     const newStatus = isIncome ? 'received' : 'paid';
     
     // Update status
-    const { error } = await supabase.from('office_expenses').update({
-      status: newStatus,
-      paid_date: today,
-      paid_by: profile.id,
-      payment_source: source,
-      petty_cash_fund_id: fundId
-    }).eq('id', item.id);
+    try {
+      await updateOfficeExpense(item.id, {
+        status: newStatus,
+        paid_date: today,
+        paid_by: profile.id,
+        payment_source: source,
+        petty_cash_fund_id: fundId
+      }, supabase);
 
-    if (!error) {
       setLocalExpenses(prev => prev.map(e => e.id === item.id ? { ...e, status: newStatus, paid_date: today, payment_source: source } : e));
       
       // If petty cash, create transaction
@@ -154,9 +155,11 @@ export default function OfficeFinanceTab({ expenses = [], categories = [], funds
           description: item.description,
           created_by: profile.id
         };
-        const { data: newTx } = await supabase.from('petty_cash_transactions').insert(tx).select().single();
+        const newTx = await insertPettyCashTransaction(tx, supabase);
         if (newTx) setLocalTxs(prev => [newTx, ...prev]);
       }
+    } catch (error) {
+      console.error(error);
     }
     
     setLoading(false);

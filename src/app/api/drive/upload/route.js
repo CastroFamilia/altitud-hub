@@ -3,14 +3,9 @@ import { NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { Readable } from 'stream';
 
-// Maximum body size configuration for Next.js API routes (required for large PDFs)
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
-  },
-};
+// App Router: request body size limit is controlled via Vercel project settings or Next.js config.
+// maxDuration prevents Vercel timeout on large uploads (default 10s on hobby, 60s on pro).
+export const maxDuration = 60;
 
 async function getAuthClient() {
   const oauth2Client = new google.auth.OAuth2(

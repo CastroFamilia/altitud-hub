@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase-server';
 
 /* ═══════════════════════════════════════════════════════════════
    HEALTH CHECK ENDPOINT — /api/health
@@ -22,6 +22,7 @@ export async function GET() {
   };
 
   let allHealthy = true;
+  const supabase = await createClient();
 
   // ── Check Supabase ──────────────────────────────────────────
   try {

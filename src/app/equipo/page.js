@@ -1,79 +1,73 @@
 import { createClient } from '@/lib/supabase-server';
 import EquipoClient from './EquipoClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function EquipoPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let initialTeam = null;
-  let initialMembers = [];
-  let initialOkrLogs = [];
+  let initialProfiles = [];
+  let initialTeams = [];
+  let initialOkrEntries = [];
+  let initialOffboardingLogs = [];
+  let initialCommissions = [];
+  let initialCommissionTiers = [];
 
   if (user) {
     try {
-      const { data: profile } = await supabase
+      // 1. Fetch current profile to check role
+      const { data: currentProfile } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, role, office')
         .eq('auth_user_id', user.id)
         .single();
 
-      if (profile) {
-        // 1. Fetch my team (where I am the leader)
-        const { data: myTeam } = await supabase
-          .from('teams')
-          .select('*')
-          .eq('leader_id', profile.id)
-          .single();
-
-        if (myTeam) {
-          initialTeam = myTeam;
-
-          // 2. Fetch team members (juniors/agents)
-          const { data: teamMembers } = await supabase
-            .from('profiles')
+      if (currentProfile) {
+        // Fetch all relevant data in parallel for optimal load times
+        const [
+          profilesRes,
+          teamsRes,
+          okrEntriesRes,
+          offboardingLogsRes,
+          commissionsRes,
+          tiersRes
+        ] = await Promise.all([
+          supabase.from('profiles').select('*').order('full_name'),
+          supabase.from('teams').select('*').order('name'),
+          supabase
+            .from('agent_daily_okr_entries')
             .select('*')
-            .eq('team_id', myTeam.id)
-            .neq('id', profile.id); // Exclude myself from the juniors list
+            .gte('date', `${new Date().getFullYear()}-01-01`)
+            .order('date', { ascending: false }),
+          supabase.from('agent_offboarding_log').select('*').order('created_at', { ascending: false }),
+          supabase
+            .from('agent_commissions')
+            .select('id, agent_id, gross_commission, agent_amount, office_amount, closing_date, status')
+            .order('closing_date', { ascending: false }),
+          supabase.from('commission_tiers').select('*').eq('active', true).order('sort_order')
+        ]);
 
-          if (teamMembers) {
-            initialMembers = teamMembers;
-
-            // 3. Fetch recent OKRs for the team
-            if (teamMembers.length > 0) {
-              const memberIds = teamMembers.map(m => m.id);
-              const { data: logs } = await supabase
-                .from('okr_daily_logs')
-                .select('*, profiles(full_name, avatar_url)')
-                .in('profile_id', memberIds)
-                .order('log_date', { ascending: false })
-                .limit(50);
-
-              if (logs) initialOkrLogs = logs;
-            }
-          }
-        } else {
-           // MOCK DATA FOR PREVIEW
-           initialTeam = { id: 'mock-team', name: 'Equipo Alpha (Vista Previa)' };
-           initialMembers = [
-             { id: '1', full_name: 'Agente Prueba 1', email: 'prueba1@remax.cr', avatar_url: '' },
-             { id: '2', full_name: 'Agente Prueba 2', email: 'prueba2@remax.cr', avatar_url: '' }
-           ];
-           initialOkrLogs = [
-             { id: 'l1', log_date: new Date().toISOString(), activities: { llamadas: 10, reuniones: 2 }, profiles: { full_name: 'Agente Prueba 1' } },
-             { id: 'l2', log_date: new Date().toISOString(), activities: { llamadas: 5, visitas: 1 }, profiles: { full_name: 'Agente Prueba 2' } }
-           ];
-        }
+        if (profilesRes.data) initialProfiles = profilesRes.data;
+        if (teamsRes.data) initialTeams = teamsRes.data;
+        if (okrEntriesRes.data) initialOkrEntries = okrEntriesRes.data;
+        if (offboardingLogsRes.data) initialOffboardingLogs = offboardingLogsRes.data;
+        if (commissionsRes.data) initialCommissions = commissionsRes.data;
+        if (tiersRes.data) initialCommissionTiers = tiersRes.data;
       }
     } catch (err) {
-      console.error('Error fetching team data on server:', err);
+      console.error('Error fetching broker team dashboard data on server:', err);
     }
   }
 
   return (
-    <EquipoClient 
-      initialTeam={initialTeam} 
-      initialMembers={initialMembers} 
-      initialOkrLogs={initialOkrLogs} 
+    <EquipoClient
+      initialProfiles={initialProfiles}
+      initialTeams={initialTeams}
+      initialOkrEntries={initialOkrEntries}
+      initialOffboardingLogs={initialOffboardingLogs}
+      initialCommissions={initialCommissions}
+      initialCommissionTiers={initialCommissionTiers}
     />
   );
 }

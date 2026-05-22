@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
+import { getAgentReferrals, updateAgentReferral } from '@/lib/dal/office';
 
 /* ═══════════════════════════════════════════════════════════════
    BROKER REFERRAL MANAGEMENT TAB
@@ -33,10 +34,7 @@ export default function ReferralManagementTab({ profiles = [] }) {
     const load = async () => {
       setLoading(true);
       try {
-        const { data } = await supabase
-          .from('agent_referrals')
-          .select('*, referring_profile:profiles!agent_referrals_referring_agent_id_fkey(full_name, avatar_url, office), receiving_profile:profiles!agent_referrals_receiving_agent_id_fkey(full_name, avatar_url, office)')
-          .order('created_at', { ascending: false });
+        const data = await getAgentReferrals(supabase);
         if (data) setReferrals(data);
       } catch (err) {
         console.error('Broker referrals load:', err);
@@ -72,12 +70,15 @@ export default function ReferralManagementTab({ profiles = [] }) {
     return true;
   });
 
-  // Update status
   const updateStatus = async (id, newStatus) => {
     const updates = { status: newStatus };
     if (newStatus === 'paid') updates.payment_date = new Date().toISOString().slice(0, 10);
-    const { error } = await supabase.from('agent_referrals').update(updates).eq('id', id);
-    if (!error) setReferrals(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+    try {
+      await updateAgentReferral(id, updates, supabase);
+      setReferrals(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   if (loading) {

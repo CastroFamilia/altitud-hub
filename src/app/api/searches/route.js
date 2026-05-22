@@ -1,5 +1,6 @@
 import { createClient, createAdminSupabase } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
+import { getSearchesByAgentId, getAllSearches, insertSearch, updateSearch, deleteSearch } from '@/lib/dal/searches';
 
 export async function GET(request) {
   try {
@@ -18,15 +19,12 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const all = searchParams.get('all') === 'true';
 
-    let query = supabase.from('buyer_searches').select('*, profiles!buyer_searches_agent_id_fkey(full_name, avatar_url, phone)').order('created_at', { ascending: false });
-
-    if (!all) {
-      query = query.eq('agent_id', user.id);
+    let data;
+    if (all) {
+      data = await getAllSearches(supabase);
+    } else {
+      data = await getSearchesByAgentId(user.id, supabase);
     }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
 
     return NextResponse.json({ searches: data });
   } catch (err) {
@@ -59,7 +57,7 @@ export async function POST(request) {
     const body = await request.json();
     const { operation_type, client_name, property_type, price_min, price_max, purchase_timeframe, purchase_type, zones, must_haves, nice_to_haves, price_tolerance, lat, lng, min_bedrooms, min_bathrooms, min_sqm } = body;
 
-    const { data, error } = await dbClient.from('buyer_searches').insert({
+    const data = await insertSearch({
       agent_id: activeUserId,
       operation_type,
       client_name,
@@ -77,9 +75,7 @@ export async function POST(request) {
       min_bedrooms: min_bedrooms ? Number(min_bedrooms) : 0,
       min_bathrooms: min_bathrooms ? Number(min_bathrooms) : 0,
       min_sqm: min_sqm ? Number(min_sqm) : 0
-    }).select().single();
-
-    if (error) throw error;
+    }, dbClient);
 
     // After creating a search, let's optionally find matches and create notifications for OTHER agents
     // who have properties that match.
@@ -134,13 +130,14 @@ export async function PATCH(request) {
     }
     updates.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase.from('buyer_searches')
-      .update(updates)
-      .eq('id', id)
-      .eq('agent_id', user.id)
-      .select().single();
+    // Verify ownership before updating if we are not admin. Since we are in the API route, we should verify ownership here.
+    // However, the previous code just did eq('agent_id', user.id) in the query, so let's check it manually.
+    const search = await dbClient.from('buyer_searches').select('agent_id').eq('id', id).single();
+    if (search.data && search.data.agent_id !== user.id) {
+       return NextResponse.json({ error: 'Unauthorized update' }, { status: 403 });
+    }
 
-    if (error) throw error;
+    const data = await updateSearch(id, updates, supabase);
 
     return NextResponse.json({ search: data });
   } catch (err) {
@@ -167,12 +164,12 @@ export async function DELETE(request) {
 
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-    const { error } = await supabase.from('buyer_searches')
-      .delete()
-      .eq('id', id)
-      .eq('agent_id', user.id);
+    const search = await supabase.from('buyer_searches').select('agent_id').eq('id', id).single();
+    if (search.data && search.data.agent_id !== user.id) {
+       return NextResponse.json({ error: 'Unauthorized delete' }, { status: 403 });
+    }
 
-    if (error) throw error;
+    await deleteSearch(id, supabase);
 
     return NextResponse.json({ success: true });
   } catch (err) {

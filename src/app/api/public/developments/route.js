@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
+import { getActiveDevelopmentsWithProperties } from '@/lib/dal/developments';
 
 /* ═══════════════════════════════════════════════════════════════
    PUBLIC DEVELOPMENTS API — /api/public/developments
@@ -13,17 +14,7 @@ export async function GET(request) {
     const supabase = await createClient();
 
     // Fetch active developments with their properties
-    const { data: developments, error } = await supabase
-      .from('developments')
-      .select(`
-        *,
-        properties:properties(
-          id, title_es, title_en, property_type, size_m2, price, status, main_image_url
-        )
-      `)
-      .eq('status', 'active');
-
-    if (error) throw error;
+    const developments = await getActiveDevelopmentsWithProperties(supabase);
 
     // Fetch agents for these developments
     const agentIds = [...new Set(developments.map(d => d.agent_id).filter(Boolean))];

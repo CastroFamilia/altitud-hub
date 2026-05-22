@@ -1,3 +1,5 @@
+import { resolveTypeId, canonicalTypeName } from '@/lib/constants/property-constants';
+
 /* ═══════════════════════════════════════════════════════════════
    RECONNECT API Client — REI API CCA v1.0
    
@@ -10,7 +12,10 @@
      RECONNECT_INTEGRATOR_ID
    ═══════════════════════════════════════════════════════════════ */
 
-const RECONNECT_BASE_URL = 'https://remax-cca.com/reiapi';
+// Production: /apiCCA — Test: /api (confirmed by Roberto Ceron, RE/MAX CCA)
+const RECONNECT_BASE_URL = process.env.RECONNECT_USE_TEST_ENV === 'true'
+  ? 'https://remax-cca.com/api'
+  : 'https://remax-cca.com/apiCCA';
 const RECONNECT_FEED_BASE = 'https://api.remax-cca.com/api';
 
 // Office GUIDs for property feeds
@@ -21,25 +26,38 @@ const OFFICE_GUIDS = {
 
 // ── TOKEN MANAGEMENT (for write operations) ──────────────────
 
-let cachedToken = null;
-let tokenExpiry = null;
+// Per-office credentials (each office has its own API key, secret, and integrator ID)
+const OFFICE_CREDENTIALS = {
+  altitud: {
+    apiKey: process.env.RECONNECT_ALTITUD_API_KEY,
+    secretKey: process.env.RECONNECT_ALTITUD_SECRET_KEY,
+    integratorId: process.env.RECONNECT_ALTITUD_INTEGRATOR_ID,
+  },
+  cero: {
+    apiKey: process.env.RECONNECT_CERO_API_KEY,
+    secretKey: process.env.RECONNECT_CERO_SECRET_KEY,
+    integratorId: process.env.RECONNECT_CERO_INTEGRATOR_ID,
+  },
+};
 
-function isWriteConfigured() {
-  return !!(
-    process.env.RECONNECT_API_KEY &&
-    process.env.RECONNECT_SECRET_KEY &&
-    process.env.RECONNECT_INTEGRATOR_ID
-  );
+function isWriteConfigured(officeKey = 'altitud') {
+  const creds = OFFICE_CREDENTIALS[officeKey];
+  return !!(creds && creds.apiKey && creds.secretKey && creds.integratorId);
 }
 
-async function getOAuthToken() {
-  if (!isWriteConfigured()) {
-    return { error: 'RECONNECT write credentials not configured. Set RECONNECT_API_KEY, RECONNECT_SECRET_KEY, and RECONNECT_INTEGRATOR_ID.' };
+// Per-office token cache
+const tokenCache = {};
+
+async function getOAuthToken(officeKey = 'altitud') {
+  const creds = OFFICE_CREDENTIALS[officeKey];
+  if (!creds || !creds.apiKey || !creds.secretKey) {
+    return { error: `RECONNECT write credentials not configured for office: ${officeKey}. Set RECONNECT_${officeKey.toUpperCase()}_API_KEY, _SECRET_KEY, _INTEGRATOR_ID.` };
   }
 
   // Return cached token if still valid (with 5 min buffer)
-  if (cachedToken && tokenExpiry && Date.now() < tokenExpiry - 5 * 60 * 1000) {
-    return { token: cachedToken };
+  const cached = tokenCache[officeKey];
+  if (cached && cached.expiry && Date.now() < cached.expiry - 5 * 60 * 1000) {
+    return { token: cached.token };
   }
 
   try {
@@ -48,23 +66,32 @@ async function getOAuthToken() {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         grant_type: 'client_credentials',
-        client_id: process.env.RECONNECT_API_KEY,
-        client_secret: process.env.RECONNECT_SECRET_KEY,
+        client_id: creds.apiKey,
+        client_secret: creds.secretKey,
       }),
+      redirect: 'manual', // Don't follow redirects — detect auth/endpoint issues
     });
+
+    // 302 = endpoint is down or path is wrong (RECONNECT redirects to login page)
+    if (res.status === 301 || res.status === 302) {
+      const location = res.headers.get('location') || 'unknown';
+      return { error: `OAuth endpoint returned ${res.status} redirect to "${location}". The API endpoint may be down or the URL may have changed. Contact Roberto Ceron at RE/MAX CCA.` };
+    }
 
     if (!res.ok) {
       const text = await res.text();
-      return { error: `OAuth token request failed: ${res.status} — ${text}` };
+      return { error: `OAuth token request failed for ${officeKey}: ${res.status} — ${text}` };
     }
 
     const data = await res.json();
-    cachedToken = data.access_token;
-    // Token expires in 48h but we cache conservatively
-    tokenExpiry = Date.now() + (data.expires_in || 172800) * 1000;
-    return { token: cachedToken };
+    tokenCache[officeKey] = {
+      token: data.access_token,
+      // Token expires in 48h but we cache conservatively
+      expiry: Date.now() + (data.expires_in || 172800) * 1000,
+    };
+    return { token: data.access_token };
   } catch (err) {
-    return { error: `OAuth token request error: ${err.message}` };
+    return { error: `OAuth token request error for ${officeKey}: ${err.message}` };
   }
 }
 
@@ -102,21 +129,35 @@ export async function fetchOfficeProperties(officeKey) {
  * Map a RECONNECT property object to Hub schema fields.
  * Field names may vary — this handles common patterns from the CCA API.
  */
+/**
+ * Helper: RECONNECT feed returns booleans as "Y"/"N" strings.
+ */
+function ynToBool(val) {
+  if (typeof val === 'boolean') return val;
+  if (typeof val === 'string') return val.toUpperCase() === 'Y';
+  return !!val;
+}
+
 export function mapReconnectToHub(rp) {
   return {
     // RECONNECT identifiers
     reconnect_listing_id: rp.ListingId || rp.listingId || rp.Id || rp.id || null,
     reconnect_listing_key: rp.ListingKey || rp.listingKey || null,
 
-    // Basic info
-    name: rp.ListingTitle || rp.Title || rp.listingTitle || '',
-    listing_title_en: rp.ListingTitleEN || rp.TitleEN || rp.listingTitleEN || '',
-    listing_title_es: rp.ListingTitleES || rp.TitleES || rp.ListingTitle || rp.listingTitle || '',
+    // Basic info — feed uses ListingTitle_en / ListingTitle_es (underscore variant)
+    name: rp.ListingTitle_es || rp.ListingTitle_en || rp.ListingTitle || rp.listingTitle || '',
+    listing_title_en: rp.ListingTitle_en || rp.ListingTitleEN || rp.TitleEN || '',
+    listing_title_es: rp.ListingTitle_es || rp.ListingTitleES || rp.TitleES || '',
 
-    // Classification
-    property_type_id: rp.PropertyTypeId || rp.propertyTypeId || null,
+    // Classification — normalize to canonical Hub names
+    property_type_id: resolveTypeId(rp) || rp.PropertyTypeId || rp.propertyTypeId || null,
+    property_type: canonicalTypeName(resolveTypeId(rp)) || (rp.PropertyTypeName_es || rp.PropertyTypeName_en || '').trim() || null,
     listing_contract_type: rp.ListingContractType || rp.listingContractType || 1,
     standard_status_id: rp.StandardStatusId || rp.standardStatusId || 1,
+
+    // Registry Numbers (Costa Rica)
+    finca_number: rp.FincaNumber || rp.fincaNumber || rp.Finca || rp.finca || null,
+    plano_number: rp.PlanoNumber || rp.planoNumber || rp.Plano || rp.plano || null,
 
     // Location
     unparsed_address: rp.UnparsedAddress || rp.unparsedAddress || rp.Address || '',
@@ -125,6 +166,8 @@ export function mapReconnectToHub(rp) {
     country_id: rp.CountryId || rp.countryId || 52,
     state_dep_prov_id: rp.StateDepProvId || rp.stateDepProvId || null,
     location_id: rp.LocationId || rp.locationId || null,
+    property_general_location_id: rp.PropertyGeneralLocationId || rp.propertyGeneralLocationId || null,
+    postal_code: rp.PostalCode || rp.postalCode || null,
 
     // Details
     bedrooms_total: rp.BedroomsTotal || rp.bedroomsTotal || 0,
@@ -132,34 +175,48 @@ export function mapReconnectToHub(rp) {
     bathrooms_half: rp.BathroomsHalf || rp.bathroomsHalf || 0,
     stories: rp.Stories || rp.stories || 1,
     lot_size_area: rp.LotSizeArea || rp.lotSizeArea || null,
+    size_sqm: rp.LotSizeArea || rp.lotSizeArea || null, // Backwards compatibility field
+    lot_size_units_id: rp.LotSizeUnitsId || rp.lotSizeUnitsId || 1, // Standard to sqm (1)
     construction_size: rp.ConstructionSize || rp.constructionSize || rp.LivingArea || null,
+    construction_size_living: rp.LivingArea || rp.livingArea || rp.ConstructionSizeLiving || rp.constructionSizeLiving || null,
+    construction_size_units_id: rp.ConstructionSizeUnitsId || rp.constructionSizeUnitsId || 1, // Standard to sqm (1)
     year_built: rp.YearBuilt || rp.yearBuilt || null,
 
     // Pricing
     list_price: rp.ListPrice || rp.listPrice || rp.Price || null,
-    list_price_currency_id: rp.ListPriceCurrencyId || rp.listPriceCurrencyId || 2,
+    list_price_currency_id: rp.CurrencyId || rp.ListPriceCurrencyId || rp.listPriceCurrencyId || 2,
+    list_price_private: ynToBool(rp.ListPricePrivate || rp.PricePrivate || rp.pricePrivate || rp.PriceHidden || rp.priceHidden),
 
     // Commission
     listing_side_comm: rp.ListingSideComm || rp.listingSideComm || 3,
     selling_side_comm: rp.SellingSideComm || rp.sellingSideComm || 3,
 
-    // Descriptions
-    public_remarks_en: rp.PublicRemarksEN || rp.publicRemarksEN || '',
-    public_remarks_es: rp.PublicRemarksES || rp.publicRemarksES || rp.PublicRemarks || '',
+    // Descriptions — feed uses PublicRemarks_en / publicRemarks_es (underscore variant)
+    public_remarks_en: rp.PublicRemarks_en || rp.PublicRemarksEN || rp.publicRemarksEN || '',
+    public_remarks_es: rp.publicRemarks_es || rp.PublicRemarksES || rp.publicRemarksES || rp.PublicRemarks || '',
+    private_remarks_es: rp.PrivateRemarks_es || rp.PrivateRemarksES || rp.privateRemarksES || rp.PrivateRemarks || rp.privateRemarks || '',
+    private_remarks_en: rp.PrivateRemarks_en || rp.PrivateRemarksEN || rp.privateRemarksEN || '',
 
-    // Amenities
-    pool_private: !!(rp.PoolPrivate || rp.poolPrivate),
-    garage: !!(rp.Garage || rp.garage),
+    // Amenities — feed returns Y/N strings, not booleans
+    pool_private: ynToBool(rp.PoolPrivate || rp.poolPrivate),
+    garage: ynToBool(rp.Garage || rp.garage),
     garage_spaces: rp.GarageSpaces || rp.garageSpaces || 0,
-    cooling: !!(rp.Cooling || rp.cooling),
-    has_view: !!(rp.HasView || rp.hasView),
-    gated_community: !!(rp.GatedCommunity || rp.gatedCommunity),
-    furnished: !!(rp.Furnished || rp.furnished),
-    maid_room: !!(rp.MaidRoom || rp.maidRoom),
-    property_new: !!(rp.PropertyNew || rp.propertyNew),
+    garage_covered: ynToBool(rp.GarageCovered || rp.garageCovered),
+    cooling: ynToBool(rp.Cooling || rp.cooling),
+    has_view: ynToBool(rp.Viewyn || rp.HasView || rp.hasView),
+    gated_community: ynToBool(rp.GatedCommunity || rp.gatedCommunity),
+    furnished: ynToBool(rp.Furnishedyn || rp.Furnished || rp.furnished),
+    maid_room: ynToBool(rp.MaidRoom || rp.maidRoom),
+    property_new: ynToBool(rp.PropertyNew || rp.propertyNew),
+    listing_agreement: ynToBool(rp.Listingagreementyn || rp.ListingAgreement),
+    has_association: ynToBool(rp.HasAssociation || rp.hasAssociation || rp.Associationyn),
+
+    // Dates
+    listing_contract_date: rp.ListingContractDate || rp.listingContractDate || null,
+    expiration_date: rp.ExpirationDate || rp.expirationDate || null,
 
     // Media
-    video_link: rp.VideoLink || rp.videoLink || rp.VirtualTourURL || '',
+    video_link: rp.Videolink || rp.VideoLink || rp.videoLink || rp.VirtualTourURL || '',
 
     // Status — imported properties are already live
     status: 'published',
@@ -169,25 +226,44 @@ export function mapReconnectToHub(rp) {
 
 /**
  * Extract image URLs from a RECONNECT property object.
+ * The feed returns Images as a pipe-separated string of URLs.
  * Returns array of { image_url, priority }.
  */
 export function extractReconnectImages(rp) {
-  const images = rp.Photos || rp.photos || rp.Images || rp.images || [];
-  return images.map((img, i) => ({
-    image_url: img.Url || img.url || img.PhotoUrl || img.photoUrl || img,
-    thumbnail_url: img.ThumbnailUrl || img.thumbnailUrl || null,
-    priority: i,
-  })).filter(img => img.image_url);
+  const raw = rp.Photos || rp.photos || rp.Images || rp.images || [];
+
+  // Handle pipe-separated string (actual RECONNECT feed format)
+  if (typeof raw === 'string') {
+    return raw.split('|').filter(url => url.trim()).map((url, i) => ({
+      image_url: url.trim(),
+      thumbnail_url: null,
+      priority: i,
+    }));
+  }
+
+  // Handle array of objects or strings
+  if (Array.isArray(raw)) {
+    return raw.map((img, i) => ({
+      image_url: typeof img === 'string' ? img : (img.Url || img.url || img.PhotoUrl || img.photoUrl || ''),
+      thumbnail_url: typeof img === 'string' ? null : (img.ThumbnailUrl || img.thumbnailUrl || null),
+      priority: i,
+    })).filter(img => img.image_url);
+  }
+
+  return [];
 }
 
-// ── WRITE FUNCTIONS (SCAFFOLDED) ─────────────────────────────
+// ── WRITE FUNCTIONS (CREDENTIALS RECEIVED — ACTIVATE WHEN READY) ─────
 
 /**
  * Map Hub property data to RECONNECT API format for creating/updating.
+ * @param {Object} property — Hub property row
+ * @param {string} officeKey — 'altitud' or 'cero'
  */
-function mapHubToReconnect(property) {
+function mapHubToReconnect(property, officeKey = 'altitud') {
+  const creds = OFFICE_CREDENTIALS[officeKey];
   return {
-    IntegratorId: process.env.RECONNECT_INTEGRATOR_ID,
+    IntegratorId: creds?.integratorId,
     ListingContractType: property.listing_contract_type || 1,
     StandardStatusId: property.standard_status_id || 1,
     PropertyTypeId: property.property_type_id,
@@ -229,14 +305,15 @@ function mapHubToReconnect(property) {
 
 /**
  * Create a new property on RECONNECT.
- * SCAFFOLDED — returns error until credentials are configured.
+ * @param {Object} propertyData — Hub property data
+ * @param {'altitud'|'cero'} officeKey — Which office credentials to use
  */
-export async function createProperty(propertyData) {
-  const tokenResult = await getOAuthToken();
+export async function createProperty(propertyData, officeKey = 'altitud') {
+  const tokenResult = await getOAuthToken(officeKey);
   if (tokenResult.error) return { success: false, error: tokenResult.error };
 
   try {
-    const payload = mapHubToReconnect(propertyData);
+    const payload = mapHubToReconnect(propertyData, officeKey);
     const res = await fetch(`${RECONNECT_BASE_URL}/api/Listing/CreateProperty`, {
       method: 'POST',
       headers: {
@@ -264,14 +341,16 @@ export async function createProperty(propertyData) {
 
 /**
  * Full update of a property on RECONNECT.
- * SCAFFOLDED — returns error until credentials are configured.
+ * @param {string} listingKey — RECONNECT listing key
+ * @param {Object} propertyData — Hub property data
+ * @param {'altitud'|'cero'} officeKey — Which office credentials to use
  */
-export async function updateProperty(listingKey, propertyData) {
-  const tokenResult = await getOAuthToken();
+export async function updateProperty(listingKey, propertyData, officeKey = 'altitud') {
+  const tokenResult = await getOAuthToken(officeKey);
   if (tokenResult.error) return { success: false, error: tokenResult.error };
 
   try {
-    const payload = { ...mapHubToReconnect(propertyData), ListingKey: listingKey };
+    const payload = { ...mapHubToReconnect(propertyData, officeKey), ListingKey: listingKey };
     const res = await fetch(`${RECONNECT_BASE_URL}/api/Listing/FullUpdateProperty`, {
       method: 'PUT',
       headers: {
@@ -294,12 +373,14 @@ export async function updateProperty(listingKey, propertyData) {
 
 /**
  * Cancel/remove a property on RECONNECT.
- * SCAFFOLDED — returns error until credentials are configured.
+ * @param {string} listingKey — RECONNECT listing key
+ * @param {'altitud'|'cero'} officeKey — Which office credentials to use
  */
-export async function cancelProperty(listingKey) {
-  const tokenResult = await getOAuthToken();
+export async function cancelProperty(listingKey, officeKey = 'altitud') {
+  const tokenResult = await getOAuthToken(officeKey);
   if (tokenResult.error) return { success: false, error: tokenResult.error };
 
+  const creds = OFFICE_CREDENTIALS[officeKey];
   try {
     const res = await fetch(`${RECONNECT_BASE_URL}/api/Listing/CancelProperty`, {
       method: 'POST',
@@ -308,7 +389,7 @@ export async function cancelProperty(listingKey) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        IntegratorId: process.env.RECONNECT_INTEGRATOR_ID,
+        IntegratorId: creds?.integratorId,
         ListingKey: listingKey,
       }),
     });
@@ -326,12 +407,16 @@ export async function cancelProperty(listingKey) {
 
 /**
  * Upload an image to a RECONNECT property listing.
- * SCAFFOLDED — returns error until credentials are configured.
+ * @param {string} listingKey — RECONNECT listing key
+ * @param {string} imageUrl — Public URL of the image
+ * @param {number} priority — Image display order (0 = first)
+ * @param {'altitud'|'cero'} officeKey — Which office credentials to use
  */
-export async function createPropertyImage(listingKey, imageUrl, priority = 0) {
-  const tokenResult = await getOAuthToken();
+export async function createPropertyImage(listingKey, imageUrl, priority = 0, officeKey = 'altitud') {
+  const tokenResult = await getOAuthToken(officeKey);
   if (tokenResult.error) return { success: false, error: tokenResult.error };
 
+  const creds = OFFICE_CREDENTIALS[officeKey];
   try {
     const res = await fetch(`${RECONNECT_BASE_URL}/api/Listing/CreatePropertyImage`, {
       method: 'POST',
@@ -340,7 +425,7 @@ export async function createPropertyImage(listingKey, imageUrl, priority = 0) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        IntegratorId: process.env.RECONNECT_INTEGRATOR_ID,
+        IntegratorId: creds?.integratorId,
         ListingKey: listingKey,
         PhotoUrl: imageUrl,
         Priority: priority,
@@ -359,4 +444,5 @@ export async function createPropertyImage(listingKey, imageUrl, priority = 0) {
   }
 }
 
-export { OFFICE_GUIDS, isWriteConfigured };
+export { OFFICE_GUIDS, OFFICE_CREDENTIALS, isWriteConfigured, getOAuthToken, RECONNECT_BASE_URL };
+

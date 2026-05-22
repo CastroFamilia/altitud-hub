@@ -12,7 +12,7 @@ import { createServerClient } from '@supabase/ssr';
    Instead we use request.cookies directly via @supabase/ssr.
    ═══════════════════════════════════════════════════════════════ */
 
-export async function middleware(request) {
+export async function proxy(request) {
   const { pathname } = request.nextUrl;
 
   // ── Public routes that don't require auth ──────────────────

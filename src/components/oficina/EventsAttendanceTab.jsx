@@ -2,10 +2,12 @@
 
 import { useState, useMemo } from 'react';
 import { useApp } from '@/lib/context';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
+import { insertOfficeEvent, upsertEventAttendance } from '@/lib/dal/office';
 
 export default function EventsAttendanceTab({ events, attendance, profiles, setEvents, setAttendance }) {
   const { t, lang } = useApp();
+  const { profile } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   
@@ -45,17 +47,13 @@ export default function EventsAttendanceTab({ events, attendance, profiles, setE
     setIsSaving(true);
     
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const profileRes = await supabase.from('profiles').select('id, office').eq('auth_user_id', userData.user.id).single();
-      
       const payload = {
         ...formData,
-        created_by: profileRes.data.id,
-        office: profileRes.data.office || 'altitud'
+        created_by: profile?.id,
+        office: profile?.office || 'altitud'
       };
 
-      const { data, error } = await supabase.from('office_events').insert([payload]).select().single();
-      if (error) throw error;
+      const data = await insertOfficeEvent(payload);
       
       setEvents(prev => [data, ...prev].sort((a, b) => new Date(b.event_date) - new Date(a.event_date)));
       setIsModalOpen(false);
@@ -83,31 +81,12 @@ export default function EventsAttendanceTab({ events, attendance, profiles, setE
     });
 
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const profileRes = await supabase.from('profiles').select('id').eq('auth_user_id', userData.user.id).single();
-      
-      const { data: existing } = await supabase
-        .from('event_attendance')
-        .select('*')
-        .eq('event_id', eventId)
-        .eq('profile_id', profileId)
-        .single();
-
-      if (existing) {
-        await supabase
-          .from('event_attendance')
-          .update({ status: newStatus, marked_by: profileRes.data.id })
-          .eq('id', existing.id);
-      } else {
-        await supabase
-          .from('event_attendance')
-          .insert([{
-            event_id: eventId,
-            profile_id: profileId,
-            status: newStatus,
-            marked_by: profileRes.data.id
-          }]);
-      }
+      await upsertEventAttendance({
+        eventId,
+        profileId,
+        status: newStatus,
+        markedBy: profile?.id
+      });
       
       // We could re-fetch attendance here to get real IDs, but optimistic update is usually fine
     } catch (err) {

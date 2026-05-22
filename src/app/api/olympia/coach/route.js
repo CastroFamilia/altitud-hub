@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase-server';
 import { rateLimitAI } from '@/lib/rate-limit';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -21,17 +21,97 @@ const MAX_HISTORY_MESSAGES = 16; // Keep last 16 messages (8 exchanges)
  * Keeps the most recent messages and adds a context summary if truncated.
  */
 function truncateHistory(messages) {
-  if (messages.length <= MAX_HISTORY_MESSAGES) {
-    return messages;
-  }
-
+  if (messages.length <= MAX_HISTORY_MESSAGES) return messages;
   const truncatedCount = messages.length - MAX_HISTORY_MESSAGES;
   const summary = {
     role: 'user',
     content: `[Nota del sistema: Se omitieron ${truncatedCount} mensajes anteriores de esta conversación para optimizar el rendimiento. Continúa la conversación de manera natural basándote en los mensajes recientes.]`,
   };
-
   return [summary, ...messages.slice(-MAX_HISTORY_MESSAGES)];
+}
+
+/**
+ * Summarize OKR entries (last 7 days + last 30 days) into a readable context string.
+ */
+function buildOkrContext(entries, agentName, planData) {
+  if (!entries || entries.length === 0) {
+    return 'El agente aún no tiene actividades registradas en el Hub esta semana.';
+  }
+
+  const today = new Date();
+  const todayISO = today.toISOString().split('T')[0];
+  const weekStart = new Date(today);
+  // Go to Monday of current week
+  const day = today.getDay();
+  weekStart.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+  const weekStartISO = weekStart.toISOString().split('T')[0];
+
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+
+  const KEYS = ['llamadas', 'prelistings', 'acm', 'listings', 'captaciones', 'busquedas', 'consultas', 'muestras', 'reservas', 'transacciones', 'cierres'];
+  const LABELS = {
+    llamadas: 'Llamadas', prelistings: 'Prelistings', acm: 'ACMs/CMA',
+    listings: 'Presentaciones', captaciones: 'Captaciones', busquedas: 'Búsquedas activas',
+    consultas: 'Consultas', muestras: 'Muestras', reservas: 'Reservas',
+    transacciones: 'Transacciones', cierres: 'Cierres',
+  };
+
+  const weekEntries = entries.filter(e => e.date >= weekStartISO && e.date <= todayISO);
+  const monthEntries = entries.filter(e => e.date >= monthStart && e.date <= todayISO);
+
+  const sumKey = (arr, key) => arr.reduce((s, e) => s + (e[key] || 0), 0);
+
+  // Weekly targets from plan
+  const weeklyTargets = planData?.weekly_targets || {};
+  const monthlyTargets = planData?.monthly_targets || {};
+
+  const weekLines = KEYS
+    .map(k => {
+      const val = sumKey(weekEntries, k);
+      const tgt = weeklyTargets[k] || 0;
+      if (val === 0 && tgt === 0) return null;
+      const pct = tgt > 0 ? Math.round((val / tgt) * 100) : null;
+      const indicator = pct === null ? '' : pct >= 100 ? ' ✅' : pct >= 60 ? ' 🟡' : ' 🔴';
+      return `  - ${LABELS[k]}: ${val}${tgt > 0 ? `/${tgt}${indicator}` : ''}`;
+    })
+    .filter(Boolean)
+    .join('\n');
+
+  const monthLines = KEYS
+    .map(k => {
+      const val = sumKey(monthEntries, k);
+      const tgt = monthlyTargets[k] || 0;
+      if (val === 0 && tgt === 0) return null;
+      return `  - ${LABELS[k]}: ${val}${tgt > 0 ? `/${tgt}` : ''}`;
+    })
+    .filter(Boolean)
+    .join('\n');
+
+  const totalWeekActivities = KEYS.reduce((s, k) => s + sumKey(weekEntries, k), 0);
+  const streak = (() => {
+    const dates = [...new Set(entries.map(e => e.date))].sort().reverse();
+    let c = 0;
+    let ck = todayISO;
+    for (const d of dates) {
+      if (d === ck) {
+        c++;
+        const p = new Date(ck + 'T12:00:00');
+        p.setDate(p.getDate() - 1);
+        while (p.getDay() === 0 || p.getDay() === 6) p.setDate(p.getDate() - 1);
+        ck = p.toISOString().split('T')[0];
+      } else if (d < ck) break;
+    }
+    return c;
+  })();
+
+  return `
+📊 Actividades esta semana (datos reales del Hub):
+${weekLines || '  - Sin actividades registradas esta semana.'}
+Total actividades semanales: ${totalWeekActivities} | Racha de días consecutivos: 🔥 ${streak}
+
+📅 Actividades este mes:
+${monthLines || '  - Sin actividades registradas este mes.'}
+`.trim();
 }
 
 export async function POST(req) {
@@ -47,178 +127,273 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Faltan mensajes' }, { status: 400 });
     }
 
-    // ── Truncate history to control token usage ──────────────
+    // ── Truncate history ─────────────────────────────────────
     const trimmedMessages = truncateHistory(messages);
 
-    // Try to get agent email from context
-    const agentEmail = context?.plan?.agent_email || '';
-    const agentName = context?.plan?.agent_name || 'Agente';
+    const agentName = context?.agentName || context?.plan?.agent_name || 'Agente';
+    const agentEmail = context?.agentEmail || context?.plan?.agent_email || '';
+    const agentId = context?.agentId;
+    const moduleType = context?.module || 'agent';
+    const lang = context?.lang || 'es';
+
+    // ── Newness check ─────────────────────────────────────────
     const startDate = context?.plan?.plan_start_date;
-    
     let isNewAgent = false;
     if (startDate) {
-      const start = new Date(startDate);
-      const now = new Date();
-      const diffTime = Math.abs(now - start);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      if (diffDays < 90) {
-        isNewAgent = true; // Less than 3 months
-      }
+      const diffDays = Math.ceil(Math.abs(new Date() - new Date(startDate)) / (1000 * 60 * 60 * 24));
+      if (diffDays < 90) isNewAgent = true;
     }
 
-    // Fetch some office/agent stats from DB if we have the email
+    // ── Live OKR data (passed from client, already fetched) ───
+    const okrEntries = context?.okrEntries || null;
+    const okrContext = buildOkrContext(okrEntries, agentName, context?.plan);
+
+    // ── DB enrichment (overdue leads, profile) ─────────────────
     let dbContext = '';
+    const supabase = await createClient();
     try {
+      // Agent profile from DB
       if (agentEmail) {
-        // Find agent profile
-        const { data: profile } = await supabase.from('profiles').select('*').eq('email', agentEmail).single();
+        const { data: profile } = await supabase.from('profiles').select('full_name, office, start_date, role, preferred_follow_up_days').eq('email', agentEmail).single();
         if (profile) {
-          dbContext += `\nDatos del Agente (DB):\n- Oficina: ${profile.office || 'RE/MAX Altitud'}\n- Fecha de Inicio: ${profile.start_date || 'Desconocida'}\n`;
+          dbContext += `\nPerfil del Agente en DB:\n- Oficina: ${profile.office || 'RE/MAX Altitud'}\n- Rol: ${profile.role || 'agent'}\n- Días preferidos para seguimiento: ${(profile.preferred_follow_up_days || []).join(', ')}\n`;
         }
       }
-      
-      // We could add global counts here if needed, for now we will tell Olympia that she is connected to Altitud Hub.
-      const { count: totalListings } = await supabase.from('listings').select('*', { count: 'exact', head: true });
-      if (totalListings) {
-        dbContext += `- Total de captaciones en el Hub: ${totalListings}\n`;
+
+      // Overdue leads (SLA >48h)
+      const fortyEightHoursAgo = new Date();
+      fortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);
+      const { count: overdueLeads } = await supabase
+        .from('leads')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'NUEVO')
+        .lte('created_at', fortyEightHoursAgo.toISOString())
+        .eq(agentId ? 'agent_id' : 'status', agentId || 'NUEVO'); // filter by agent if id available
+
+      if (overdueLeads && overdueLeads > 0) {
+        dbContext += `\n⚠️ URGENTE: Tienes ${overdueLeads} lead(s) sin contactar por más de 48 horas. ¡Esto necesita atención inmediata!\n`;
       }
+
+      // Total office listings
+      const { count: totalListings } = await supabase.from('listings').select('*', { count: 'exact', head: true });
+      if (totalListings) dbContext += `- Total captaciones en el Hub (red): ${totalListings}\n`;
+
     } catch (e) {
-      console.warn("Could not fetch DB context for Olympia", e);
+      console.warn('[Olympia Coach] Could not fetch DB context:', e.message);
     }
 
+    // ── Plan context ──────────────────────────────────────────
     const planContext = context?.plan ? `
-Plan de Negocios Actual (Altitud Hub):
+Plan de Negocios Activo:
 - Meta de Ingresos: ${context.plan.currency || '$'} ${context.plan.grand_total_monthly || 0} / mes
 - Portafolio Objetivo: ${context.plan.target_portfolio_size || 25} propiedades
 - Ticket Promedio: ${context.plan.ticket_currency || '$'} ${context.plan.avg_ticket || 0}
 - Cierres Mensuales Necesarios: ${context.plan.closes_needed_monthly || 0}
-` : 'El agente no tiene un plan de negocios configurado en el HUB.';
+` : 'El agente no tiene un plan de negocios configurado en el HUB todavía.';
 
+    // ── Onboarding checklist for rookies ─────────────────────
     const onboardingContext = isNewAgent ? `
-[CONTEXTO DE ONBOARDING - CHECKLIST PARA ROOKIES (PRIMER MES)]: 
-Este es un agente nuevo. Tienes acceso a su Checklist de Onboarding del Primer Mes. 
-Como su coach, tu objetivo es hacer seguimiento a su progreso en estas tareas, preguntando sutilmente por una o dos cosas a la vez (¡No le des la lista entera de golpe!).
+[CONTEXTO DE ONBOARDING - CHECKLIST PRIMER MES]: 
+Este es un agente nuevo. Como su coach, guíalo sutilmente por una o dos tareas a la vez.
 
-El Checklist es el siguiente:
+Checklist:
+1. Altas iniciales: REconnect, MAX/Center, Registro de la Propiedad, correo institucional, Google Workspace, grupos WhatsApp, reunión con psicóloga Maia.
+2. Identidad profesional: Foto profesional, Bio ES/EN, Nicho de mercado, Firma correo, Tarjetas.
+3. Presencia online: Redes actualizadas, video presentación, primer reel de propiedad/zona.
+4. Capacitación: Onboarding interno, Manual de Normas, Learning Center (captación y ACM).
+5. Herramientas: Canva, ChatGPT, CapCut, calendario compartido, carpeta prelisting, 1 ACM de prueba.
+6. Objetivos: Metas trimestrales, plan de negocio, primer funnel activo.
 
-1. Altas y accesos iniciales
-- Firma del acuerdo con REMAX Altitud
-- Alta en REconnect y MAX/Center
-- Alta Registro de la Propiedad (https://www.rnpdigital.com/shopping/login.jspx)
-- Creación del correo institucional (@remax-altitud.cr)
-- Acceso a Google Workspace y grupos de WhatsApp (equipo y RCR)
-- Reunión con la psicóloga Maia
-
-2. Identidad profesional
-- Foto profesional y Bio en inglés/español
-- Definir Nicho de mercado (remax-costa-rica.com/niche)
-- Firma de correo y Tarjetas de presentación
-
-3. Presencia en línea
-- Perfiles en redes actualizados (Instagram, Facebook, LinkedIn)
-- Publicación del video de presentación personal
-- Primer reel de propiedad o zona
-
-4. Capacitación obligatoria
-- Onboarding interno REMAX Altitud (inducción)
-- Lectura del Manual de Normas y Código de Ética
-- Capacitación básica en Learning Center (proceso captación y ACM)
-
-5. Herramientas y productividad
-- Conocimiento de Canva, ChatGPT, CapCut, etc.
-- Agregar el calendario compartido
-- Carpeta prelisting personalizada
-- Hacer 1 ACM (aunque sea de prueba)
-
-6. Objetivos y planificación
-- Definir metas trimestrales y plan de negocio
-- Definir tareas semanales a alcanzar
-- Tener primer funnel activo (al menos 1 cliente o propiedad en prospección)
-- Capacitaciones 2026
-
-Instrucción: Usa esta lista para guiar al agente nuevo. Revisa sus metas o pregúntale por un par de tareas específicas, por ejemplo: "¿Ya pudiste crear tu cuenta en el Registro de la Propiedad?" o "¿Cómo te fue con tu primer video de presentación?".
+Instrucción: Pregunta por 1-2 tareas específicas, no toda la lista. Ej: "¿Ya tienes tu correo @remax-altitud.cr?"
 ` : '';
 
-    const moduleType = context?.module || 'agent';
-    const lang = context?.lang || 'es';
-
-    let roleDescription = `coach inmobiliaria exclusiva para agentes de RE/MAX Altitud.
-Eres también la máxima experta en el uso de la plataforma "Altitud Hub" (este sistema). Tu deber principal es entrenar a los agentes sobre cómo usar el hub, dónde encontrar las funciones y cómo sacarle el mayor provecho para su negocio.
-Además, tu objetivo es ayudar al agente inmobiliario (${agentName}) a alcanzar sus metas, dándole feedback basado en sus números, ayudándolo a analizar su cartera, dándole ideas de prospección y manteniéndolo enfocado.`;
-
+    // ── Role descriptions ─────────────────────────────────────
+    let roleDescription = `coach inmobiliaria exclusiva para agentes de RE/MAX Altitud y máxima experta en la plataforma "Altitud Hub". Tu deber es entrenar a los agentes en el hub y ayudarlos a alcanzar sus metas basándote en sus números reales.`;
     if (moduleType === 'office') {
-      roleDescription = `asesora experta para el Broker / Office Manager de RE/MAX Altitud.
-Eres la máxima experta en el uso de la plataforma "Altitud Hub" (este sistema) para operaciones de la oficina. Tu deber principal es ayudar al Broker a analizar las métricas de la oficina, liderar a sus agentes, usar herramientas de reclutamiento y retención, y tomar decisiones gerenciales.`;
+      roleDescription = `asesora experta para el Broker / Office Manager de RE/MAX Altitud. Ayudas a analizar métricas de la oficina, liderar agentes y tomar decisiones gerenciales.`;
     } else if (moduleType === 'team') {
-      roleDescription = `asesora experta para Líderes de Equipo (Team Leaders) de RE/MAX Altitud.
-Eres la máxima experta en el uso de la plataforma "Altitud Hub" (este sistema). Tu deber principal es ayudar al Líder de Equipo a coachear a sus agentes, medir el rendimiento del equipo y alcanzar las metas conjuntas.`;
+      roleDescription = `asesora experta para Líderes de Equipo de RE/MAX Altitud. Ayudas a coachear agentes, medir rendimiento del equipo y alcanzar metas conjuntas.`;
     }
 
-    const languageInstruction = lang === 'en' 
-      ? "- Siempre respondes exclusivamente en INGLÉS (English)." 
-      : "- Siempre respondes exclusivamente en ESPAÑOL.";
+    const languageInstruction = lang === 'en'
+      ? '- Respond exclusively in ENGLISH.'
+      : '- Responde exclusivamente en ESPAÑOL.';
 
     const systemPrompt = `
 Eres Olympia, la asistente virtual de Inteligencia Artificial experta y ${roleDescription}
 
 Instrucciones de Personalidad:
-- Eres empática, motivadora, pero también exiges resultados (estilo Buffini / coach de alto rendimiento).
-- Tu tono es profesional pero cercano. Usas emojis para darle vida al texto.
+- Eres empática, motivadora, pero exiges resultados (estilo Buffini / coach de alto rendimiento).
+- Tu tono es profesional pero cercano. Usas emojis para dar vida al texto.
+- Formateas tus respuestas en Markdown: usa **negritas**, listas con viñetas y emojis.
 ${languageInstruction}
 
 Contexto del Usuario:
-Nombre: ${agentName}
-Rol Actual en el Hub: ${moduleType.toUpperCase()}
+- Nombre: ${agentName}
+- Rol en el Hub: ${moduleType.toUpperCase()}
 ${planContext}
+${okrContext}
 ${dbContext}
 ${onboardingContext}
 
 Instrucciones Críticas:
-1. Responde a la última pregunta o comentario del usuario de manera concisa pero de mucho valor.
-2. Si el usuario te pregunta cómo usar el hub o dónde encontrar algo, explícalo de manera clara y paso a paso.
-3. Si el usuario te pregunta cómo va, revisa sus metas o las métricas de su equipo/oficina (si están disponibles).
-4. Si te pide ideas de prospección, reclutamiento o gestión, dale tácticas modernas y efectivas.
-5. No asumas datos que no tienes. Pide al usuario que te cuente sus números si no los tienes en contexto.
-6. Mantén tus respuestas relativamente cortas y fáciles de leer en un chat (usa viñetas o negritas).
+1. Cuando el agente pregunte "¿cómo voy?", usa los datos reales de OKR arriba para dar feedback específico. Menciona las actividades con 🔴 (riesgo) y felicita las ✅.
+2. Si hay leads con SLA vencido (>48h), menciónalo con urgencia al inicio.
+3. Si preguntan sobre el hub, explica paso a paso dónde encontrar la función.
+4. Si piden ideas de prospección, da tácticas modernas y concretas.
+5. No inventes datos. Si no tienes info, pídela al usuario.
+6. Mantén respuestas concisas y fáciles de leer (usa viñetas y negritas).
+7. Tienes herramientas (tools) disponibles: "update_follow_up_preferences", "log_communication", y "schedule_follow_up". Úsalas proactivamente para ayudar al agente a registrar actividades en el CRM.
 `;
 
-    // Format history for Gemini — use truncated messages
+    // ── Format for Gemini ─────────────────────────────────────
     const chatHistory = trimmedMessages.map(msg => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: msg.content }]
+      parts: [{ text: msg.content }],
     }));
-    
-    const requestContents = [...chatHistory];
 
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: requestContents,
-        systemInstruction: systemPrompt,
+    const tools = [{
+      functionDeclarations: [
+        {
+          name: 'update_follow_up_preferences',
+          description: 'Actualiza los días preferidos del agente para hacer seguimientos (ej. Lunes, Jueves).',
+          parameters: {
+            type: 'OBJECT',
+            properties: {
+              days: {
+                type: 'ARRAY',
+                items: { type: 'STRING' },
+                description: 'Array de nombres de días en español o inglés (ej. ["Lunes", "Miércoles"]).'
+              }
+            },
+            required: ['days']
+          }
+        },
+        {
+          name: 'log_communication',
+          description: 'Registra una comunicación o interacción con un lead en el CRM.',
+          parameters: {
+            type: 'OBJECT',
+            properties: {
+              inquiry_id: { type: 'STRING', description: 'El UUID (ID de Inquiry) del lead.' },
+              channel: { type: 'STRING', enum: ['whatsapp', 'email', 'phone', 'in_person'], description: 'Canal de comunicación.' },
+              direction: { type: 'STRING', enum: ['outbound', 'inbound'], description: 'Dirección de la comunicación.' },
+              summary: { type: 'STRING', description: 'Resumen de la interacción.' }
+            },
+            required: ['inquiry_id', 'channel', 'direction', 'summary']
+          }
+        },
+        {
+          name: 'schedule_follow_up',
+          description: 'Programa un recordatorio de seguimiento futuro para un lead en el CRM.',
+          parameters: {
+            type: 'OBJECT',
+            properties: {
+              inquiry_id: { type: 'STRING', description: 'El UUID (ID de Inquiry) del lead.' },
+              due_date: { type: 'STRING', description: 'Fecha del seguimiento en formato YYYY-MM-DD.' },
+              note: { type: 'STRING', description: 'Nota o motivo del seguimiento.' }
+            },
+            required: ['inquiry_id', 'due_date', 'note']
+          }
+        }
+      ]
+    }];
+
+    let response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: chatHistory,
+      systemInstruction: systemPrompt,
+      tools: tools
     });
-    
+
+    if (response.functionCalls && response.functionCalls.length > 0) {
+      const functionResponses = [];
+
+      for (const call of response.functionCalls) {
+        const name = call.name;
+        const args = call.args;
+        let result = {};
+
+        try {
+          if (name === 'update_follow_up_preferences') {
+            await supabase.from('profiles').update({ preferred_follow_up_days: args.days }).eq('email', agentEmail);
+            result = { success: true, message: 'Preferences updated successfully.' };
+          } else if (name === 'log_communication') {
+            await supabase.from('lead_communications').insert({
+              inquiry_id: args.inquiry_id,
+              agent_id: agentId,
+              channel: args.channel,
+              direction: args.direction,
+              summary: args.summary
+            });
+            result = { success: true, message: 'Communication logged successfully.' };
+          } else if (name === 'schedule_follow_up') {
+            await supabase.from('lead_follow_ups').insert({
+              inquiry_id: args.inquiry_id,
+              agent_id: agentId,
+              due_date: args.due_date,
+              note: args.note
+            });
+            result = { success: true, message: 'Follow up scheduled successfully.' };
+          } else {
+            result = { success: false, message: 'Unknown function.' };
+          }
+        } catch (e) {
+          result = { success: false, error: e.message };
+        }
+
+        functionResponses.push({
+          functionResponse: {
+            name: name,
+            response: result
+          }
+        });
+      }
+
+      chatHistory.push({
+        role: 'model',
+        parts: response.functionCalls.map(call => ({
+          functionCall: {
+            name: call.name,
+            args: call.args
+          }
+        }))
+      });
+
+      chatHistory.push({
+        role: 'user',
+        parts: functionResponses
+      });
+
+      response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: chatHistory,
+        systemInstruction: systemPrompt,
+        tools: tools
+      });
+    }
+
     return NextResponse.json({ reply: response.text });
 
   } catch (error) {
     console.error('Olympia Coach API Error:', error);
-    
-    // ── Graceful degradation based on error type ─────────────
     const errorMessage = error.message || '';
-    
+
     if (errorMessage.includes('quota') || errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
-      return NextResponse.json({ 
-        reply: '⏸️ Olympia está tomando un breve descanso por alta demanda. Todos los demás módulos del Hub siguen funcionando normalmente. Intenta de nuevo en unos minutos.',
+      return NextResponse.json({
+        reply: '⏸️ Olympia está tomando un breve descanso por alta demanda. Todos los demás módulos del Hub siguen funcionando. Intenta de nuevo en unos minutos.',
         isQuotaError: true,
-      }, { status: 200 }); // Return 200 so the UI handles it gracefully
+      }, { status: 200 });
     }
-    
+
     if (errorMessage.includes('API key') || errorMessage.includes('INVALID_API_KEY')) {
-      return NextResponse.json({ 
-        reply: '🔧 Olympia está en mantenimiento. El equipo técnico ya fue notificado. Los demás módulos del Hub siguen funcionando normalmente.',
+      return NextResponse.json({
+        reply: '🔧 Olympia está en mantenimiento técnico. Los demás módulos del Hub funcionan normalmente.',
         isConfigError: true,
       }, { status: 200 });
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       reply: 'Lo siento, tuve un problema al procesar tu solicitud. Por favor intenta de nuevo.',
     }, { status: 200 });
   }

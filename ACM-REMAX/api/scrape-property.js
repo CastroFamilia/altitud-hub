@@ -143,8 +143,8 @@ module.exports = async function handler(req, res) {
       ${bodyText}
     `;
 
-    // 4. Call Gemini - Using stable gemini-1.5-flash
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // 4. Call Gemini - Using evergreen alias 'gemini-flash-latest' to prevent deprecation issues
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     let result = null;
     let retries = 3;

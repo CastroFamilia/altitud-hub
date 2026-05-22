@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
+import { getAgentCommissions, getCommissionTiers, updateAgentCommission, updateProfile } from '@/lib/dal/office';
 import Image from 'next/image';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -44,12 +45,9 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
     const load = async () => {
       setLoading(true);
       try {
-        const [{ data: c }, { data: ti }] = await Promise.all([
-          supabase
-            .from('agent_commissions')
-            .select('*, properties(name, listing_title_es, unparsed_address), profiles!agent_commissions_agent_id_fkey(full_name, avatar_url, commission_tier_id)')
-            .order('closing_date', { ascending: false }),
-          supabase.from('commission_tiers').select('*').eq('active', true).order('sort_order'),
+        const [c, ti] = await Promise.all([
+          getAgentCommissions(supabase),
+          getCommissionTiers(supabase),
         ]);
         if (c) setCommissions(c);
         if (ti) setTiers(ti);
@@ -148,17 +146,23 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
   const updateStatus = async (id, newStatus) => {
     const updates = { status: newStatus };
     if (newStatus === 'paid') updates.payment_date = new Date().toISOString().slice(0, 10);
-    const { error } = await supabase.from('agent_commissions').update(updates).eq('id', id);
-    if (!error) setCommissions(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+    try {
+      await updateAgentCommission(id, updates, supabase);
+      setCommissions(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // ── Change Agent Tier ──
   const handleTierChange = async (profileId, newTierId) => {
     setSaving(true);
-    const { error } = await supabase.from('profiles').update({ commission_tier_id: newTierId }).eq('id', profileId);
-    if (!error) {
+    try {
+      await updateProfile(profileId, { commission_tier_id: newTierId }, supabase);
       alert(t('ofc_comm_saved'));
       setTierModal(null);
+    } catch (e) {
+      console.error(e);
     }
     setSaving(false);
   };

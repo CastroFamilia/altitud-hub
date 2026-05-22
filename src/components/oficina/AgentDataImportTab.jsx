@@ -16,6 +16,7 @@ const IMPORT_TYPES = [
   { key: 'properties_active', label_es: 'Propiedades Activas', label_en: 'Active Properties', icon: '🏠', desc_es: 'Listings actuales del agente', desc_en: 'Agent current listings' },
   { key: 'okr_history', label_es: 'Historial OKR', label_en: 'OKR History', icon: '📊', desc_es: 'Actividades diarias del funnel', desc_en: 'Daily funnel activities' },
   { key: 'leads', label_es: 'Leads / Consultas', label_en: 'Leads / Inquiries', icon: '📬', desc_es: 'Consultas recibidas', desc_en: 'Received inquiries' },
+  { key: 'historical_commissions', label_es: 'Comisiones Históricas', label_en: 'Historical Commissions', icon: '💰', desc_es: 'Planilla mensual de comisiones', desc_en: 'Monthly commissions spreadsheet' },
 ];
 
 const CSV_TEMPLATES = {
@@ -23,6 +24,7 @@ const CSV_TEMPLATES = {
   properties_active: 'name,precio,ubicacion,tipo,habitaciones,banos,terreno,construccion,descripcion\nApartamento Santa Ana,250000,Santa Ana,1,2,2,0,85,Moderno apartamento',
   okr_history: 'fecha,Llamados,PL,ACM,Listing,Exclusivas,Consultas,Muestras,Reservas,Transacciones,$$$$\n2026-01-06,5,2,1,1,0,3,1,0,0,0',
   leads: 'lead_name,lead_email,lead_phone,motivo,fuente,property_id,notas\nJuan García,juan@email.com,+506 8888-0000,propiedad,sitio_web,,Interesado en Escazú',
+  historical_commissions: 'Asociado,Año,Ene,Feb,Mar,Abr,May,Jun,Jul,Ago,Sep,Oct,Nov,Dic\nAlejandra Castro,2026,20500,15250,21150,8000,0,0,0,0,0,0,0,0\nGustavo Valverde,2026,950,7500,0,1200,0,0,0,0,0,0,0,0',
 };
 
 export default function AgentDataImportTab({ profiles = [] }) {
@@ -39,6 +41,36 @@ export default function AgentDataImportTab({ profiles = [] }) {
   const [importHistory, setImportHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
+  // Auto-sync Google Sheet states
+  const [syncSettings, setSyncSettings] = useState({ okr_sheet_url: '', okr_sheet_last_synced: '' });
+  const [loadingSettings, setLoadingSettings] = useState(false);
+  const [syncingSheet, setSyncingSheet] = useState(false);
+  const [syncResult, setSyncResult] = useState(null);
+
+  // Load sync settings
+  useEffect(() => {
+    const loadSyncSettings = async () => {
+      setLoadingSettings(true);
+      try {
+        const { data, error } = await supabase
+          .from('office_settings')
+          .select('okr_sheet_url, okr_sheet_last_synced')
+          .eq('office_id', 'altitud')
+          .single();
+        if (data) {
+          setSyncSettings({
+            okr_sheet_url: data.okr_sheet_url || '',
+            okr_sheet_last_synced: data.okr_sheet_last_synced || ''
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to load sheet sync settings', err);
+      }
+      setLoadingSettings(false);
+    };
+    loadSyncSettings();
+  }, [syncResult, result]);
+
   // Load import history
   useEffect(() => {
     const loadHistory = async () => {
@@ -52,7 +84,7 @@ export default function AgentDataImportTab({ profiles = [] }) {
       setLoadingHistory(false);
     };
     loadHistory();
-  }, [result]);
+  }, [result, syncResult]);
 
   // Handle file upload
   const handleFileUpload = (e) => {
@@ -74,15 +106,31 @@ export default function AgentDataImportTab({ profiles = [] }) {
     });
   };
 
+  // Resolve template dynamically based on agent selection type
+  const getCsvTemplate = (type, isMulti) => {
+    if (type === 'okr_history' && isMulti) {
+      return 'Timestamp,Email Address,Llamados,PL,ACM,Listing,Exclusivas,consultas,Muestras,Reservas,Transacciones,$$$$\n1/3/2026 5:29:05,kris@remax-altitud,5,2,1,1,0,3,1,0,0,0';
+    }
+    return CSV_TEMPLATES[type];
+  };
+
   // Download template
   const downloadTemplate = (type) => {
-    const csv = CSV_TEMPLATES[type];
+    const csv = getCsvTemplate(type, selectedAgent === 'multi_agent');
     if (!csv) return;
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `template_${type}.csv`;
+    
+    let filename = `template_${type}.csv`;
+    if (selectedAgent === 'multi_agent' && type === 'okr_history') {
+      filename = 'template_okr_central.csv';
+    } else if (type === 'historical_commissions') {
+      filename = 'template_comisiones_historicas.csv';
+    }
+    
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -108,12 +156,15 @@ export default function AgentDataImportTab({ profiles = [] }) {
       } else if (importType === 'okr_history') {
         endpoint = '/api/okr/bulk-import';
         payload = {
-          entries: csvData.map(row => ({
-            date: row.fecha || row.date || row.log_date,
-            ...row,
-          })),
+          entries: csvData,
           profileId: selectedAgent,
-          importedBy: profiles.find(p => p.role === 'broker')?.id || selectedAgent,
+        };
+      } else if (importType === 'historical_commissions') {
+        endpoint = '/api/oficina/import-performance';
+        payload = {
+          entries: csvData,
+          fileName,
+          importedBy: profiles.find(p => p.role === 'broker')?.id || (selectedAgent === 'multi_agent' ? null : selectedAgent),
         };
       } else if (importType === 'leads') {
         // Direct insert into property_inquiries
@@ -178,8 +229,8 @@ export default function AgentDataImportTab({ profiles = [] }) {
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {lang === 'en'
-              ? 'Upload historical data for existing agents from CSV files.'
-              : 'Sube datos históricos para agentes existentes desde archivos CSV.'}
+              ? 'Upload historical data or synchronize with Google Sheets.'
+              : 'Sube datos históricos o sincroniza con Google Sheets.'}
           </p>
         </div>
       </div>
@@ -187,14 +238,26 @@ export default function AgentDataImportTab({ profiles = [] }) {
       {/* Step 1: Select Agent */}
       <div className="glass-panel rounded-2xl p-5">
         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
-          {lang === 'en' ? '1. Select Agent' : '1. Seleccionar Agente'}
+          {lang === 'en' ? '1. Select Target Agent / Planilla' : '1. Seleccionar Agente o Planilla de Destino'}
         </h3>
         <select
           value={selectedAgent}
-          onChange={(e) => setSelectedAgent(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value;
+            setSelectedAgent(val);
+            if (val === 'multi_agent') {
+              setImportType('okr_history');
+            }
+            setCsvData(null);
+            setFileName('');
+            setResult(null);
+          }}
           className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">{lang === 'en' ? '-- Select agent --' : '-- Seleccionar agente --'}</option>
+          <option value="">{lang === 'en' ? '-- Select target --' : '-- Seleccionar destino --'}</option>
+          <option value="multi_agent" className="font-bold text-blue-600 dark:text-blue-400">
+            📊 {lang === 'en' ? 'Central OKR Sheet (Multi-Agent)' : 'Planilla Central de OKR (Multi-Agente)'}
+          </option>
           {agentProfiles.map(p => (
             <option key={p.id} value={p.id}>
               {p.full_name} ({p.email}) — {p.role}
@@ -210,26 +273,157 @@ export default function AgentDataImportTab({ profiles = [] }) {
             {lang === 'en' ? '2. Import Type' : '2. Tipo de Importación'}
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {IMPORT_TYPES.map(type => (
-              <button
-                key={type.key}
-                onClick={() => { setImportType(type.key); setCsvData(null); setFileName(''); setResult(null); }}
-                className={`p-3 rounded-xl text-left transition-all border ${
-                  importType === type.key
-                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600 ring-2 ring-blue-400/20'
-                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-300'
-                }`}
-              >
-                <span className="text-xl">{type.icon}</span>
-                <p className="text-xs font-bold text-slate-900 dark:text-white mt-1">
-                  {lang === 'en' ? type.label_en : type.label_es}
-                </p>
-                <p className="text-[9px] text-slate-400 mt-0.5">
-                  {lang === 'en' ? type.desc_en : type.desc_es}
-                </p>
-              </button>
-            ))}
+            {IMPORT_TYPES.map(type => {
+              const isDisabled = selectedAgent === 'multi_agent' && type.key !== 'okr_history' && type.key !== 'historical_commissions';
+              return (
+                <button
+                  key={type.key}
+                  disabled={isDisabled}
+                  onClick={() => { setImportType(type.key); setCsvData(null); setFileName(''); setResult(null); }}
+                  className={`p-3 rounded-xl text-left transition-all border ${
+                    importType === type.key
+                      ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600 ring-2 ring-blue-400/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                  } ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                >
+                  <span className="text-xl">{type.icon}</span>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white mt-1">
+                    {lang === 'en' ? type.label_en : type.label_es}
+                  </p>
+                  <p className="text-[9px] text-slate-400 mt-0.5">
+                    {isDisabled 
+                      ? (lang === 'en' ? 'Only supports single agent' : 'Solo disponible por agente individual') 
+                      : (lang === 'en' ? type.desc_en : type.desc_es)}
+                  </p>
+                </button>
+              );
+            })}
           </div>
+        </div>
+      )}
+
+      {/* Google Sheets Sync Trigger (Special view for Central OKR Sheet) */}
+      {selectedAgent === 'multi_agent' && importType === 'okr_history' && (
+        <div className="glass-panel rounded-2xl p-6 bg-gradient-to-br from-blue-50/50 to-white dark:from-slate-900/50 dark:to-slate-950 border border-blue-200/50 dark:border-blue-800/30 shadow-xl">
+          <div className="flex items-start gap-4">
+            <span className="text-3xl shrink-0 mt-1">🔄</span>
+            <div className="flex-1 space-y-1">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                {lang === 'en' ? 'Google Sheets Auto-Sync' : 'Sincronización Automática con Google Sheets'}
+              </h3>
+              <p className="text-[11px] text-slate-500">
+                {lang === 'en' 
+                  ? 'Fetch agent activities directly from your central Google Sheet in real time. No manual CSV uploads needed!' 
+                  : 'Importa la actividad de todos los agentes directamente desde tu planilla central de Google Sheets en tiempo real sin subir archivos.'}
+              </p>
+            </div>
+          </div>
+
+          {syncSettings.okr_sheet_url ? (
+            <div className="mt-4 pt-4 border-t border-slate-200/50 dark:border-slate-800/50 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/30 dark:border-slate-800/30">
+                <div className="min-w-0">
+                  <span className="text-[9px] font-black uppercase text-slate-400 block tracking-wider">
+                    {lang === 'en' ? 'Configured Sheet Link' : 'Enlace de Planilla Configurado'}
+                  </span>
+                  <span className="text-[10px] text-blue-500 font-mono block truncate max-w-sm mt-0.5 select-all">
+                    {syncSettings.okr_sheet_url}
+                  </span>
+                </div>
+                {syncSettings.okr_sheet_last_synced && (
+                  <div className="text-left sm:text-right shrink-0">
+                    <span className="text-[9px] font-black uppercase text-slate-400 block tracking-wider">
+                      {lang === 'en' ? 'Last Synced' : 'Última Sincronización'}
+                    </span>
+                    <span className="text-[10px] text-slate-600 dark:text-slate-400 font-medium block mt-0.5">
+                      {new Date(syncSettings.okr_sheet_last_synced).toLocaleString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={async () => {
+                  setSyncingSheet(true);
+                  setSyncResult(null);
+                  try {
+                    const broker = profiles.find(p => p.role === 'broker')?.id;
+                    const res = await fetch('/api/okr/sync-sheet', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ officeId: 'altitud', triggeredBy: broker })
+                    });
+                    const data = await res.json();
+                    setSyncResult(data);
+                  } catch (err) {
+                    setSyncResult({ error: err.message });
+                  } finally {
+                    setSyncingSheet(false);
+                  }
+                }}
+                disabled={syncingSheet}
+                className="w-full py-3.5 rounded-xl text-[11px] font-black uppercase tracking-widest bg-gradient-to-r from-blue-600 to-indigo-50 text-white shadow-lg shadow-blue-500/25 hover:from-blue-500 hover:to-indigo-400 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {syncingSheet ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    {lang === 'en' ? 'Syncing...' : 'Sincronizando...'}
+                  </>
+                ) : (
+                  <>
+                    <span>🔄</span>
+                    {lang === 'en' ? 'Sync Live Google Sheet Now' : 'Sincronizar Planilla de Google Ahora'}
+                  </>
+                )}
+              </button>
+            </div>
+          ) : (
+            <div className="mt-4 pt-4 border-t border-slate-200/50 dark:border-slate-800/50 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-xl border border-amber-200/50 dark:border-amber-800/20 text-center">
+              <span className="text-xl">⚠️</span>
+              <p className="text-xs font-bold text-amber-800 dark:text-amber-400 mt-2">
+                {lang === 'en' ? 'Auto-Sync Link Not Set' : 'Enlace de Sincronización No Configurado'}
+              </p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+                {lang === 'en'
+                  ? 'To enable single-click syncing, paste your published Google Sheet CSV URL under the "API Integrations" settings tab.'
+                  : 'Para habilitar la sincronización con un solo clic, pega la URL de CSV publicado de Google Sheets en la pestaña de configuraciones "Integraciones API".'}
+              </p>
+            </div>
+          )}
+
+          {syncResult && (
+            <div className={`mt-4 p-4 rounded-xl ${syncResult.success ? 'bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/30' : 'bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30'}`}>
+              {syncResult.success ? (
+                <div className="text-center">
+                  <span className="text-2xl">🎉</span>
+                  <p className="text-xs font-bold text-emerald-800 dark:text-emerald-400 mt-1">
+                    {lang === 'en' ? 'Google Sheets Sync Completed!' : '¡Sincronización de Google Sheets Completada!'}
+                  </p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5">
+                    {syncResult.imported} {lang === 'en' ? 'records updated' : 'registros actualizados'}
+                    {syncResult.skipped > 0 && ` · ${syncResult.skipped} ${lang === 'en' ? 'skipped' : 'omitidos'}`}
+                  </p>
+                  {syncResult.errors && syncResult.errors.length > 0 && (
+                    <div className="mt-2 text-left">
+                      <p className="text-[9px] font-bold text-red-500 mb-0.5">{syncResult.errors.length} {lang === 'en' ? 'warnings' : 'advertencias'}:</p>
+                      <div className="max-h-20 overflow-y-auto text-[8px] text-red-400 space-y-0.5 font-mono">
+                        {syncResult.errors.slice(0, 10).map((e, idx) => (
+                          <p key={idx}>Fila {e.row}: {e.error}</p>
+                        ))}
+                        {syncResult.errors.length > 10 && <p className="text-[8px] text-slate-400">...y {syncResult.errors.length - 10} más</p>}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center">
+                  <span className="text-2xl">❌</span>
+                  <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-1">{syncResult.error}</p>
+                  {syncResult.details && <p className="text-[9px] text-red-400 mt-0.5 max-w-md mx-auto font-medium">{syncResult.details}</p>}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -238,7 +432,9 @@ export default function AgentDataImportTab({ profiles = [] }) {
         <div className="glass-panel rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-              {lang === 'en' ? '3. Upload CSV File' : '3. Subir Archivo CSV'}
+              {selectedAgent === 'multi_agent' 
+                ? (lang === 'en' ? '3. Or Manually Upload CSV File' : '3. O Sube Manualmente el Archivo CSV')
+                : (lang === 'en' ? '3. Upload CSV File' : '3. Subir Archivo CSV')}
             </h3>
             <button
               onClick={() => downloadTemplate(importType)}

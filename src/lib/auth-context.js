@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchProfile = useCallback(async (authUser) => {
+  const fetchProfile = useCallback(async (authUser, retryCount = 0) => {
     if (!authUser) {
       setProfile(null);
       return null;
@@ -31,6 +31,13 @@ export function AuthProvider({ children }) {
         .maybeSingle();
 
       if (err || !data) {
+        // Transient lock error — retry with backoff (do NOT sign out)
+        if ((err?.message?.includes('lock') || err?.message?.includes('Lock')) && retryCount < 3) {
+          console.warn(`[fetchProfile] Lock conflict, retrying (${retryCount + 1}/3)...`);
+          await new Promise(r => setTimeout(r, 600 * (retryCount + 1)));
+          return fetchProfile(authUser, retryCount + 1);
+        }
+
         // Fallback: look up by email to link new Google auth users to existing profiles
         const { data: emailMatch, error: emailErr } = await supabase
           .from('profiles')
@@ -39,6 +46,12 @@ export function AuthProvider({ children }) {
           .maybeSingle();
 
         if (emailErr || !emailMatch) {
+          // Also retry email lookup on lock errors
+          if ((emailErr?.message?.includes('lock') || emailErr?.message?.includes('Lock')) && retryCount < 3) {
+            console.warn(`[fetchProfile] Lock conflict on email lookup, retrying (${retryCount + 1}/3)...`);
+            await new Promise(r => setTimeout(r, 600 * (retryCount + 1)));
+            return fetchProfile(authUser, retryCount + 1);
+          }
           setError('Tu cuenta no está autorizada. Contacta al administrador de la oficina.');
           await supabase.auth.signOut();
           setProfile(null);
@@ -49,8 +62,8 @@ export function AuthProvider({ children }) {
         if (!emailMatch.auth_user_id) {
           await supabase
             .from('profiles')
-            .update({ 
-              auth_user_id: authUser.id, 
+            .update({
+              auth_user_id: authUser.id,
               status: 'active',
               last_login: new Date().toISOString(),
               avatar_url: authUser.user_metadata?.avatar_url || emailMatch.avatar_url,
@@ -83,13 +96,15 @@ export function AuthProvider({ children }) {
     }
   }, [supabase]);
 
-  // Initialize auth state
+  // Initialize auth state — rely ONLY on onAuthStateChange.
+  // It fires with INITIAL_SESSION on mount, making a separate
+  // initAuth() call redundant AND dangerous (they race for the auth lock).
   useEffect(() => {
     const applyImpersonation = async (realP) => {
       if (realP?.role === 'broker') {
         const impId = localStorage.getItem('impersonated_id');
         if (impId) {
-          const { data: impP } = await supabase.from('profiles').select('*, teams(id, name)').eq('id', impId).single();
+          const { data: impP } = await supabase.from('profiles').select('*, teams:teams!profiles_team_id_fkey(id, name)').eq('id', impId).single();
           if (impP) {
             setProfile(impP);
             return;
@@ -99,24 +114,6 @@ export function AuthProvider({ children }) {
       setProfile(realP);
     };
 
-    const initAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          setUser(session.user);
-          const realP = await fetchProfile(session.user);
-          await applyImpersonation(realP);
-        }
-      } catch (e) {
-        console.error('Auth init error:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initAuth();
-
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         try {
@@ -137,10 +134,8 @@ export function AuthProvider({ children }) {
       }
     );
 
-    // Fallback timeout to ensure we don't stay in loading state forever
-    const timeoutId = setTimeout(() => {
-      setLoading(false);
-    }, 5000);
+    // Fallback: if onAuthStateChange never fires (edge case), stop loading after 6s
+    const timeoutId = setTimeout(() => setLoading(false), 6000);
 
     return () => {
       subscription.unsubscribe();
@@ -182,9 +177,10 @@ export function AuthProvider({ children }) {
   // Derived helpers
   const role = profile?.role || null;
   const realRole = realProfile?.role || null;
-  const isBroker = realRole === 'broker'; // Always true if real user is broker
+  const isBroker = realRole === 'broker' || realRole === 'admin'; // broker OR admin (administrativa)
   const isTeamLeader = role === 'team_leader';
-  const isAgent = role === 'agent';
+  const isAgent = role === 'agent' || role === 'junior';
+  const isJunior = role === 'junior';
   const isOfficeAssistant = role === 'office_assistant';
   const isAuthenticated = !!user && !!realProfile;
 
@@ -204,6 +200,7 @@ export function AuthProvider({ children }) {
       isBroker,
       isTeamLeader,
       isAgent,
+      isJunior,
       isOfficeAssistant,
       isAuthenticated,
       fetchProfile,

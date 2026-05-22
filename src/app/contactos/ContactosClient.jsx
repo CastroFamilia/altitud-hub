@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from 'react';
 import { useApp } from '@/lib/context';
-import TopNav from '@/components/layout/TopNav';
 import Link from 'next/link';
 
 export default function ContactosClient({ initialContacts = [] }) {
@@ -101,7 +100,6 @@ export default function ContactosClient({ initialContacts = [] }) {
 
   return (
     <>
-      <TopNav titleKey="nav_crm" subtitleKey="contact_dash_desc" />
       <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-dark-bg p-4 md:p-8 overflow-y-auto w-full">
         <div className="max-w-7xl w-full mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useApp } from '@/lib/context';
+import { getAgentActiveInquiries, updatePropertyInquiry, insertLeadCommunication } from '@/lib/dal/contacts';
 
 export default function AgentLeadsPanel() {
   const { lang, t } = useApp();
@@ -15,14 +16,12 @@ export default function AgentLeadsPanel() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { data, error } = await supabase
-        .from('property_inquiries')
-        .select('*, properties(listing_title_es, listing_title_en, name)')
-        .eq('assigned_agent_id', user.id)
-        .in('status', ['new', 'contacted', 'prelisting', 'cma'])
-        .order('assigned_at', { ascending: false });
-      
-      if (!error && data) setLeads(data);
+      try {
+        const data = await getAgentActiveInquiries(user.id, supabase);
+        if (data) setLeads(data);
+      } catch (err) {
+        console.error(err);
+      }
     }
     setLoading(false);
   };
@@ -36,7 +35,12 @@ export default function AgentLeadsPanel() {
     const updatePayload = { status };
     if (reason) updatePayload.rejection_reason = reason;
 
-    await supabase.from('property_inquiries').update(updatePayload).eq('id', id);
+    try {
+      await updatePropertyInquiry(id, updatePayload, supabase);
+    } catch (e) {
+      console.error(e);
+      return;
+    }
     
     // Optimistic update
     setLeads(prev => prev.map(l => l.id === id ? { ...l, status, rejection_reason: reason || l.rejection_reason } : l));
@@ -53,13 +57,17 @@ export default function AgentLeadsPanel() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       // Log the communication
-      await supabase.from('lead_communications').insert({
-        inquiry_id: id,
-        agent_id: user.id,
-        channel: channel,
-        direction: 'outbound',
-        summary: `SLA Initial contact initiated via ${channel}`
-      });
+      try {
+        await insertLeadCommunication({
+          inquiry_id: id,
+          agent_id: user.id,
+          channel: channel,
+          direction: 'outbound',
+          summary: `SLA Initial contact initiated via ${channel}`
+        }, supabase);
+      } catch (e) {
+        console.error(e);
+      }
 
       // Optimistic update so the UI changes immediately
       setLeads(prev => prev.map(l => l.id === id ? { ...l, status: 'contacted', first_contact_at: new Date().toISOString() } : l));
@@ -124,8 +132,18 @@ export default function AgentLeadsPanel() {
               
               <div className="mb-4">
                 {lead.properties && (
-                  <p className="text-[10px] text-brand-600 dark:text-brand-400 font-medium mb-1 line-clamp-1">
-                    🏠 {lang === 'es' ? lead.properties.listing_title_es : lead.properties.listing_title_en}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded-lg p-2.5 mb-2">
+                    <p className="text-[9px] text-blue-500 dark:text-blue-400 uppercase font-black tracking-wider mb-0.5">
+                      {lang === 'en' ? 'Property' : 'Propiedad'}
+                    </p>
+                    <p className="text-xs font-bold text-blue-800 dark:text-blue-200 line-clamp-2">
+                      🏠 {lang === 'es' ? (lead.properties.listing_title_es || lead.properties.name) : (lead.properties.listing_title_en || lead.properties.name)}
+                    </p>
+                  </div>
+                )}
+                {!lead.properties && lead.notes && (
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-2 mb-1">
+                    {lead.notes}
                   </p>
                 )}
                 {needsContact && timeLeft && (

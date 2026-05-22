@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server';
 import DesarrolloDetailClient from './DesarrolloDetailClient';
+import { getDevelopmentById } from '@/lib/dal/developments';
 
 export default async function DesarrolloDetailPage({ params }) {
   const { id } = params;
@@ -9,12 +10,7 @@ export default async function DesarrolloDetailPage({ params }) {
 
   if (id) {
     try {
-      const { data } = await supabase
-        .from('developments')
-        .select('*')
-        .eq('id', id)
-        .single();
-        
+      const data = await getDevelopmentById(id, supabase);
       if (data) {
         initialDevelopment = data;
       }

@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import TopNav from '@/components/layout/TopNav';
-import CommissionBar from '@/components/layout/CommissionBar';
+import AchievementOverview from '@/components/layout/AchievementOverview';
 import { useApp } from '@/lib/context';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
 import AgentLeadsPanel from '@/components/oficina/AgentLeadsPanel';
 
 /* ═══════════════════════════════════════════════════════
@@ -17,6 +19,7 @@ const ACTIVITIES = [
   { key: 'acm',            labelKey: 'act_acm',            icon: 'chart',     color: 'blue',    auto: true, source: 'Registro ACM' },
   { key: 'listings',       labelKey: 'act_listings',       icon: 'presentation', color: 'purple', auto: false },
   { key: 'captaciones',    labelKey: 'act_captaciones',    icon: 'home',      color: 'teal',    auto: true, source: 'API' },
+  { key: 'busquedas',      labelKey: 'act_busquedas',      icon: 'search',    color: 'indigo',  auto: true, source: 'Portal' },
   { key: 'consultas',      labelKey: 'act_consultas',      icon: 'search',    color: 'cyan',    auto: false },
   { key: 'muestras',       labelKey: 'act_muestras',       icon: 'eye',       color: 'amber',   auto: false },
   { key: 'reservas',       labelKey: 'act_reservas',       icon: 'bookmark',  color: 'orange',  auto: false },
@@ -28,8 +31,8 @@ const ACTIVITIES = [
    AGENT PLAN (editable, persisted in localStorage)
    ═══════════════════════════════════════════════════════ */
 const DEFAULT_PLAN = {
-  monthly_targets: { llamadas: 80, prelistings: 12, acm: 8, listings: 6, captaciones: 4, consultas: 20, muestras: 10, reservas: 3, transacciones: 2, cierres: 1 },
-  weekly_targets:  { llamadas: 20, prelistings: 3, acm: 2, listings: 1, captaciones: 1, consultas: 5, muestras: 3, reservas: 1, transacciones: 0, cierres: 0 },
+  monthly_targets: { llamadas: 80, prelistings: 12, acm: 8, listings: 6, captaciones: 4, busquedas: 5, consultas: 20, muestras: 10, reservas: 3, transacciones: 2, cierres: 1 },
+  weekly_targets:  { llamadas: 20, prelistings: 3, acm: 2, listings: 1, captaciones: 1, busquedas: 1, consultas: 5, muestras: 3, reservas: 1, transacciones: 0, cierres: 0 },
 };
 const PLAN_KEY = 'altitud_okr_plan';
 function loadPlan() { if(typeof window==='undefined') return DEFAULT_PLAN; try{ const r=localStorage.getItem(PLAN_KEY); if(r) return JSON.parse(r); }catch{} return DEFAULT_PLAN; }
@@ -41,6 +44,7 @@ function savePlan(plan) { if(typeof window!=='undefined') localStorage.setItem(P
 const STORAGE_KEY = 'altitud_okr_entries';
 function loadEntries() { if(typeof window==='undefined') return []; try{ const r=localStorage.getItem(STORAGE_KEY); if(r) return JSON.parse(r); }catch{} return []; }
 function saveEntries(entries) { if(typeof window==='undefined') return; localStorage.setItem(STORAGE_KEY,JSON.stringify(entries)); }
+
 
 /* ═══════════════════════════════════════════════════════
    HELPERS
@@ -417,14 +421,18 @@ function StatRow({ activity, weekVal, weekTarget, monthVal, monthTarget, ytdVal,
 /* ═══════════════════════════════════════════════════════
    MAIN PAGE
    ═══════════════════════════════════════════════════════ */
-export default function DashboardClient() {
+export default function DashboardClient({ initialEntries = [], initialFollowUps = [], initialActiveCount = 0, initialSoldStats = { avgDom: 0, recentTrend: 0, count: 0 } }) {
+  const { user, profile } = useAuth();
+  const router = useRouter();
   const { t, lang, mounted: appMounted } = useApp();
-  const [entries, setEntries] = useState([]);
+  const [entries, setEntries] = useState(initialEntries);
   const [modalOpen, setModalOpen] = useState(false);
   const [plan, setPlan] = useState(DEFAULT_PLAN);
   const [mounted, setMounted] = useState(false);
   const [hasPlan, setHasPlan] = useState(false);
-  const [followUps, setFollowUps] = useState([]);
+  const [followUps, setFollowUps] = useState(initialFollowUps);
+  const [activePropertiesCount, setActivePropertiesCount] = useState(initialActiveCount);
+  const [soldDomStats, setSoldDomStats] = useState(initialSoldStats);
 
   // Navigation state
   const now = new Date();
@@ -432,48 +440,96 @@ export default function DashboardClient() {
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
+  const [activePlanningYear, setActivePlanningYear] = useState(null);
+  const [activePlanningYearPlan, setActivePlanningYearPlan] = useState(null);
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEntries(loadEntries());
-    const loadedPlan = loadPlan();
-    setPlan(loadedPlan);
-    // Detect if a real plan exists (not just defaults)
-    const bp = typeof window !== 'undefined' ? localStorage.getItem('altitud_business_plan') : null;
-    if (bp) {
+    const fetchPlanFromDb = async () => {
+      if (!profile?.email) return;
       try {
-        const parsed = JSON.parse(bp);
-        setHasPlan(parsed.status === 'active');
-        // If active plan has targets, use them
-        if (parsed.monthly_targets && Object.keys(parsed.monthly_targets).length > 0) {
-          setPlan({
-            monthly_targets: parsed.monthly_targets,
-            weekly_targets: parsed.weekly_targets || {},
-            monthly_targets_by_month: parsed.monthly_targets_by_month || [],
-            plan_start_date: parsed.plan_start_date || '',
-            target_portfolio_size: parsed.target_portfolio_size || 25,
-          });
+        const { data, error } = await supabase
+          .from('business_plans')
+          .select('*')
+          .eq('agent_email', profile.email)
+          .eq('plan_year', selectedYear)
+          .maybeSingle();
+
+        if (data && !error) {
+          setHasPlan(data.status === 'active');
+          if (data.monthly_targets && Object.keys(data.monthly_targets).length > 0) {
+            setPlan({
+              monthly_targets: data.monthly_targets,
+              weekly_targets: data.weekly_targets || {},
+              monthly_targets_by_month: data.monthly_targets_by_month || [],
+              plan_start_date: data.plan_start_date || '',
+              target_portfolio_size: data.target_portfolio_size || 25,
+            });
+          }
+        } else {
+          // Fallback to local storage
+          const bp = localStorage.getItem(`altitud_business_plan_${selectedYear}`) || localStorage.getItem('altitud_business_plan');
+          if (bp) {
+            const parsed = JSON.parse(bp);
+            setHasPlan(parsed.status === 'active');
+            if (parsed.monthly_targets && Object.keys(parsed.monthly_targets).length > 0) {
+              setPlan({
+                monthly_targets: parsed.monthly_targets,
+                weekly_targets: parsed.weekly_targets || {},
+                monthly_targets_by_month: parsed.monthly_targets_by_month || [],
+                plan_start_date: parsed.plan_start_date || '',
+                target_portfolio_size: parsed.target_portfolio_size || 25,
+              });
+            }
+          } else {
+            setHasPlan(false);
+            setPlan(loadPlan()); // Default targets
+          }
         }
-      } catch { /* ignore */ }
-    }
+      } catch (err) {
+        console.warn('Failed to load yearly business plan on dashboard:', err);
+      }
+    };
+    
+    const fetchPlanningBannerInfo = async () => {
+      if (!profile?.office || !profile?.email) return;
+      try {
+        const { data: config } = await supabase
+          .from('office_config')
+          .select('config_value')
+          .eq('office', profile.office)
+          .eq('config_key', 'active_planning_year')
+          .maybeSingle();
+        
+        if (config?.config_value?.year) {
+          const year = config.config_value.year;
+          setActivePlanningYear(year);
+
+          const { data: planData } = await supabase
+            .from('business_plans')
+            .select('status')
+            .eq('agent_email', profile.email)
+            .eq('plan_year', year)
+            .maybeSingle();
+
+          setActivePlanningYearPlan(planData || null);
+        } else {
+          setActivePlanningYear(null);
+          setActivePlanningYearPlan(null);
+        }
+      } catch (err) {
+        console.warn('Failed to load planning banner info:', err);
+      }
+    };
+
+    fetchPlanFromDb();
+    fetchPlanningBannerInfo();
     setMounted(true);
-  }, []);
+  }, [profile?.email, profile?.office, selectedYear]);
 
-  // Fetch follow-ups
-  useEffect(() => {
-    async function loadFollowUps() {
-      const { data } = await supabase
-        .from('lead_follow_ups')
-        .select('*, property_inquiries(lead_name, lead_phone)')
-        .eq('status', 'pending')
-        .order('due_date');
-      setFollowUps(data || []);
-    }
-    loadFollowUps();
-  }, []);
-
-  const markFollowUpDone = async (id) => {
+    const markFollowUpDone = async (id) => {
     await supabase.from('lead_follow_ups').update({ status: 'completed' }).eq('id', id);
     setFollowUps(prev => prev.filter(f => f.id !== id));
+    router.refresh();
   };
 
   const todayISO_ = todayISO();
@@ -484,9 +540,23 @@ export default function DashboardClient() {
   const todayEntry = entries.find(e=>e.date===todayISO());
   const hasFilledToday = !!todayEntry;
 
-  const handleSave = useCallback((entry) => {
+  const handleSave = useCallback(async (entry) => {
     setEntries(prev => { const f=prev.filter(e=>e.date!==entry.date); const u=[...f,entry]; saveEntries(u); return u; });
-  }, []);
+    if (profile?.id) {
+      try {
+        const payload = {
+          profile_id: profile.id,
+          date: entry.date,
+          is_completed: true,
+          completed_at: new Date().toISOString()
+        };
+        ACTIVITIES.forEach(a => { if (entry[a.key] !== undefined) payload[a.key] = entry[a.key]; });
+        await supabase.from('agent_daily_okr_entries').upsert(payload, { onConflict: 'profile_id, date' });
+      } catch (err) {
+        console.error('Failed to save OKR to DB', err);
+      }
+    }
+  }, [profile?.id]);
 
 
 
@@ -560,6 +630,34 @@ export default function DashboardClient() {
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 relative z-0">
         <div className="fade-in max-w-6xl mx-auto pb-16">
 
+          {/* ── Active Broker Planning Invite Banner ── */}
+          {mounted && activePlanningYear && activePlanningYearPlan?.status !== 'active' && (
+            <Link href={`/plan?year=${activePlanningYear}`} className="block mb-4 md:mb-6 group">
+              <div className="bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-500 rounded-2xl p-5 md:p-6 text-white shadow-xl shadow-blue-500/20 hover:shadow-2xl hover:shadow-blue-500/30 transition-all hover:scale-[1.01] active:scale-[0.99] border border-blue-400/20 relative overflow-hidden">
+                <div className="absolute right-0 top-0 bottom-0 opacity-10 select-none text-9xl font-black pointer-events-none translate-x-10 translate-y-5">📅</div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-3xl shrink-0 mt-0.5">📅</span>
+                    <div>
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-200">Invitación del Broker</h4>
+                      <h3 className="text-base md:text-lg font-black mt-1">
+                        {activePlanningYearPlan?.status === 'draft' 
+                          ? `¡Completa tu borrador de plan de negocio para el año ${activePlanningYear}!`
+                          : `Sesión de Planificación Anual ${activePlanningYear} Abierta`}
+                      </h3>
+                      <p className="text-xs text-white/80 mt-1 max-w-lg">
+                        El broker ha iniciado la sesión de planificación de negocios. Prepárate para el éxito el próximo año configurando tus presupuestos y metas de conversión.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-white text-blue-700 px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest group-hover:bg-blue-50 transition-colors shrink-0 self-start sm:self-center">
+                    {activePlanningYearPlan?.status === 'draft' ? 'Continuar Borrador' : 'Comenzar Plan'} →
+                  </div>
+                </div>
+              </div>
+            </Link>
+          )}
+
           {/* ── Plan CTA or Compliance Bar ── */}
           {!hasPlan ? (
             <Link href="/plan" className="block mb-4 md:mb-6 group">
@@ -615,11 +713,9 @@ export default function DashboardClient() {
           {mounted && <AgentLeadsPanel />}
 
           {/* ── Commission Progress Bar ── */}
-          {mounted && (
             <div className="mb-4 md:mb-6">
-              <CommissionBar />
+              <AchievementOverview />
             </div>
-          )}
 
           {/* ── Follow-Up Reminders ── */}
           {mounted && followUps.length > 0 && (
@@ -710,6 +806,26 @@ export default function DashboardClient() {
               <div className="glass-panel rounded-xl p-3 flex flex-col justify-center shadow-sm">
                 <p className="text-[8px] md:text-[9px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">{t('okr_streak_label')}</p>
                 <h3 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mt-0.5">🔥 {streak}</h3>
+              </div>
+              <div className="glass-panel rounded-xl p-3 flex flex-col justify-center shadow-sm relative overflow-hidden">
+                <p className="text-[8px] md:text-[9px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider relative z-10">Rotación Cartera</p>
+                <div className="flex items-end gap-2 mt-0.5 relative z-10">
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
+                    {soldDomStats.avgDom || 0}
+                    <span className="text-xs font-normal text-gray-500 ml-1">días</span>
+                  </h3>
+                  {soldDomStats.count > 0 && (
+                    <span className={`text-[10px] font-bold mb-1 ${soldDomStats.recentTrend <= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                      {soldDomStats.recentTrend <= 0 ? '↓' : '↑'} {Math.abs(soldDomStats.recentTrend)}d
+                    </span>
+                  )}
+                </div>
+                {/* SVG Trendline background */}
+                <div className="absolute bottom-0 left-0 right-0 h-8 opacity-20 pointer-events-none">
+                  <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-full">
+                    <polyline points={soldDomStats.recentTrend <= 0 ? "0,25 25,20 50,22 75,10 100,5" : "0,5 25,10 50,8 75,20 100,25"} fill="none" stroke={soldDomStats.recentTrend <= 0 ? "#10b981" : "#ef4444"} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
               </div>
             </div>
           </div>

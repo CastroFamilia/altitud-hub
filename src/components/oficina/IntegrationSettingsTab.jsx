@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useApp } from '@/lib/context';
+import { getOfficeSettings, upsertOfficeSettings } from '@/lib/dal/office';
 
 export default function IntegrationSettingsTab({ officeId = 'altitud' }) {
   const { lang } = useApp();
@@ -11,24 +11,25 @@ export default function IntegrationSettingsTab({ officeId = 'altitud' }) {
   const [settings, setSettings] = useState({
     reconnect_read_api_key: '',
     reconnect_write_api_key: '',
-    agents_api_key: ''
+    agents_api_key: '',
+    okr_sheet_url: ''
   });
 
   useEffect(() => {
     async function loadSettings() {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('office_settings')
-        .select('*')
-        .eq('office_id', officeId)
-        .single();
-      
-      if (data) {
-        setSettings({
-          reconnect_read_api_key: data.reconnect_read_api_key || '',
-          reconnect_write_api_key: data.reconnect_write_api_key || '',
-          agents_api_key: data.agents_api_key || ''
-        });
+      try {
+        const data = await getOfficeSettings(officeId);
+        if (data) {
+          setSettings({
+            reconnect_read_api_key: data.reconnect_read_api_key || '',
+            reconnect_write_api_key: data.reconnect_write_api_key || '',
+            agents_api_key: data.agents_api_key || '',
+            okr_sheet_url: data.okr_sheet_url || ''
+          });
+        }
+      } catch(err) {
+        // error handling if needed
       }
       setLoading(false);
     }
@@ -38,16 +39,13 @@ export default function IntegrationSettingsTab({ officeId = 'altitud' }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('office_settings')
-        .upsert({
-          office_id: officeId,
-          reconnect_read_api_key: settings.reconnect_read_api_key,
-          reconnect_write_api_key: settings.reconnect_write_api_key,
-          agents_api_key: settings.agents_api_key
-        }, { onConflict: 'office_id' });
-      
-      if (error) throw error;
+      await upsertOfficeSettings({
+        office_id: officeId,
+        reconnect_read_api_key: settings.reconnect_read_api_key,
+        reconnect_write_api_key: settings.reconnect_write_api_key,
+        agents_api_key: settings.agents_api_key,
+        okr_sheet_url: settings.okr_sheet_url
+      });
       alert(lang === 'en' ? 'Settings saved successfully' : 'Configuraciones guardadas exitosamente');
     } catch (err) {
       alert('Error: ' + err.message);
@@ -132,6 +130,39 @@ export default function IntegrationSettingsTab({ officeId = 'altitud' }) {
           />
         </div>
 
+        {/* Google Sheets OKR Auto-Sync */}
+        <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2">
+            {lang === 'en' ? 'Google Sheets OKR Auto-Sync' : 'Sincronización Automática de OKR de Google Sheets'}
+          </h3>
+          <div className="text-[10px] text-slate-500 mb-3 space-y-1">
+            <p>
+              {lang === 'en' 
+                ? 'Allows fetching OKR records directly from your central Google Sheet in real time.' 
+                : 'Permite importar los registros de OKR directamente desde tu planilla central de Google Sheets en tiempo real.'}
+            </p>
+            <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl text-[9px] font-mono text-slate-600 dark:text-slate-400 mt-2 space-y-1">
+              <p className="font-bold text-slate-700 dark:text-slate-300">
+                {lang === 'en' ? 'How to get the link:' : 'Cómo obtener el enlace:'}
+              </p>
+              <ol className="list-decimal list-inside space-y-1 mt-1">
+                <li>{lang === 'en' ? 'Open your central Google Sheet.' : 'Abre tu planilla central de Google Sheets.'}</li>
+                <li>{lang === 'en' ? 'Click File -> Share -> Publish to the web.' : 'Haz clic en Archivo -> Compartir -> Publicar en la web.'}</li>
+                <li>{lang === 'en' ? 'Under "Link", select the OKR tab instead of "Entire Document".' : 'En la sección "Enlace", selecciona la pestaña de OKR en lugar de "Todo el documento".'}</li>
+                <li>{lang === 'en' ? 'Select "Comma-separated values (.csv)" as the format.' : 'Selecciona "Valores separados por comas (.csv)" como formato.'}</li>
+                <li>{lang === 'en' ? 'Click Publish, copy the generated URL, and paste it below.' : 'Haz clic en Publicar, copia la URL generada y pégala aquí abajo.'}</li>
+              </ol>
+            </div>
+          </div>
+          <input
+            type="text"
+            name="okr_sheet_url"
+            value={settings.okr_sheet_url}
+            onChange={handleChange}
+            placeholder={lang === 'en' ? 'Paste the published CSV URL (https://docs.google.com/spreadsheets/.../pub?output=csv)' : 'Pega la URL de CSV publicado (https://docs.google.com/spreadsheets/.../pub?output=csv)'}
+            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-nexus-blue dark:text-white"
+          />
+        </div>
       </div>
     </div>
   );

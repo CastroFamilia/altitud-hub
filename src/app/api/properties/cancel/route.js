@@ -38,11 +38,13 @@ export async function POST(req) {
     }
 
     // Attempt RECONNECT cancellation if configured and listing exists
-    if (isWriteConfigured() && property.reconnect_listing_key) {
-      const result = await reconnectCancel(property.reconnect_listing_key);
+    let syncStatus = 'removed';
+    if (false && isWriteConfigured() && property.reconnect_listing_key) { // FUTURE EPIC 13: Push disabled for now
+      const officeCode = property.office_code || 'altitud';
+      const result = await reconnectCancel(property.reconnect_listing_key, officeCode);
       if (!result.success) {
         console.error('RECONNECT cancel error:', result.error);
-        // Continue with local cancellation anyway
+        syncStatus = 'error'; // Record failure in syndication table but continue local cancellation
       }
     }
 
@@ -55,8 +57,12 @@ export async function POST(req) {
     // Update syndication records
     await supabaseAdmin
       .from('property_syndication')
-      .update({ status: 'removed', last_synced_at: new Date().toISOString() })
-      .eq('property_id', propertyId);
+      .upsert({
+        property_id: propertyId,
+        portal_name: 'reconnect',
+        status: syncStatus,
+        last_synced_at: new Date().toISOString()
+      }, { onConflict: 'property_id,portal_name' });
 
     return NextResponse.json({
       success: true,

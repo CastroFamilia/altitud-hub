@@ -21,6 +21,18 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'balloon.remax-cca.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'remaxcaribbeanandcentralamerica.azureedge.net',
+      },
+      {
+        protocol: 'https',
+        hostname: 'remax-cds.com',
       }
     ],
   },

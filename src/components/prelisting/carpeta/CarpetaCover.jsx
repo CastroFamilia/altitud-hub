@@ -1,9 +1,9 @@
 import Image from 'next/image';
 
-export default function CarpetaCover({ cfg, agentName, agentPhoto, t }) {
+export default function CarpetaCover({ cfg, agentName, agentPhoto, clientName, t }) {
   // Fallback for when t is not provided
   const tr = t || ((key) => {
-    const fallback = { pre_carpeta_title: 'STRATEGIC ASSET VALUATION', pre_presented_by: 'PRESENTED BY' };
+    const fallback = { pre_carpeta_title: 'STRATEGIC ASSET VALUATION', pre_presented_by: 'PRESENTED BY', pre_presented_for: 'PREPARED FOR' };
     return fallback[key] || key;
   });
 
@@ -53,10 +53,27 @@ export default function CarpetaCover({ cfg, agentName, agentPhoto, t }) {
           fontWeight: 400, 
           color: 'rgba(255,255,255,0.9)', 
           letterSpacing: '0.02em', 
-          marginBottom: 60
+          marginBottom: clientName ? 16 : 60
         }}>
           {cfg.location}
         </h2>
+
+        {clientName && (
+          <div style={{ marginBottom: 60, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6, textTransform: 'uppercase' }}>
+              {tr('pre_presented_for')}
+            </p>
+            <h3 style={{ 
+              fontFamily: "'Playfair Display', serif", 
+              fontSize: 32, 
+              fontWeight: 600, 
+              color: 'white', 
+              letterSpacing: '0.02em'
+            }}>
+              {clientName}
+            </h3>
+          </div>
+        )}
 
         {/* Agent Info & Presentation Info */}
         <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -80,7 +97,7 @@ export default function CarpetaCover({ cfg, agentName, agentPhoto, t }) {
 
       {/* Logo at the very bottom */}
       <div style={{ position: 'absolute', bottom: 40, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
-        <Image src="/assets/logo-altitud.png" alt="Logo" style={{ height: 40, filter: 'brightness(0) invert(1)', opacity: 0.9 }} width={100} height={100} unoptimized />
+        <Image src={cfg.logo || '/assets/logo-altitud.png'} alt="Logo" style={{ height: 40, filter: 'brightness(0) invert(1)', opacity: 0.9 }} width={100} height={100} unoptimized />
       </div>
 
     </div>

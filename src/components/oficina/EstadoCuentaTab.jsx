@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useApp } from '@/lib/context';
+import { getAgentProfiles, getAccountTransactions, insertAccountTransaction } from '@/lib/dal/office';
 import Image from 'next/image';
 
 export default function EstadoCuentaTab() {
@@ -21,6 +22,27 @@ export default function EstadoCuentaTab() {
   const [povertyLineNet, setPovertyLineNet] = useState(1000); // Mensual bolsillo
   const [agentSplit, setAgentSplit] = useState(45); // Porcentaje
 
+  useEffect(() => {
+    const fetchPovertyLine = async () => {
+      if (!supabase) return;
+      const office = profile?.office || 'altitud';
+      try {
+        const { data, error } = await supabase
+          .from('office_config')
+          .select('config_value')
+          .eq('office', office)
+          .eq('config_key', 'poverty_line')
+          .maybeSingle();
+        if (!error && data?.config_value?.amount) {
+          setPovertyLineNet(Number(data.config_value.amount));
+        }
+      } catch (err) {
+        console.error('Failed to load poverty line in EstadoCuentaTab', err);
+      }
+    };
+    fetchPovertyLine();
+  }, [profile?.office, supabase]);
+
   // Modal State
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [transactionType, setTransactionType] = useState('office_charge'); // 'office_charge' | 'agent_payment'
@@ -36,11 +58,11 @@ export default function EstadoCuentaTab() {
     setLoading(true);
     try {
       // Fetch all agents
-      const { data: profilesData } = await supabase.from('profiles').select('id, full_name, avatar_url, role');
+      const profilesData = await getAgentProfiles(supabase);
       const loadedAgents = profilesData || [];
       
       // Fetch all transactions (to calculate balances)
-      const { data: txData } = await supabase.from('account_transactions').select('*');
+      const txData = await getAccountTransactions(supabase);
       const loadedTx = txData || [];
       
       setAgents(loadedAgents);
@@ -88,7 +110,7 @@ export default function EstadoCuentaTab() {
     if (!selectedAgentId || !txForm.amount || !txForm.category) return;
     setSubmitting(true);
     try {
-      const { error } = await supabase.from('account_transactions').insert({
+      await insertAccountTransaction({
         profile_id: selectedAgentId,
         type: transactionType,
         amount: parseFloat(txForm.amount),
@@ -96,8 +118,7 @@ export default function EstadoCuentaTab() {
         description: txForm.description,
         date: txForm.date,
         added_by: profile?.id
-      });
-      if (error) throw error;
+      }, supabase);
       
       setShowTransactionModal(false);
       loadData();
@@ -131,10 +152,12 @@ export default function EstadoCuentaTab() {
                 <input 
                   type="number" 
                   value={povertyLineNet} 
-                  onChange={e => setPovertyLineNet(Number(e.target.value))}
-                  className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-lg font-black italic w-32 focus:outline-none focus:ring-2 focus:ring-nexus-blue text-slate-900 dark:text-white"
+                  disabled
+                  title="Configurable por el Broker en la sección de Equipo"
+                  className="bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-lg font-black italic w-32 focus:outline-none text-slate-400 dark:text-slate-500 cursor-not-allowed"
                 />
               </div>
+              <p className="text-[8px] text-slate-400 mt-1">Configurable por el broker en Equipo</p>
             </div>
             <div>
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Split Promedio (%)</label>

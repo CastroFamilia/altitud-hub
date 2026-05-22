@@ -6,8 +6,9 @@ import TopNav from '@/components/layout/TopNav';
 import Step1Owners from '@/components/prelisting/Step1Owners';
 import Step2Property from '@/components/prelisting/Step2Property';
 import Step3Tech from '@/components/prelisting/Step3Tech';
-import { supabase } from '@/lib/supabase';
+import { insertAcmReport, updateAcmReport } from '@/lib/dal/prelisting';
 import { useApp } from '@/lib/context';
+import { trackOkrActivity } from '@/lib/okr-tracker';
 
 const STATUS_STYLES = {
   followup: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
@@ -111,11 +112,11 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
         }
       };
 
-      const { data, error } = await supabase.from('acm_reports').insert([dbPayload]).select().single();
-      if (error) throw error;
+      const data = await insertAcmReport(dbPayload);
       
       if (data) {
         setInterviews([data, ...interviews]);
+        await trackOkrActivity('prelistings');
       }
       resetWizard();
     } catch (e) {
@@ -207,7 +208,7 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
     }));
 
     try {
-      await supabase.from('acm_reports').update({ status: newStatus }).eq('id', id);
+      await updateAcmReport(id, { status: newStatus });
     } catch(err) {
       console.error(err);
     }
@@ -328,14 +329,14 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
                           {item.initials || item.client_name?.charAt(0) || '?'}
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.client_name || 'Sin nombre'}</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.client_name || t('pre_client_no_name')}</p>
                           <p className="text-xs text-brand-500 dark:text-brand-400 mt-0.5">{item.interest || item.property_address}</p>
                         </div>
                       </div>
                     </td>
                     {/* Zona Geográfica */}
                     <td className="py-4 px-5">
-                      <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{item.zone || 'No definida'}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{item.zone || t('pre_zone_undefined')}</p>
                       <p className="text-[10px] text-gray-500 dark:text-gray-500">{item.last_contact || new Date(item.created_at).toLocaleDateString()}</p>
                     </td>
                     {/* Origen */}
@@ -371,7 +372,7 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
             </table>
             {filteredInterviews.length === 0 && (
               <div className="p-8 text-center text-sm text-gray-500">
-                No hay entrevistas para mostrar.
+                {t('pre_empty_interviews')}
               </div>
             )}
           </div>

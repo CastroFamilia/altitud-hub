@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { insertMultipleContacts } from '@/lib/dal/contacts';
 import { useAuth } from '@/lib/auth-context';
 import TopNav from '@/components/layout/TopNav';
 import Link from 'next/link';
@@ -10,19 +10,19 @@ import { useApp } from '@/lib/context';
 import Papa from 'papaparse';
 
 const SYSTEM_FIELDS = [
-  { id: 'first_name', label: 'Nombre (Requerido)', required: true },
-  { id: 'last_name', label: 'Apellidos' },
-  { id: 'email', label: 'Correo Electrónico' },
-  { id: 'phone', label: 'Teléfono' },
-  { id: 'type', label: 'Perfil (Comprador, Vendedor... separar con coma)' },
-  { id: 'lead_origin', label: 'Origen (Digital, Rótulo...)' },
-  { id: 'market', label: 'Mercado (Nacional, Extranjero)' },
-  { id: 'primary_language', label: 'Idioma Primario' },
-  { id: 'secondary_language', label: 'Idioma Secundario' },
-  { id: 'tertiary_language', label: 'Idioma Terciario' },
-  { id: 'favorite_language', label: 'Idioma Favorito' },
-  { id: 'contact_classification', label: 'Clasificación (A+, A, B, C)' },
-  { id: 'notes', label: 'Notas / Detalles' }
+  { id: 'first_name', labelKey: 'imp_field_first_name', required: true },
+  { id: 'last_name', labelKey: 'imp_field_last_name' },
+  { id: 'email', labelKey: 'imp_field_email' },
+  { id: 'phone', labelKey: 'imp_field_phone' },
+  { id: 'type', labelKey: 'imp_field_type' },
+  { id: 'lead_origin', labelKey: 'imp_field_lead_origin' },
+  { id: 'market', labelKey: 'imp_field_market' },
+  { id: 'primary_language', labelKey: 'imp_field_primary_language' },
+  { id: 'secondary_language', labelKey: 'imp_field_secondary_language' },
+  { id: 'tertiary_language', labelKey: 'imp_field_tertiary_language' },
+  { id: 'favorite_language', labelKey: 'imp_field_favorite_language' },
+  { id: 'contact_classification', labelKey: 'imp_field_classification' },
+  { id: 'notes', labelKey: 'imp_field_notes' }
 ];
 
 export default function ImportarContactosClient() {
@@ -96,11 +96,11 @@ export default function ImportarContactosClient() {
           setMapping(initialMapping);
           setStep(2);
         } else {
-          alert("El archivo parece estar vacío o no es un CSV válido.");
+          alert(t('contact_imp_err_empty'));
         }
       },
       error: function(err) {
-        alert("Error leyendo el archivo: " + err.message);
+        alert(t('contact_imp_err_read') + err.message);
       }
     });
   };
@@ -117,7 +117,7 @@ export default function ImportarContactosClient() {
     
     // Validate required fields
     if (!mapping.first_name) {
-      alert("Debes mapear al menos la columna para 'Nombre'");
+      alert(t('contact_imp_err_map'));
       return;
     }
 
@@ -209,19 +209,14 @@ export default function ImportarContactosClient() {
         };
       });
 
-      const { data, error } = await supabase
-        .from('contacts')
-        .insert(recordsToInsert)
-        .select();
-
-      if (error) throw error;
+      const data = await insertMultipleContacts(recordsToInsert);
       
-      alert(`¡Éxito! Se importaron ${recordsToInsert.length} contactos correctamente.`);
+      alert(t('contact_imp_success').replace('{n}', recordsToInsert.length));
       router.push('/contactos');
 
     } catch (err) {
       console.error(err);
-      alert('Hubo un error al importar: ' + err.message);
+      alert(t('contact_imp_err_import') + err.message);
     } finally {
       setLoading(false);
     }
@@ -241,7 +236,7 @@ export default function ImportarContactosClient() {
         <div className="glass-panel p-6 md:p-8">
           {/* Progress Indicator */}
           <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-100 dark:border-dark-border">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Importar Contactos</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('contact_imp_title_h1')}</h1>
             <div className="flex gap-2">
               <span className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold ${step >= 1 ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-400'}`}>1</span>
               <div className={`w-8 h-px my-auto ${step >= 2 ? 'bg-brand-500' : 'bg-gray-200'}`}></div>
@@ -328,8 +323,8 @@ export default function ImportarContactosClient() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                   {SYSTEM_FIELDS.map(sysField => (
                     <div key={sysField.id} className="flex flex-col">
-                      <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                        {sysField.label} {sysField.required && <span className="text-brand-500">*</span>}
+                        <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                        {t(sysField.labelKey)} {sysField.required && <span className="text-brand-500">*</span>}
                       </label>
                       <select
                         value={mapping[sysField.id]}
@@ -359,10 +354,10 @@ export default function ImportarContactosClient() {
                       onChange={(e) => setGlobalDefaults({...globalDefaults, lead_origin: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-sm"
                     >
-                      <option value="Esfera de Influencia">Esfera de Influencia</option>
-                      <option value="Digital">Digital</option>
-                      <option value="Rótulo">Rótulo</option>
-                      <option value="Referido">Referido</option>
+                      <option value="Esfera de Influencia">{t('contact_imp_origin_sphere')}</option>
+                      <option value="Digital">{t('contact_imp_origin_digital')}</option>
+                      <option value="Rótulo">{t('contact_imp_origin_sign')}</option>
+                      <option value="Referido">{t('contact_imp_origin_referral')}</option>
                     </select>
                   </div>
                   <div>
@@ -424,7 +419,7 @@ export default function ImportarContactosClient() {
               </div>
               <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">{t('contact_imp_step3_title')}</h3>
               <p className="text-gray-500 dark:text-gray-400 mb-8">
-                Se detectaron <strong>{csvData.length}</strong> {t('contact_imp_step3_desc')}
+                {t('contact_imp_detected')} <strong>{csvData.length}</strong> {t('contact_imp_step3_desc')}
               </p>
               
               <div className="flex justify-center gap-4">

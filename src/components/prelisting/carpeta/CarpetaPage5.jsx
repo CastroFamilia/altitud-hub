@@ -1,12 +1,12 @@
 import Image from 'next/image';
-export default function CarpetaPage5({ cfg, agentName, agentPhone, agentEmail, t }) {
+export default function CarpetaPage5({ cfg, agentName, agentPhone, agentEmail, personalMessage, t }) {
   return (
     <div className="carpeta-page" style={{ padding: 0, display: 'flex', flexDirection: 'column' }}>
       <div style={{ height: 4, background: `linear-gradient(90deg, ${cfg.accent}, #DC1431)`, flexShrink: 0 }} />
 
       {/* Header */}
       <div style={{ padding: '14px 44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
-        <Image src="/assets/logo-altitud.png" alt="Logo" style={{ height: 20 }} width={100} height={100} unoptimized />
+        <Image src={cfg.logo || '/assets/logo-altitud.png'} alt="Logo" style={{ height: 20 }} width={100} height={100} unoptimized />
         <span style={{ fontSize: 9, color: '#94a3b8', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{t.p5_header}</span>
       </div>
 
@@ -16,7 +16,14 @@ export default function CarpetaPage5({ cfg, agentName, agentPhone, agentEmail, t
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 9, color: '#DC1431', fontWeight: 800, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 4 }}>{cfg.zone}</p>
             <h2 style={{ fontSize: 26, fontWeight: 900, color: '#1a1a2e', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 12 }}>{t.p5_title}</h2>
-            <p style={{ fontSize: 11, lineHeight: 1.85, color: '#4b5563' }} dangerouslySetInnerHTML={{ __html: t.p5_desc }} />
+            <p style={{ fontSize: 11, lineHeight: 1.85, color: '#4b5563', marginBottom: personalMessage ? 16 : 0 }} dangerouslySetInnerHTML={{ __html: t.p5_desc }} />
+            
+            {personalMessage && (
+              <div style={{ background: '#f8fafc', padding: '16px', borderLeft: `3px solid ${cfg.accent}`, borderRadius: '0 8px 8px 0', marginTop: '16px' }}>
+                <p style={{ fontSize: 11, color: '#1e293b', fontStyle: 'italic', lineHeight: 1.6 }}>"{personalMessage}"</p>
+                <p style={{ fontSize: 10, color: '#64748b', fontWeight: 600, marginTop: 8 }}>— {agentName}</p>
+              </div>
+            )}
           </div>
           {/* Commission — light color card */}
           <div style={{ flexShrink: 0, width: 130, textAlign: 'center', border: `2px solid ${cfg.accent}`, borderRadius: 16, padding: '24px 16px' }}>

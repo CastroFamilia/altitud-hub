@@ -9,7 +9,7 @@ export default function CarpetaPage4({ cfg, t }) {
         <div style={{ position:'absolute',top:-40,right:-40,width:140,height:140,borderRadius:'50%',background:'rgba(255,255,255,0.04)' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <Image src="/assets/logo-altitud.png" alt="Logo" style={{ height: 18, marginBottom: 12, filter: 'brightness(10)' }} width={100} height={100} unoptimized />
+            <Image src={cfg.logo || '/assets/logo-altitud.png'} alt="Logo" style={{ height: 18, marginBottom: 12, filter: 'brightness(10)' }} width={100} height={100} unoptimized />
             <h2 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.03em', lineHeight: 1.1 }}>{t.p4_header}</h2>
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 8, fontWeight: 500 }}>{t.p4_title}</p>
           </div>

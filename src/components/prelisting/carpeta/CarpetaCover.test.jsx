@@ -2,6 +2,16 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import CarpetaCover from './CarpetaCover'
 
+// Next.js <Image> rewrites src to /_next/image?url=... in the DOM.
+// Mock it with a plain <img> so tests can assert on the raw src attribute.
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: (props) => {
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+    return <img {...props} />
+  },
+}))
+
 describe('CarpetaCover Component', () => {
   const mockCfg = {
     location: 'Test Location',

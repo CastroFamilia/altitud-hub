@@ -6,38 +6,40 @@ import PlanWizard from '@/components/plan/PlanWizard';
 import { useApp } from '@/lib/context';
 import { supabase } from '@/lib/supabase';
 
-const PLAN_KEY = 'altitud_business_plan';
+const getPlanKey = (year) => `altitud_business_plan_${year}`;
+const getOkrPlanKey = (year) => `altitud_okr_plan_${year}`;
 
-function loadLocalPlan() {
+function loadLocalPlan(year) {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = localStorage.getItem(PLAN_KEY);
+    const raw = localStorage.getItem(getPlanKey(year));
     if (raw) return JSON.parse(raw);
   } catch { /* ignore */ }
   return null;
 }
 
-export default function PlanClient({ initialPlan }) {
+export default function PlanClient({ initialPlan, queriedYear }) {
   const { t } = useApp();
   const [existingPlan, setExistingPlan] = useState(initialPlan);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!initialPlan) {
-      const local = loadLocalPlan();
+      const local = loadLocalPlan(queriedYear);
      
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (local) setExistingPlan(local);
     }
      
     setLoading(false);
-  }, [initialPlan]);
+  }, [initialPlan, queriedYear]);
 
   // Save (upsert) to Supabase
   const handleSave = useCallback(async (planData) => {
     const payload = {
       agent_email: planData.agent_email || 'default@altitud.cr',
       agent_name: planData.agent_name || 'Agente',
+      plan_year: queriedYear,
       para_que: planData.para_que,
       currency: planData.currency,
       exchange_rate: planData.exchange_rate,
@@ -67,7 +69,7 @@ export default function PlanClient({ initialPlan }) {
     try {
       const { error } = await supabase
         .from('business_plans')
-        .upsert(payload, { onConflict: 'agent_email' });
+        .upsert(payload, { onConflict: 'agent_email,plan_year' });
       
       if (error) {
         console.warn('Supabase save failed, saving to localStorage:', error.message);
@@ -77,15 +79,15 @@ export default function PlanClient({ initialPlan }) {
     }
 
     // Always save to localStorage as backup + for OKR integration
-    localStorage.setItem(PLAN_KEY, JSON.stringify(planData));
-    localStorage.setItem('altitud_okr_plan', JSON.stringify({
+    localStorage.setItem(getPlanKey(queriedYear), JSON.stringify(planData));
+    localStorage.setItem(getOkrPlanKey(queriedYear), JSON.stringify({
       monthly_targets: planData.monthly_targets || {},
       weekly_targets: planData.weekly_targets || {},
       monthly_targets_by_month: planData.monthly_targets_by_month || [],
       plan_start_date: planData.plan_start_date || '',
       target_portfolio_size: planData.target_portfolio_size || 25,
     }));
-  }, []);
+  }, [queriedYear]);
 
   const handleComplete = useCallback(async (planData) => {
     await handleSave({ ...planData, status: 'active', completed_at: new Date().toISOString() });
@@ -115,6 +117,7 @@ export default function PlanClient({ initialPlan }) {
       <TopNav titleKey="pw_page_title" subtitleKey="pw_page_subtitle" />
       <PlanWizard
         existingPlan={existingPlan}
+        queriedYear={queriedYear}
         onComplete={handleComplete}
         onSaveDraft={handleSaveDraft}
       />

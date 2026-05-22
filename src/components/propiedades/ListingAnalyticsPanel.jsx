@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useApp } from '@/lib/context';
-import { supabase } from '@/lib/supabase';
+import { getListingDailyStats, getListingPageViewsReferrers, getListingLeadsCount } from '@/lib/dal/analytics';
 
 /* ═══════════════════════════════════════════════════════════════
    LISTING ANALYTICS PANEL
@@ -28,16 +28,7 @@ export default function ListingAnalyticsPanel({ propertyId, developmentId }) {
         const d30 = new Date(now - 30 * 86400000).toISOString().split('T')[0];
 
         // Get daily stats
-        let query = supabase
-          .from('listing_daily_stats')
-          .select('*')
-          .order('stat_date', { ascending: false })
-          .limit(90);
-
-        if (propertyId) query = query.eq('property_id', propertyId);
-        if (developmentId) query = query.eq('development_id', developmentId);
-
-        const { data: daily } = await query;
+        const daily = await getListingDailyStats(propertyId, developmentId);
         setDailyData(daily || []);
 
         // Calculate aggregated stats
@@ -62,17 +53,7 @@ export default function ListingAnalyticsPanel({ propertyId, developmentId }) {
         });
 
         // Top referrers from raw views (last 30 days)
-        let refQuery = supabase
-          .from('listing_page_views')
-          .select('referrer')
-          .gte('viewed_at', d30 + 'T00:00:00Z')
-          .not('referrer', 'is', null)
-          .limit(200);
-
-        if (propertyId) refQuery = refQuery.eq('property_id', propertyId);
-        if (developmentId) refQuery = refQuery.eq('development_id', developmentId);
-
-        const { data: refs } = await refQuery;
+        const refs = await getListingPageViewsReferrers(propertyId, developmentId, d30);
         if (refs) {
           const counts = {};
           refs.forEach(r => {
@@ -91,10 +72,7 @@ export default function ListingAnalyticsPanel({ propertyId, developmentId }) {
 
         // Leads count
         if (propertyId) {
-          const { count } = await supabase
-            .from('property_inquiries')
-            .select('id', { count: 'exact', head: true })
-            .eq('reconnect_listing_id', propertyId);
+          const count = await getListingLeadsCount(propertyId);
           setStats(prev => ({ ...prev, leads: count || 0 }));
         }
       } catch (err) {

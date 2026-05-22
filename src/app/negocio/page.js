@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server';
 import NegocioClient from './NegocioClient';
+import { getAllContactsMinimal } from '@/lib/dal/contacts';
 
 export default async function NegocioPage() {
   const supabase = await createClient();
@@ -20,7 +21,7 @@ export default async function NegocioPage() {
     try {
       const { data } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, role, team_id')
         .eq('auth_user_id', user.id)
         .single();
       profile = data;
@@ -29,12 +30,23 @@ export default async function NegocioPage() {
     }
 
     if (profile) {
+      let teamProfileIds = [profile.id];
+      if (profile.role === 'team_leader' && profile.team_id) {
+        const { data: teamMembers } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('team_id', profile.team_id);
+        if (teamMembers) {
+          teamProfileIds = [...teamProfileIds, ...teamMembers.map(m => m.id)];
+        }
+      }
+
       // Fetch reservations
       try {
         const { data: reservations } = await supabase
           .from('office_reservations')
           .select('*, due_diligence_items (*)')
-          .eq('profile_id', profile.id)
+          .in('profile_id', teamProfileIds)
           .order('created_at', { ascending: false });
         if (reservations) initialReservations = reservations;
       } catch (e) {
@@ -46,7 +58,7 @@ export default async function NegocioPage() {
         const { data: commissions } = await supabase
           .from('agent_commissions')
           .select('*, properties(name, listing_title_es, listing_title_en, unparsed_address)')
-          .eq('agent_id', profile.id)
+          .in('agent_id', teamProfileIds)
           .order('closing_date', { ascending: false });
         if (commissions) initialCommissions = commissions;
       } catch (e) {
@@ -58,7 +70,7 @@ export default async function NegocioPage() {
         const { data: referrals } = await supabase
           .from('agent_referrals')
           .select('*, referring_profile:profiles!agent_referrals_referring_agent_id_fkey(full_name, avatar_url, office), receiving_profile:profiles!agent_referrals_receiving_agent_id_fkey(full_name, avatar_url, office)')
-          .or(`referring_agent_id.eq.${profile.id},receiving_agent_id.eq.${profile.id}`)
+          .or(teamProfileIds.map(id => `referring_agent_id.eq.${id},receiving_agent_id.eq.${id}`).join(','))
           .order('created_at', { ascending: false });
         if (referrals) initialReferrals = referrals;
       } catch (e) {
@@ -79,11 +91,7 @@ export default async function NegocioPage() {
 
     // Fetch contacts
     try {
-      const { data: contacts } = await supabase
-        .from('contacts')
-        .select('id, first_name, last_name, type')
-        .order('first_name');
-      if (contacts) initialContacts = contacts;
+      initialContacts = await getAllContactsMinimal(supabase);
     } catch (e) {
       console.error('NegocioPage: Error fetching contacts:', e?.message);
     }
@@ -102,14 +110,18 @@ export default async function NegocioPage() {
   }
 
   return (
-    <NegocioClient 
-      initialReservations={initialReservations} 
-      initialContacts={initialContacts}
-      initialCommissions={initialCommissions}
-      initialTiers={initialTiers}
-      initialReferrals={initialReferrals}
-      initialEvents={initialEvents}
-      initialAttendance={initialAttendance}
-    />
+    <div className="flex-1 overflow-y-auto min-h-screen bg-slate-50 dark:bg-[#0B1120] text-slate-800 dark:text-slate-200 w-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 lg:pt-8">
+        <NegocioClient 
+          initialReservations={initialReservations} 
+          initialContacts={initialContacts}
+          initialCommissions={initialCommissions}
+          initialTiers={initialTiers}
+          initialReferrals={initialReferrals}
+          initialEvents={initialEvents}
+          initialAttendance={initialAttendance}
+        />
+      </div>
+    </div>
   );
 }

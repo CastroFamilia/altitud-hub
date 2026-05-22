@@ -3,13 +3,8 @@ import { NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { Readable } from 'stream';
 
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
-  },
-};
+// App Router: maxDuration prevents Vercel timeout on large PDF uploads.
+export const maxDuration = 60;
 
 async function getAuthClient() {
   const oauth2Client = new google.auth.OAuth2(

@@ -1,5 +1,6 @@
 import { createAdminSupabase } from '@/lib/supabase-server';
 import { notFound } from 'next/navigation';
+import { getOfficeReservationById } from '@/lib/dal/office';
 
 export const metadata = {
   title: 'Deal Room | RE/MAX Altitud',
@@ -19,17 +20,14 @@ export default async function TransaccionPage(props) {
   }
 
   // Fetch the reservation bypassing RLS
-  const { data: res, error } = await supabase
-    .from('office_reservations')
-    .select(`
-      *,
-      profiles ( full_name, email, phone ),
-      due_diligence_items (*)
-    `)
-    .eq('id', id)
-    .single();
+  let res;
+  try {
+    res = await getOfficeReservationById(id, supabase);
+  } catch (error) {
+    res = null;
+  }
 
-  if (error || !res) {
+  if (!res) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0B1120]">
         <div className="text-center p-8 bg-white dark:bg-slate-900 rounded-2xl shadow-xl max-w-md">
@@ -183,7 +181,7 @@ export default async function TransaccionPage(props) {
                           {item.status === 'ready' && <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
                         </div>
                         <div>
-                          <p className="font-semibold text-slate-900 dark:text-white">{item.item_name}</p>
+                          <p className="font-semibold text-slate-900 dark:text-white">{item.document_name || item.item_name}</p>
                           <p className="text-sm text-slate-500">{item.notes || 'Sin notas adicionales'}</p>
                         </div>
                       </div>

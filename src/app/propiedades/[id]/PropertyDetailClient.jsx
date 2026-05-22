@@ -4,17 +4,20 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
+import { getPropertyDetails, updateProperty, deletePropertyImage, getListingMilestone, upsertListingMilestone } from '@/lib/dal/properties';
 import TopNav from '@/components/layout/TopNav';
 import PropertyStatusBadge from '@/components/propiedades/PropertyStatusBadge';
 import PropertyTimeline from '@/components/propiedades/PropertyTimeline';
 import { PROPERTY_TYPES, formatPrice } from '@/components/propiedades/PropertyCard';
 import SyndicationPanel from '@/components/propiedades/SyndicationPanel';
+import PortalLinkManager from '@/components/propiedades/PortalLinkManager';
 import CommissionCalculator from '@/components/propiedades/CommissionCalculator';
 import SoldCongratsModal from '@/components/propiedades/SoldCongratsModal';
 import ListingAnalyticsPanel from '@/components/propiedades/ListingAnalyticsPanel';
+import PropertyInquiriesPanel from '@/components/propiedades/PropertyInquiriesPanel';
 import Link from 'next/link';
 import Image from 'next/image';
+import WhatsAppSendButton from '@/components/propiedades/WhatsAppSendButton';
 
 const AMENITY_LABELS = {
   pool_private: { es: 'Piscina', en: 'Pool' },
@@ -65,22 +68,18 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
   const [soldResult, setSoldResult] = useState(null);
 
   const fetchProperty = async () => {
-    const { data, error } = await supabase
-      .from('properties')
-      .select('*, property_images(id, image_url, thumbnail_url, priority, drive_file_id)')
-      .eq('id', id)
-      .single();
-    if (error) { console.error(error); setLoading(false); return; }
-    setProperty(data);
-    setImages((data.property_images || []).sort((a, b) => a.priority - b.priority));
-    // Fetch milestones
-    const { data: msData } = await supabase
-      .from('listing_milestones')
-      .select('*')
-      .eq('property_id', id)
-      .single();
-    if (msData) setMilestones(msData);
-    setLoading(false);
+    try {
+      const data = await getPropertyDetails(id);
+      setProperty(data);
+      setImages((data.property_images || []).sort((a, b) => a.priority - b.priority));
+      // Fetch milestones
+      const msData = await getListingMilestone(id);
+      if (msData) setMilestones(msData);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Removed initial fetch useEffect, keep fetchProperty for refreshing data
@@ -91,8 +90,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
       const updates = { status: newStatus };
       if (newStatus === 'pending_approval') updates.submitted_at = new Date().toISOString();
       if (notes !== undefined && notes !== null) updates.broker_notes = notes;
-      const { error } = await supabase.from('properties').update(updates).eq('id', id);
-      if (error) throw error;
+      await updateProperty(id, updates);
       setProperty(p => ({ ...p, ...updates }));
 
       // Auto-update listing milestones
@@ -100,10 +98,10 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
       if (newStatus === 'pending_approval') milestoneUpdate.submitted_at = new Date().toISOString();
       if (newStatus === 'approved') milestoneUpdate.broker_approved_at = new Date().toISOString();
       if (newStatus === 'published') milestoneUpdate.published_at = new Date().toISOString();
-      await supabase.from('listing_milestones').upsert(milestoneUpdate, { onConflict: 'property_id' });
+      await upsertListingMilestone(milestoneUpdate);
 
       // Re-fetch milestones to update the timeline
-      const { data: msData } = await supabase.from('listing_milestones').select('*').eq('property_id', id).single();
+      const msData = await getListingMilestone(id);
       if (msData) setMilestones(msData);
     } catch (err) {
       alert('Error: ' + err.message);
@@ -128,16 +126,18 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
       });
       const data = await res.json();
       if (data.success) {
-        const { error } = await supabase.from('properties').update({
-          drive_photos_folder_id: data.folderId,
-          drive_photos_folder_url: data.folderUrl,
-        }).eq('id', id);
-        if (!error) {
+        try {
+          await updateProperty(id, {
+            drive_photos_folder_id: data.folderId,
+            drive_photos_folder_url: data.folderUrl,
+          });
           setProperty(p => ({
             ...p,
             drive_photos_folder_id: data.folderId,
             drive_photos_folder_url: data.folderUrl,
           }));
+        } catch (updateErr) {
+          console.error(updateErr);
         }
       } else {
         alert('Error: ' + (data.error || 'Failed to create folder'));
@@ -147,6 +147,22 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
     } finally {
       setCreatingFolder(false);
     }
+  };
+
+  // Schedule Photographer
+  const handleSchedulePhotographer = async () => {
+    try {
+      await upsertListingMilestone({
+        property_id: id,
+        agent_id: user?.id,
+        photos_requested_at: new Date().toISOString(),
+      });
+      const msData = await getListingMilestone(id);
+      if (msData) setMilestones(msData);
+    } catch (err) {
+      console.error("Failed to update milestone", err);
+    }
+    window.open("https://calendar.app.google/yYSUgBYr6Zv7Wrgn9", "_blank");
   };
 
   // Sync photos from Drive
@@ -160,10 +176,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
       });
       const data = await res.json();
       if (data.success) {
-        alert(lang === 'en'
-          ? `Synced ${data.synced} new photos (${data.total_images} total)`
-          : `Sincronizadas ${data.synced} fotos nuevas (${data.total_images} total)`
-        );
+        alert(t('pd_synced_msg').replace('{synced}', data.synced).replace('{total}', data.total_images));
         fetchProperty(); // Reload to show new images
       } else {
         alert('Error: ' + (data.error || 'Unknown error'));
@@ -175,12 +188,13 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
     }
   };
 
-  // Delete image
   const handleDeleteImage = async (imageId) => {
-    if (!confirm(lang === 'en' ? 'Delete this photo?' : '¿Eliminar esta foto?')) return;
-    const { error } = await supabase.from('property_images').delete().eq('id', imageId);
-    if (!error) {
+    if (!confirm(t('pd_delete_photo'))) return;
+    try {
+      await deletePropertyImage(imageId);
       setImages(prev => prev.filter(i => i.id !== imageId));
+    } catch (err) {
+      alert('Error deleting image: ' + err.message);
     }
   };
 
@@ -198,7 +212,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
       <TopNav titleKey="nav_properties" subtitleKey="nav_portfolio" />
       <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-dark-bg">
         <div className="text-center">
-          <p className="text-gray-500">{lang === 'en' ? 'Property not found' : 'Propiedad no encontrada'}</p>
+          <p className="text-gray-500">{t('pd_not_found')}</p>
           <Link href="/propiedades" className="text-brand-500 text-sm mt-2 inline-block">← {t('nav_properties')}</Link>
         </div>
       </div>
@@ -235,7 +249,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 mb-4 flex items-start gap-3">
               <span className="text-xl">⚠️</span>
               <div>
-                <p className="text-sm font-bold text-amber-800 dark:text-amber-300">{lang === 'en' ? 'Changes Requested by Broker' : 'Cambios Solicitados por el Broker'}</p>
+                <p className="text-sm font-bold text-amber-800 dark:text-amber-300">{t('pd_broker_changes')}</p>
                 <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">{p.broker_notes}</p>
               </div>
             </div>
@@ -249,7 +263,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
                 {typeLabel && <span className="text-xs font-semibold uppercase tracking-widest text-brand-500">{typeLabel}</span>}
                 {daysOnMarket !== null && (
                   <span className="text-xs font-medium text-gray-400 dark:text-gray-500">
-                    {daysOnMarket} {lang === 'en' ? 'days' : 'días'}
+                    {daysOnMarket} {t('pd_days')}
                   </span>
                 )}
               </div>
@@ -266,20 +280,28 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+              {/* WhatsApp Quick-Send */}
+              <WhatsAppSendButton
+                property={p}
+                contactPhone={p.owner_phones || ''}
+                contactName={p.owner_name || ''}
+                variant="detail"
+                lang={lang}
+              />
               {canEdit && (
                 <button onClick={() => router.push(`/propiedades/nueva?edit=${p.id}`)} className="px-4 py-2 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-panel hover:bg-slate-50 dark:hover:bg-white/5 text-sm font-medium text-gray-700 dark:text-white transition-colors">
-                  ✏️ {lang === 'en' ? 'Edit' : 'Editar'}
+                  ✏️ {t('pd_edit')}
                 </button>
               )}
               {canEdit && (
                 <button onClick={() => updateStatus('pending_approval')} disabled={actionLoading} className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold shadow-md shadow-brand-500/20 transition-all disabled:opacity-50">
-                  {lang === 'en' ? 'Submit for Approval' : 'Enviar para Aprobación'}
+                  {t('pd_submit_approval')}
                 </button>
               )}
               {p.status === 'approved' && (
                 <span className="px-4 py-2 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm font-semibold border border-green-200 dark:border-green-800">
-                  ✅ {lang === 'en' ? 'Approved — Ready to Publish' : 'Aprobada — Lista para Publicar'}
+                  ✅ {t('pd_approved_ready')}
                 </span>
               )}
               {(p.status === 'published' || p.status === 'approved') && p.status !== 'sold' && (
@@ -287,12 +309,12 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
                   onClick={() => setShowSoldModal(true)}
                   className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5"
                 >
-                  🎉 {lang === 'en' ? 'Mark as Sold' : 'Marcar como Vendida'}
+                  🎉 {t('pd_mark_sold')}
                 </button>
               )}
               {p.status === 'sold' && (
                 <span className="px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-sm font-bold border border-emerald-200 dark:border-emerald-800">
-                  🏆 {lang === 'en' ? 'SOLD' : 'VENDIDA'} — {p.sold_price ? formatPrice(p.sold_price, p.list_price_currency_id) : ''}
+                  🏆 {t('pd_sold_label')} — {p.sold_price ? formatPrice(p.sold_price, p.list_price_currency_id) : ''}
                 </span>
               )}
             </div>
@@ -319,23 +341,29 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
                   ))}
                 </div>
                 {images.length > 8 && (
-                  <p className="text-center py-2 text-xs text-gray-500">+{images.length - 8} {lang === 'en' ? 'more photos' : 'fotos más'}</p>
+                  <p className="text-center py-2 text-xs text-gray-500">+{images.length - 8} {t('pd_more_photos')}</p>
                 )}
               </>
             ) : (
               <div className="p-8 text-center">
                 <svg className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{lang === 'en' ? 'No photos yet' : 'Aún no hay fotos'}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{t('pd_no_photos')}</p>
               </div>
             )}
 
             {/* Photo actions bar */}
             <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-gray-100 dark:border-dark-border bg-gray-50/50 dark:bg-white/5">
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                🖼️ {images.length} {lang === 'en' ? 'photos' : 'fotos'}
-                {p.photos_ready && <span className="text-green-500 ml-2">✓ {lang === 'en' ? 'Ready' : 'Listas'}</span>}
+                🖼️ {images.length} {t('pd_photos')}
+                {p.photos_ready && <span className="text-green-500 ml-2">✓ {t('pd_photos_ready')}</span>}
               </p>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSchedulePhotographer}
+                  className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors flex items-center gap-1.5"
+                >
+                  🗓️ {t('pd_schedule_photographer') || 'Schedule'}
+                </button>
                 {!p.drive_photos_folder_id ? (
                   <button
                     onClick={handleCreateFolder}
@@ -347,7 +375,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
                     ) : (
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
                     )}
-                    {lang === 'en' ? 'Create Drive Folder' : 'Crear Carpeta Drive'}
+                    {t('pd_create_drive')}
                   </button>
                 ) : (
                   <>
@@ -358,7 +386,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
                       className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex items-center gap-1.5"
                     >
                       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l4.58 7.5h13.54l4.58-7.5L17.29 3.5H7.71z" /></svg>
-                      {lang === 'en' ? 'Open Drive' : 'Abrir Drive'}
+                      {t('pd_open_drive')}
                     </a>
                     <button
                       onClick={handleSyncPhotos}
@@ -370,7 +398,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
                       ) : (
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                       )}
-                      {lang === 'en' ? 'Sync Photos' : 'Sincronizar Fotos'}
+                      {t('pd_sync_photos')}
                     </button>
                   </>
                 )}
@@ -384,7 +412,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
             <div className="lg:col-span-2 space-y-4">
               {/* Description */}
               {(p.public_remarks_es || p.public_remarks_en) && (
-                <SectionCard title={lang === 'en' ? 'Description' : 'Descripción'} icon="📝">
+                <SectionCard title={t('pd_section_description')} icon="📝">
                   <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                     {lang === 'en' ? (p.public_remarks_en || p.public_remarks_es) : (p.public_remarks_es || p.public_remarks_en)}
                   </p>
@@ -392,20 +420,20 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
               )}
 
               {/* Details */}
-              <SectionCard title={lang === 'en' ? 'Property Details' : 'Detalles'} icon="📐">
-                <InfoRow label={lang === 'en' ? 'Bedrooms' : 'Habitaciones'} value={p.bedrooms_total} />
-                <InfoRow label={lang === 'en' ? 'Full Bathrooms' : 'Baños Completos'} value={p.bathrooms_full} />
-                <InfoRow label={lang === 'en' ? 'Half Bathrooms' : 'Medios Baños'} value={p.bathrooms_half} />
-                <InfoRow label={lang === 'en' ? 'Floors' : 'Pisos'} value={p.stories} />
-                <InfoRow label={lang === 'en' ? 'Lot Size' : 'Terreno'} value={p.lot_size_area ? `${Number(p.lot_size_area).toLocaleString()} m²` : null} />
-                <InfoRow label={lang === 'en' ? 'Construction' : 'Construcción'} value={p.construction_size ? `${Number(p.construction_size).toLocaleString()} m²` : null} />
-                <InfoRow label={lang === 'en' ? 'Year Built' : 'Año'} value={p.year_built} />
-                <InfoRow label={lang === 'en' ? 'Garage Spaces' : 'Espacios Garaje'} value={p.garage ? p.garage_spaces : null} />
+              <SectionCard title={t('pd_section_details')} icon="📐">
+                <InfoRow label={t('pd_bedrooms')} value={p.bedrooms_total} />
+                <InfoRow label={t('pd_bathrooms_full')} value={p.bathrooms_full} />
+                <InfoRow label={t('pd_bathrooms_half')} value={p.bathrooms_half} />
+                <InfoRow label={t('pd_floors')} value={p.stories} />
+                <InfoRow label={t('pd_lot_size')} value={p.lot_size_area ? `${Number(p.lot_size_area).toLocaleString()} m²` : null} />
+                <InfoRow label={t('pd_construction')} value={p.construction_size ? `${Number(p.construction_size).toLocaleString()} m²` : null} />
+                <InfoRow label={t('pd_year_built')} value={p.year_built} />
+                <InfoRow label={t('pd_garage_spaces')} value={p.garage ? p.garage_spaces : null} />
               </SectionCard>
 
               {/* Amenities */}
               {amenities.length > 0 && (
-                <SectionCard title={lang === 'en' ? 'Amenities' : 'Amenidades'} icon="✨">
+                <SectionCard title={t('pd_section_amenities')} icon="✨">
                   <div className="flex flex-wrap gap-2">
                     {amenities.map(a => (
                       <span key={a} className="px-3 py-1 rounded-full bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 text-xs font-semibold">
@@ -420,38 +448,49 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
             {/* Right Column */}
             <div className="space-y-4">
               {/* Owner Info */}
-              <SectionCard title={lang === 'en' ? 'Owner' : 'Propietario'} icon="👤">
-                <InfoRow label={lang === 'en' ? 'Name' : 'Nombre'} value={p.owner_name} />
-                <InfoRow label={lang === 'en' ? 'Phone' : 'Teléfono'} value={p.owner_phones} />
-                <InfoRow label={lang === 'en' ? 'Email' : 'Email'} value={p.owner_email} />
-                <InfoRow label={lang === 'en' ? 'Agreement' : 'Contrato'} value={p.listing_agreement ? '✅ Firmado' : '❌ Pendiente'} />
+              <SectionCard title={t('pd_section_owner')} icon="👤">
+                <InfoRow label={t('pd_owner_name')} value={p.owner_name} />
+                <InfoRow label={t('pd_owner_phone')} value={p.owner_phones} />
+                <InfoRow label={t('pd_owner_email')} value={p.owner_email} />
+                <InfoRow label={t('pd_agreement')} value={p.listing_agreement ? t('pd_agreement_signed') : t('pd_agreement_pending')} />
               </SectionCard>
 
               {/* Commission */}
-              <SectionCard title={lang === 'en' ? 'Commission' : 'Comisión'} icon="💰">
+              <SectionCard title={t('pd_section_commission')} icon="💰">
                 <InfoRow label="Listing Side" value={p.listing_side_comm ? `${p.listing_side_comm}%` : null} />
                 <InfoRow label="Selling Side" value={p.selling_side_comm ? `${p.selling_side_comm}%` : null} />
                 <InfoRow label="Total" value={(p.listing_side_comm && p.selling_side_comm) ? `${Number(p.listing_side_comm) + Number(p.selling_side_comm)}%` : null} />
               </SectionCard>
 
-              {/* Syndication Panel */}
-              <SectionCard title={lang === 'en' ? 'Portals' : 'Portales'} icon="🔗">
+              {/* Syndication Panel — Multi-Portal Dashboard */}
+              <SectionCard title={t('pd_section_portals')} icon="🔗">
                 <SyndicationPanel
                   propertyId={p.id}
                   propertyStatus={p.status}
                   onPublish={() => fetchProperty()}
+                  agentId={user?.id}
+                  agentName={user?.user_metadata?.full_name || user?.email?.split('@')[0]}
+                  propertyTitle={title}
+                  office={p.office_code?.toLowerCase()?.includes('cero') ? 'cero' : 'altitud'}
                 />
+                {/* Broker-only: manage portal links */}
+                {isBroker && (
+                  <PortalLinkManager
+                    propertyId={p.id}
+                    onUpdate={() => fetchProperty()}
+                  />
+                )}
               </SectionCard>
 
               {/* Office */}
-              <SectionCard title={lang === 'en' ? 'Office' : 'Oficina'} icon="🏢">
-                <InfoRow label={lang === 'en' ? 'Office Code' : 'Código'} value={p.office_code} />
+              <SectionCard title={t('pd_section_office')} icon="🏢">
+                <InfoRow label={t('pd_office_code')} value={p.office_code} />
                 <InfoRow label="RECONNECT ID" value={p.reconnect_listing_id} />
                 <InfoRow label="Finca" value={p.finca_number} />
                 <InfoRow label="Plano" value={p.plano_number} />
                 {p.reconnect_last_sync && (
                   <InfoRow
-                    label={lang === 'en' ? 'Last Sync' : 'Última Sync'}
+                    label={t('pd_last_sync')}
                     value={new Date(p.reconnect_last_sync).toLocaleDateString()}
                   />
                 )}
@@ -467,13 +506,23 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
               )}
 
               {/* Analytics */}
-              <SectionCard title={lang === 'en' ? 'Analytics' : 'Analíticas'} icon="📊">
+              <SectionCard title={t('pd_section_analytics')} icon="📊">
                 <ListingAnalyticsPanel propertyId={p.id} />
               </SectionCard>
             </div>
-          </div>
-
         </div>
+
+          {/* ═══ PROPERTY INQUIRIES — Prominent Section ═══ */}
+          <div className="mt-6 mb-2">
+            <div className="p-[1px] rounded-2xl bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 shadow-xl shadow-blue-500/10">
+              <div className="bg-white dark:bg-dark-panel rounded-[15px] p-5">
+                <h3 className="text-sm font-bold text-gray-800 dark:text-white mb-3 flex items-center gap-2">
+                  <span className="text-lg">📩</span> {lang === 'en' ? 'Property Inquiries' : 'Consultas de la Propiedad'}
+                </h3>
+                <PropertyInquiriesPanel propertyId={p.id} />
+              </div>
+            </div>
+          </div>        </div>
       </div>
 
       {/* ═══ MARK AS SOLD MODAL ═══ */}
@@ -487,7 +536,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-xl font-black italic text-slate-900 dark:text-white">
-                  🎉 {lang === 'en' ? 'Record Sale' : 'Registrar Venta'}
+                  🎉 {t('pd_record_sale')}
                 </h3>
                 <p className="text-xs text-slate-400 mt-1">{title}</p>
               </div>

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-server';
 import { notFound } from 'next/navigation';
 import DevelopmentLanding from './DevelopmentLanding';
+import { getActiveDevelopmentBySlug, getActiveDevelopmentWithProperties } from '@/lib/dal/developments';
 
 /* ═══════════════════════════════════════════════════════════════
    PUBLIC DEVELOPMENT LANDING PAGE — /d/[slug]
@@ -14,12 +15,12 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
   const supabase = await createClient();
 
-  const { data: dev } = await supabase
-    .from('developments')
-    .select('name, tagline_es, tagline_en, og_image_url, developer_name')
-    .eq('slug', slug)
-    .eq('status', 'active')
-    .single();
+  let dev = null;
+  try {
+    dev = await getActiveDevelopmentBySlug(slug, supabase);
+  } catch (err) {
+    console.error(err);
+  }
 
   if (!dev) {
     return { title: 'Development Not Found' };
@@ -50,17 +51,15 @@ export default async function DevelopmentPage({ params }) {
   const { slug } = await params;
   const supabase = await createClient();
 
-  const { data: dev, error } = await supabase
-    .from('developments')
-    .select(`
-      *,
-      properties:properties(id, title_es, title_en, property_type, size_m2, price, status, main_image_url)
-    `)
-    .eq('slug', slug)
-    .eq('status', 'active')
-    .single();
+  let dev = null;
+  try {
+    dev = await getActiveDevelopmentWithProperties(slug, supabase);
+  } catch (err) {
+    console.error(err);
+    notFound();
+  }
 
-  if (!dev || error) {
+  if (!dev) {
     notFound();
   }
 

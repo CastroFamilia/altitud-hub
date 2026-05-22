@@ -49,6 +49,8 @@ export default async function NuevaPropiedadPage({ searchParams }) {
         Object.keys(INITIAL_FORM).forEach(key => {
           editForm[key] = propData[key] !== null && propData[key] !== undefined ? propData[key] : INITIAL_FORM[key];
         });
+        // Carry status so client can lock contact fields on approved properties
+        editForm._status = propData.status;
         initialForm = editForm;
       }
     }

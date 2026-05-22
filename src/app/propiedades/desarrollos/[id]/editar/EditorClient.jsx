@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
+import { updateDevelopment } from '@/lib/dal/developments';
 import TopNav from '@/components/layout/TopNav';
 import Link from 'next/link';
 
@@ -22,7 +22,7 @@ function slugify(text) {
 export default function EditorClient({ initialDevelopment }) {
   const { id } = useParams();
   const { t, lang } = useApp();
-  const { user } = useAuth();
+  const { user, supabase } = useAuth();
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
@@ -32,7 +32,7 @@ export default function EditorClient({ initialDevelopment }) {
     if (!initialDevelopment) {
       return {
         name: '', slug: '', tagline_es: '', tagline_en: '', developer_name: '', developer_contact: '',
-        unit_label: 'Lotes', custom_unit_label: '', logo_url: '', og_image_url: '', office_code: 'altitud',
+        unit_label: 'Lotes', custom_unit_label: '', total_units: '', logo_url: '', og_image_url: '', office_code: 'altitud',
       };
     }
     const data = initialDevelopment;
@@ -46,6 +46,7 @@ export default function EditorClient({ initialDevelopment }) {
       developer_contact: data.developer_contact || '',
       unit_label: isCustom ? 'custom' : (data.unit_label || 'Lotes'),
       custom_unit_label: isCustom ? data.unit_label : '',
+      total_units: data.total_units || '',
       logo_url: data.logo_url || '',
       og_image_url: data.og_image_url || '',
       office_code: data.office_code || 'altitud',
@@ -74,6 +75,7 @@ export default function EditorClient({ initialDevelopment }) {
         developer_name: form.developer_name || null,
         developer_contact: form.developer_contact || null,
         unit_label: unitLabel || 'Lotes',
+        total_units: form.total_units ? parseInt(form.total_units, 10) : 0,
         logo_url: form.logo_url || null,
         og_image_url: form.og_image_url || null,
         office_code: form.office_code,
@@ -84,12 +86,8 @@ export default function EditorClient({ initialDevelopment }) {
         updates.submitted_at = new Date().toISOString();
       }
 
-      const { error } = await supabase
-        .from('developments')
-        .update(updates)
-        .eq('id', id);
+      await updateDevelopment(id, updates, supabase);
 
-      if (error) throw error;
       router.push(`/propiedades/desarrollos/${id}`);
     } catch (err) {
       console.error('Save error:', err);
@@ -175,6 +173,15 @@ export default function EditorClient({ initialDevelopment }) {
                     <input type="text" value={form.custom_unit_label} onChange={e => update('custom_unit_label', e.target.value)}
                       placeholder={lang === 'en' ? 'Custom label...' : 'Etiqueta personalizada...'} className={`${inputCls} mt-2`} />
                   )}
+                </div>
+
+                <div>
+                  <label className={labelCls}>{lang === 'en' ? 'Total Units in Development' : 'Cantidad Total de Unidades'}</label>
+                  <input type="number" min="0" value={form.total_units} onChange={e => update('total_units', e.target.value)}
+                    placeholder={lang === 'en' ? 'e.g. 24' : 'Ej: 24'} className={inputCls} />
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    {lang === 'en' ? 'How many units does the development have in total? Not all need to be listed.' : '¿Cuántas unidades tiene el desarrollo en total? No todas necesitan estar publicadas.'}
+                  </p>
                 </div>
               </div>
             </div>

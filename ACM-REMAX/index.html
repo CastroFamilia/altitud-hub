@@ -270,19 +270,19 @@
 
         /* ===== SECTION HEADER ===== */
         .section-header {
-            text-align: center; margin-bottom: 36px;
+            text-align: center; margin-bottom: 24px;
         }
 
         .section-header h2 {
-            font-size: 36px; font-weight: 900;
+            font-size: 24px; font-weight: 900;
             font-style: italic; text-transform: uppercase;
             letter-spacing: -0.05em;
             color: var(--text-primary);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .section-header p {
-            font-size: 15px; color: var(--text-secondary);
+            font-size: 13px; color: var(--text-secondary);
             max-width: 500px; margin: 0 auto;
         }
 
@@ -297,7 +297,7 @@
             background: var(--gradient-card);
             border: 2px solid var(--glass-border);
             border-radius: var(--radius);
-            padding: 28px 20px;
+            padding: 16px 14px;
             text-align: center;
             cursor: pointer;
             transition: var(--transition);
@@ -326,17 +326,17 @@
         .type-card.selected::before { opacity: 1; }
 
         .type-card .type-icon {
-            font-size: 36px; margin-bottom: 14px;
+            font-size: 28px; margin-bottom: 8px;
             display: block;
         }
 
         .type-card .type-name {
-            font-size: 16px; font-weight: 700;
-            color: var(--text-primary); margin-bottom: 4px;
+            font-size: 14px; font-weight: 700;
+            color: var(--text-primary); margin-bottom: 2px;
         }
 
         .type-card .type-desc {
-            font-size: 12px; color: var(--text-muted);
+            font-size: 11px; color: var(--text-muted);
         }
 
         .type-card .check-badge {
@@ -855,31 +855,51 @@
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
-            .header { padding: 12px 16px; }
-            .header-title h1 { font-size: 15px; }
-            .main-container { padding: 16px 12px 100px; }
-            .stepper { padding: 12px; gap: 0; }
+            .header { padding: 10px 12px; }
+            .header-inner { flex-wrap: wrap; gap: 8px; }
+            .header-brand { gap: 8px; flex: 1; min-width: 0; }
+            .header-brand img { height: 32px !important; }
+            .header-title h1 { font-size: 13px; }
+            .header-title p { display: none; }
+            .header-actions { gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+            .header-actions .btn { padding: 6px 10px; font-size: 11px; }
+            .header-actions .btn span { display: none; }
+            #office-select { min-width: 100px; font-size: 11px; padding: 6px 24px 6px 8px !important; }
+            .main-container { padding: 12px 10px 100px; }
+            .stepper { padding: 8px; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
             .step-label { display: none; }
-            .step-connector { width: 20px; }
-            .section-header h2 { font-size: 22px; }
-            .type-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .step-number { width: 28px; height: 28px; font-size: 11px; }
+            .step-connector { width: 16px; }
+            .section-header { margin-bottom: 16px; }
+            .section-header h2 { font-size: 18px; }
+            .section-header p { font-size: 12px; }
+            .type-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .type-card { padding: 14px 10px; }
+            .type-card .type-icon { font-size: 24px; margin-bottom: 6px; }
+            .type-card .type-name { font-size: 13px; }
+            .type-card .type-desc { font-size: 10px; }
             .form-grid { grid-template-columns: 1fr; }
-            .indicators-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+            .indicators-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
             .indicator-item { padding: 8px 10px; min-height: 44px; }
             .indicator-label { font-size: 12px; line-height: 1.2; }
             .url-input-group { flex-direction: column; }
             .price-input-large { font-size: 24px; max-width: 100%; }
-            .form-section { padding: 20px 16px; }
-            .summary-table-wrapper { margin: 0 -12px; border-radius: 0; width: calc(100% + 24px); }
-            .summary-table th, .summary-table td { padding: 10px 8px; font-size: 12px; }
-            .comp-tabs { gap: 6px; }
+            .form-section { padding: 16px 12px; }
+            .summary-table-wrapper { margin: 0 -10px; border-radius: 0; width: calc(100% + 20px); }
+            .summary-table th, .summary-table td { padding: 8px 6px; font-size: 11px; }
+            .comp-tabs { gap: 6px; flex-wrap: wrap; }
+            #breadcrumb-bar { padding: 8px 12px !important; font-size: 11px !important; }
+            .nav-bar { padding: 12px 16px; }
         }
 
         @media (max-width: 480px) {
-            .type-grid { grid-template-columns: 1fr 1fr; }
-            .type-card { padding: 20px 14px; }
-            .type-card .type-icon { font-size: 28px; }
-            .header-actions .btn span { display: none; }
+            .header-brand img { height: 28px !important; }
+            .header-title h1 { font-size: 12px; }
+            .type-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .type-card { padding: 12px 8px; }
+            .type-card .type-icon { font-size: 22px; }
+            .type-card .type-name { font-size: 12px; }
+            #acm-map { height: 280px !important; }
         }
 
         /* ===== LOADING OVERLAY ===== */
@@ -1036,6 +1056,9 @@
     <header class="header">
         <div class="header-inner">
             <div class="header-brand">
+                <a href="https://hub.remax-altitud.cr" title="Volver al HUB" style="display:flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(74,108,247,0.12);border:1px solid rgba(74,108,247,0.25);border-radius:10px;font-size:12px;font-weight:700;color:var(--accent-light);text-decoration:none;transition:all 0.2s;margin-right:8px;white-space:nowrap;" onmouseover="this.style.background='rgba(74,108,247,0.25)'" onmouseout="this.style.background='rgba(74,108,247,0.12)'">
+                    <i class="fas fa-arrow-left" style="font-size:11px;"></i> HUB
+                </a>
                 <a href="https://www.remax-altitud.cr" target="_blank" style="display:flex;align-items:center;">
                     <img src="img/logo-altitud.png" alt="RE/MAX Altitud" id="header-logo-img" style="height:48px;object-fit:contain;">
                 </a>
@@ -1132,67 +1155,67 @@
                 <h2 data-i18n="select_category_title">¿Residencial o Comercial?</h2>
                 <p data-i18n="select_category_sub">Selecciona la categoría de la propiedad a avaluar</p>
             </div>
-            <div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
-                <div class="type-card" style="min-width:220px;min-height:180px;" data-category="residential" onclick="selectCategory('residential'); this.classList.add('selected'); document.querySelector('[data-category=commercial]').classList.remove('selected');">
+            <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
+                <div class="type-card" style="min-width:160px;" data-category="residential" onclick="selectCategory('residential'); this.classList.add('selected'); document.querySelector('[data-category=commercial]').classList.remove('selected');">
                     <div class="check-badge"><i class="fas fa-check"></i></div>
-                    <span class="type-icon" style="font-size:48px;">🏠</span>
+                    <span class="type-icon" style="font-size:32px;">🏠</span>
                     <div class="type-name" data-i18n="cat_residential">Residencial</div>
                     <div class="type-desc" data-i18n="cat_res_desc">Casa, Lote, Depto, Finca</div>
                 </div>
-                <div class="type-card" style="min-width:220px;min-height:180px;" data-category="commercial" onclick="selectCategory('commercial'); this.classList.add('selected'); document.querySelector('[data-category=residential]').classList.remove('selected');">
+                <div class="type-card" style="min-width:160px;" data-category="commercial" onclick="selectCategory('commercial'); this.classList.add('selected'); document.querySelector('[data-category=residential]').classList.remove('selected');">
                     <div class="check-badge"><i class="fas fa-check"></i></div>
-                    <span class="type-icon" style="font-size:48px;">🏢</span>
+                    <span class="type-icon" style="font-size:32px;">🏢</span>
                     <div class="type-name" data-i18n="cat_commercial">Comercial</div>
                     <div class="type-desc" data-i18n="cat_com_desc">Hotel, Bodega, Local, Negocio</div>
                 </div>
             </div>
 
             <!-- Transaction Type: Venta / Alquiler -->
-            <div id="transaction-type-section" style="margin-top:40px;">
-                <div class="section-header" style="margin-bottom:20px;">
-                    <h2 data-i18n="select_transaction_title" style="font-size:22px;">¿Venta o Alquiler?</h2>
+            <div id="transaction-type-section" style="margin-top:24px;">
+                <div class="section-header" style="margin-bottom:12px;">
+                    <h2 data-i18n="select_transaction_title" style="font-size:18px;">¿Venta o Alquiler?</h2>
                     <p data-i18n="select_transaction_sub">Selecciona el tipo de operación para este análisis</p>
                 </div>
-                <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
-                    <div class="type-card selected" style="flex:1;min-width:140px;padding:16px 12px;" data-transaction="sale" onclick="selectTransactionType('sale')">
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;max-width:400px;margin:0 auto;">
+                    <div class="type-card selected" style="flex:1;min-width:120px;padding:12px 10px;" data-transaction="sale" onclick="selectTransactionType('sale')">
                         <div class="check-badge"><i class="fas fa-check"></i></div>
-                        <span class="type-icon" style="font-size:32px;">💰</span>
-                        <div class="type-name" data-i18n="tx_sale" style="font-size:16px;margin-bottom:4px;">Venta</div>
-                        <div class="type-desc" data-i18n="tx_sale_desc" style="font-size:11px;line-height:1.2;">Valor de compra-venta</div>
+                        <span class="type-icon" style="font-size:24px;">💰</span>
+                        <div class="type-name" data-i18n="tx_sale" style="font-size:14px;">Venta</div>
+                        <div class="type-desc" data-i18n="tx_sale_desc" style="font-size:10px;">Valor de compra-venta</div>
                     </div>
-                    <div class="type-card" style="flex:1;min-width:140px;padding:16px 12px;" data-transaction="rental" onclick="selectTransactionType('rental')">
+                    <div class="type-card" style="flex:1;min-width:120px;padding:12px 10px;" data-transaction="rental" onclick="selectTransactionType('rental')">
                         <div class="check-badge"><i class="fas fa-check"></i></div>
-                        <span class="type-icon" style="font-size:32px;">🔑</span>
-                        <div class="type-name" data-i18n="tx_rental" style="font-size:16px;margin-bottom:4px;">Alquiler</div>
-                        <div class="type-desc" data-i18n="tx_rental_desc" style="font-size:11px;line-height:1.2;">Renta mensual</div>
+                        <span class="type-icon" style="font-size:24px;">🔑</span>
+                        <div class="type-name" data-i18n="tx_rental" style="font-size:14px;">Alquiler</div>
+                        <div class="type-desc" data-i18n="tx_rental_desc" style="font-size:10px;">Renta mensual</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Analysis Method: Competencias / Reposición / Ambos -->
-            <div id="analysis-method-section" style="margin-top:40px;">
-                <div class="section-header" style="margin-bottom:20px;">
-                    <h2 data-i18n="select_method_title" style="font-size:22px;">¿Método de Valoración?</h2>
-                    <p data-i18n="select_method_sub">Selecciona cómo deseas calcular el valor sugerido</p>
+            <!-- Analysis Method: Competencias / Reposición / Rentabilidad -->
+            <div id="analysis-method-section" style="margin-top:24px;">
+                <div class="section-header" style="margin-bottom:12px;">
+                    <h2 data-i18n="select_method_title" style="font-size:18px;">¿Método de Valoración?</h2>
+                    <p data-i18n="select_method_sub">Selecciona uno o más métodos de valoración</p>
                 </div>
-                <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
-                    <div class="type-card" style="flex:1;min-width:100px;padding:16px 8px;" data-method="competencies" onclick="selectAnalysisMethod('competencies')">
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;max-width:520px;margin:0 auto;">
+                    <div class="type-card" style="flex:1;min-width:100px;padding:12px 8px;" data-method="competencies" onclick="toggleMethod('competencies')">
                         <div class="check-badge"><i class="fas fa-check"></i></div>
-                        <span class="type-icon" style="font-size:28px;">📊</span>
-                        <div class="type-name" data-i18n="method_comps" style="font-size:14px;margin-bottom:4px;">Competencias</div>
-                        <div class="type-desc" data-i18n="method_comps_desc" style="font-size:10px;line-height:1.2;">Comparativo de mercado</div>
+                        <span class="type-icon" style="font-size:22px;">📊</span>
+                        <div class="type-name" data-i18n="method_comps" style="font-size:13px;">Competencias</div>
+                        <div class="type-desc" data-i18n="method_comps_desc" style="font-size:10px;">Comparativo de mercado</div>
                     </div>
-                    <div class="type-card" style="flex:1;min-width:100px;padding:16px 8px;" data-method="replacement" onclick="selectAnalysisMethod('replacement')">
+                    <div class="type-card" style="flex:1;min-width:100px;padding:12px 8px;" data-method="replacement" onclick="toggleMethod('replacement')">
                         <div class="check-badge"><i class="fas fa-check"></i></div>
-                        <span class="type-icon" style="font-size:28px;">🏗️</span>
-                        <div class="type-name" data-i18n="method_repl" style="font-size:14px;margin-bottom:4px;">Reposición</div>
-                        <div class="type-desc" data-i18n="method_repl_desc" style="font-size:10px;line-height:1.2;">Lote + Construcción</div>
+                        <span class="type-icon" style="font-size:22px;">🏗️</span>
+                        <div class="type-name" data-i18n="method_repl" style="font-size:13px;">Reposición</div>
+                        <div class="type-desc" data-i18n="method_repl_desc" style="font-size:10px;">Lote + Construcción</div>
                     </div>
-                    <div class="type-card selected" style="flex:1;min-width:100px;padding:16px 8px;" data-method="both" onclick="selectAnalysisMethod('both')">
+                    <div class="type-card" style="flex:1;min-width:100px;padding:12px 8px;" data-method="rental" onclick="toggleMethod('rental')">
                         <div class="check-badge"><i class="fas fa-check"></i></div>
-                        <span class="type-icon" style="font-size:28px;">⚖️</span>
-                        <div class="type-name" data-i18n="method_both" style="font-size:14px;margin-bottom:4px;">Ambos</div>
-                        <div class="type-desc" data-i18n="method_both_desc" style="font-size:10px;line-height:1.2;">Incluir ambos</div>
+                        <span class="type-icon" style="font-size:22px;">📈</span>
+                        <div class="type-name" data-i18n="method_rental" style="font-size:13px;">Rentabilidad</div>
+                        <div class="type-desc" data-i18n="method_rental_desc" style="font-size:10px;">Cap Rate / NOI</div>
                     </div>
                 </div>
             </div>
@@ -1311,11 +1334,35 @@
                 </div>
             </div>
 
+
+            <!-- Map Filters -->
+            <div id="map-filters" style="padding:10px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                    <!-- Type filter pills -->
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-right:4px;">Filtrar:</span>
+                        <button class="map-filter-btn active" data-filter="all" onclick="filterMapMarkers('all')" style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--accent);color:white;transition:all 0.2s;">Todos</button>
+                        <button class="map-filter-btn" data-filter="house" onclick="filterMapMarkers('house')" style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg-hover);color:var(--text-secondary);transition:all 0.2s;">🏠 Casas</button>
+                        <button class="map-filter-btn" data-filter="lot" onclick="filterMapMarkers('lot')" style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg-hover);color:var(--text-secondary);transition:all 0.2s;">🏞️ Lotes</button>
+                        <button class="map-filter-btn" data-filter="condo" onclick="filterMapMarkers('condo')" style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg-hover);color:var(--text-secondary);transition:all 0.2s;">🏢 Deptos</button>
+                        <button class="map-filter-btn" data-filter="commercial" onclick="filterMapMarkers('commercial')" style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg-hover);color:var(--text-secondary);transition:all 0.2s;">🏪 Comercial</button>
+                        <button class="map-filter-btn" data-filter="farm" onclick="filterMapMarkers('farm')" style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg-hover);color:var(--text-secondary);transition:all 0.2s;">🌄 Fincas</button>
+                    </div>
+                    <!-- Show Sold toggle -->
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;font-weight:600;color:var(--text-secondary);">
+                        <input type="checkbox" id="show-sold-toggle" onchange="filterMapMarkers()" style="accent-color:var(--accent);width:16px;height:16px;">
+                        <span>🏷️ Incluir Vendidas</span>
+                    </label>
+                </div>
+                <div id="map-filter-count" style="font-size:10px;color:var(--text-muted);margin-top:6px;"></div>
+            </div>
+
             <!-- Map Legend + Actions -->
             <div style="display:flex;gap:16px;align-items:center;padding:8px 16px;font-size:11px;color:var(--text-muted);justify-content:space-between;flex-wrap:wrap;">
-                <div style="display:flex;gap:16px;align-items:center;">
-                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#4ade80;margin-right:4px;"></span>Listados activos</span>
-                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f97316;margin-right:4px;border:1px solid #fff;"></span>ACMs anteriores</span>
+                <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#4ade80;margin-right:4px;"></span>Activas</span>
+                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#8b5cf6;margin-right:4px;"></span>Vendidas</span>
+                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f97316;margin-right:4px;border:1px solid #fff;"></span>ACMs</span>
                     <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#DC1431;margin-right:4px;"></span>Tu propiedad</span>
                 </div>
             </div>
@@ -1459,9 +1506,10 @@
                 <p data-i18n="analysis_value_desc">Ingresa los datos para calcular el valor de mercado.</p>
             </div>
 
-            <div id="analysis-method-tabs" style="display:none; justify-content:center; gap:12px; margin-bottom:24px; padding:6px; background:var(--bg-input); border-radius:12px; border:1px solid var(--border-color); max-width:400px; margin-left:auto; margin-right:auto;">
+            <div id="analysis-method-tabs" style="display:none; justify-content:center; gap:12px; margin-bottom:24px; padding:6px; background:var(--bg-input); border-radius:12px; border:1px solid var(--border-color); max-width:500px; margin-left:auto; margin-right:auto;">
                 <button class="btn btn-primary" id="btn-tab-comps" onclick="switchAnalysisTab('comps')" style="flex:1;border-radius:8px;" data-i18n="tab_comps">📊 Competencias</button>
                 <button class="btn btn-ghost" id="btn-tab-repl" onclick="switchAnalysisTab('repl')" style="flex:1;border-radius:8px;" data-i18n="tab_repl">🏗️ Reposición</button>
+                <button class="btn btn-ghost" id="btn-tab-rental" onclick="switchAnalysisTab('rental')" style="flex:1;border-radius:8px;">📈 Rentabilidad</button>
             </div>
 
             <div id="competencies-wrapper">
@@ -1521,18 +1569,6 @@
                         <div class="form-grid">
 
                             <div class="form-group">
-                                <label class="form-label">Nombre</label>
-                                <input type="text" class="form-input" id="comp-name-1" placeholder="Nombre de la propiedad">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Estatus</label>
-                                <select class="form-input" id="comp-status-1">
-                                    <option value="Activa">Activa (Listada)</option>
-                                    <option value="Vendida">Vendida (SOLD)</option>
-                                    <option value="Bajo Contrato">Bajo Contrato</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
                                 <label class="form-label">Barrio</label>
                                 <input type="text" class="form-input" id="comp-barrio-1" placeholder="Barrio o zona">
                             </div>
@@ -1589,18 +1625,6 @@
                         </div>
                         <div class="form-grid">
 
-                            <div class="form-group">
-                                <label class="form-label">Nombre</label>
-                                <input type="text" class="form-input" id="comp-name-2" placeholder="Nombre de la propiedad">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Estatus</label>
-                                <select class="form-input" id="comp-status-2">
-                                    <option value="Activa">Activa (Listada)</option>
-                                    <option value="Vendida">Vendida (SOLD)</option>
-                                    <option value="Bajo Contrato">Bajo Contrato</option>
-                                </select>
-                            </div>
                             <div class="form-group">
                                 <label class="form-label">Barrio</label>
                                 <input type="text" class="form-input" id="comp-barrio-2" placeholder="Barrio o zona">
@@ -1710,6 +1734,87 @@
                             <span style="font-size:18px;font-weight:700;" data-i18n="repl_final_val">Valor Final de Reposición:</span>
                             <span id="repl-final-value" style="font-size:24px;font-weight:900;color:var(--success);">$0</span>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RENTAL PROFITABILITY WRAPPER -->
+            <div id="rental-wrapper" style="display:none; margin-top:20px;">
+                <div class="form-section">
+                    <div class="form-section-title"><i class="fas fa-chart-line"></i> Tasación por Rentabilidad</div>
+                    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Calcula el valor de la propiedad basado en su capacidad de generar ingresos por alquiler.</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Renta Mensual Estimada (USD)</label>
+                            <input type="number" class="form-input" id="rental-monthly-income" placeholder="Ej: 1500" oninput="calcRentalValue()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ocupación Anual (%)</label>
+                            <input type="number" class="form-input" id="rental-occupancy" placeholder="Ej: 90" value="90" oninput="calcRentalValue()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title"><i class="fas fa-minus-circle"></i> Gastos Operativos Anuales</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Mantenimiento</label>
+                            <input type="number" class="form-input" id="rental-maint" placeholder="$0" oninput="calcRentalValue()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Seguros</label>
+                            <input type="number" class="form-input" id="rental-insurance" placeholder="$0" oninput="calcRentalValue()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Impuestos / Tasas</label>
+                            <input type="number" class="form-input" id="rental-taxes" placeholder="$0" oninput="calcRentalValue()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Administración / HOA</label>
+                            <input type="number" class="form-input" id="rental-admin" placeholder="$0" oninput="calcRentalValue()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Otros Gastos</label>
+                            <input type="number" class="form-input" id="rental-other" placeholder="$0" oninput="calcRentalValue()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Total Gastos Anuales</label>
+                            <input type="text" class="form-input" id="rental-total-expenses" readonly style="background:var(--bg-card);font-weight:bold;color:var(--remax-red);">  
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title"><i class="fas fa-percentage"></i> Cap Rate de Mercado</div>
+                    <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">El Cap Rate (tasa de capitalización) refleja el retorno esperado del mercado. En Costa Rica: 5%–8% para residencial, 7%–12% para comercial.</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Cap Rate (%)</label>
+                            <input type="number" class="form-input" id="rental-cap-rate" placeholder="Ej: 7" step="0.1" oninput="calcRentalValue()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div style="margin-top:16px;padding:20px;background:linear-gradient(135deg,rgba(0,61,165,0.08),rgba(0,61,165,0.02));border:2px solid rgba(0,61,165,0.2);border-radius:12px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                        <div style="text-align:center;padding:12px;background:var(--bg-card);border-radius:8px;border:1px solid var(--border);">
+                            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Ingreso Bruto Anual</div>
+                            <div id="rental-gross-income" style="font-size:20px;font-weight:900;color:var(--accent);">$0</div>
+                        </div>
+                        <div style="text-align:center;padding:12px;background:var(--bg-card);border-radius:8px;border:1px solid var(--border);">
+                            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">NOI (Ingreso Neto)</div>
+                            <div id="rental-noi" style="font-size:20px;font-weight:900;color:var(--success);">$0</div>
+                        </div>
+                    </div>
+                    <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:18px;font-weight:700;">💰 Valor por Rentabilidad:</span>
+                        <span id="rental-property-value" style="font-size:28px;font-weight:900;color:var(--success);">$0</span>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:right;">
+                        Fórmula: NOI ÷ Cap Rate = Valor
                     </div>
                 </div>
             </div>
@@ -2452,6 +2557,11 @@
             select_transaction_title: '¿Venta o Alquiler?',
             select_transaction_sub: 'Selecciona el tipo de operación para este análisis',
             tx_sale: 'Venta', tx_sale_desc: 'Valor de compra-venta',
+            select_method_title: '¿Método de Valoración?',
+            select_method_sub: 'Selecciona uno o más métodos de valoración',
+            method_comps: 'Competencias', method_comps_desc: 'Comparativo de mercado',
+            method_repl: 'Reposición', method_repl_desc: 'Lote + Construcción',
+            method_rental: 'Rentabilidad', method_rental_desc: 'Cap Rate / NOI',
             tx_rental: 'Alquiler', tx_rental_desc: 'Renta mensual',
             cat_res_desc: 'Casa, Lote, Depto, Finca',
             cat_com_desc: 'Hotel, Bodega, Local, Negocio',
@@ -2534,6 +2644,11 @@
             select_transaction_title: 'Sale or Rental?',
             select_transaction_sub: 'Select the transaction type for this analysis',
             tx_sale: 'Sale', tx_sale_desc: 'Purchase price',
+            select_method_title: 'Valuation Method?',
+            select_method_sub: 'Select one or more valuation methods',
+            method_comps: 'Comparables', method_comps_desc: 'Market comparison',
+            method_repl: 'Replacement', method_repl_desc: 'Land + Construction',
+            method_rental: 'Profitability', method_rental_desc: 'Cap Rate / NOI',
             tx_rental: 'Rental', tx_rental_desc: 'Monthly rent',
             cat_res_desc: 'House, Lot, Condo, Farm',
             cat_com_desc: 'Hotel, Warehouse, Retail, Business',
@@ -3138,18 +3253,6 @@
                 <div class="form-grid">
 
                     <div class="form-group">
-                        <label class="form-label">Nombre</label>
-                        <input type="text" class="form-input" id="comp-name-${index}" placeholder="Nombre de la propiedad">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Estatus</label>
-                        <select class="form-input" id="comp-status-${index}">
-                            <option value="Activa">Activa (Listada)</option>
-                            <option value="Vendida">Vendida (SOLD)</option>
-                            <option value="Bajo Contrato">Bajo Contrato</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
                         <label class="form-label">Barrio</label>
                         <input type="text" class="form-input" id="comp-barrio-${index}" placeholder="Barrio o zona">
                     </div>
@@ -3350,50 +3453,140 @@
         showToast('Tipo de operación: ' + label, 'success');
     }
 
-    function selectAnalysisMethod(method) {
-        STATE.analysisMethod = method;
-        document.querySelectorAll('[data-method]').forEach(c => c.classList.remove('selected'));
-        const card = document.querySelector(`[data-method="${method}"]`);
-        if (card) card.classList.add('selected');
+    function toggleMethod(method) {
+        // Initialize as array if not already
+        if (!Array.isArray(STATE.analysisMethods)) {
+            STATE.analysisMethods = STATE.analysisMethod ? [STATE.analysisMethod] : [];
+        }
 
-        // Apply UI logic for panel-6
+        const card = document.querySelector(`[data-method="${method}"]`);
+        const idx = STATE.analysisMethods.indexOf(method);
+
+        if (idx >= 0) {
+            // Deselect
+            STATE.analysisMethods.splice(idx, 1);
+            if (card) card.classList.remove('selected');
+        } else {
+            // Select
+            STATE.analysisMethods.push(method);
+            if (card) card.classList.add('selected');
+        }
+
+        // Keep legacy STATE.analysisMethod in sync
+        if (STATE.analysisMethods.includes('competencies') && STATE.analysisMethods.includes('replacement')) {
+            STATE.analysisMethod = 'both';
+        } else if (STATE.analysisMethods.includes('competencies')) {
+            STATE.analysisMethod = 'competencies';
+        } else if (STATE.analysisMethods.includes('replacement')) {
+            STATE.analysisMethod = 'replacement';
+        } else {
+            STATE.analysisMethod = STATE.analysisMethods[0] || 'competencies';
+        }
+
+        // Update panel-6 visibility
         const tabs = document.getElementById('analysis-method-tabs');
         const compsWrap = document.getElementById('competencies-wrapper');
         const replWrap = document.getElementById('replacement-wrapper');
+        const rentalWrap = document.getElementById('rental-wrapper');
 
-        if (method === 'competencies') {
-            if (tabs) tabs.style.display = 'none';
-            if (compsWrap) compsWrap.style.display = 'block';
-            if (replWrap) replWrap.style.display = 'none';
-        } else if (method === 'replacement') {
-            if (tabs) tabs.style.display = 'none';
-            if (compsWrap) compsWrap.style.display = 'none';
-            if (replWrap) replWrap.style.display = 'block';
-        } else if (method === 'both') {
-            if (tabs) tabs.style.display = 'flex';
-            if (compsWrap) compsWrap.style.display = 'block';
-            if (replWrap) replWrap.style.display = 'none'; // Default show comps when 'both'
-            switchAnalysisTab('comps');
+        const hasComps = STATE.analysisMethods.includes('competencies');
+        const hasRepl = STATE.analysisMethods.includes('replacement');
+        const hasRental = STATE.analysisMethods.includes('rental');
+        const count = [hasComps, hasRepl, hasRental].filter(Boolean).length;
+
+        // Show tabs when more than 1 method selected
+        if (tabs) tabs.style.display = count > 1 ? 'flex' : 'none';
+
+        // Show/hide tab buttons based on selected methods
+        const btnComps = document.getElementById('btn-tab-comps');
+        const btnRepl = document.getElementById('btn-tab-repl');
+        const btnRental = document.getElementById('btn-tab-rental');
+        if (btnComps) btnComps.style.display = hasComps ? '' : 'none';
+        if (btnRepl) btnRepl.style.display = hasRepl ? '' : 'none';
+        if (btnRental) btnRental.style.display = hasRental ? '' : 'none';
+
+        // Default panel visibility
+        if (compsWrap) compsWrap.style.display = 'none';
+        if (replWrap) replWrap.style.display = 'none';
+        if (rentalWrap) rentalWrap.style.display = 'none';
+
+        if (count === 1) {
+            if (hasComps && compsWrap) compsWrap.style.display = 'block';
+            if (hasRepl && replWrap) replWrap.style.display = 'block';
+            if (hasRental && rentalWrap) rentalWrap.style.display = 'block';
+        } else if (count > 1) {
+            // Show first selected tab
+            const first = hasComps ? 'comps' : hasRepl ? 'repl' : 'rental';
+            switchAnalysisTab(first);
+        }
+    }
+
+    // Keep backward compat
+    function selectAnalysisMethod(method) {
+        STATE.analysisMethods = [];
+        document.querySelectorAll('[data-method]').forEach(c => c.classList.remove('selected'));
+        if (method === 'both') {
+            toggleMethod('competencies');
+            toggleMethod('replacement');
+        } else {
+            toggleMethod(method);
         }
     }
 
     function switchAnalysisTab(tab) {
         const compsWrap = document.getElementById('competencies-wrapper');
         const replWrap = document.getElementById('replacement-wrapper');
+        const rentalWrap = document.getElementById('rental-wrapper');
         const btnComps = document.getElementById('btn-tab-comps');
         const btnRepl = document.getElementById('btn-tab-repl');
+        const btnRental = document.getElementById('btn-tab-rental');
 
+        // Hide all
+        if (compsWrap) compsWrap.style.display = 'none';
+        if (replWrap) replWrap.style.display = 'none';
+        if (rentalWrap) rentalWrap.style.display = 'none';
+
+        // Reset all buttons
+        [btnComps, btnRepl, btnRental].forEach(btn => {
+            if (btn) { btn.classList.add('btn-ghost'); btn.classList.remove('btn-primary'); }
+        });
+
+        // Show active
         if (tab === 'comps') {
             if (compsWrap) compsWrap.style.display = 'block';
-            if (replWrap) replWrap.style.display = 'none';
             if (btnComps) { btnComps.classList.add('btn-primary'); btnComps.classList.remove('btn-ghost'); }
-            if (btnRepl) { btnRepl.classList.add('btn-ghost'); btnRepl.classList.remove('btn-primary'); }
-        } else {
-            if (compsWrap) compsWrap.style.display = 'none';
+        } else if (tab === 'repl') {
             if (replWrap) replWrap.style.display = 'block';
-            if (btnComps) { btnComps.classList.add('btn-ghost'); btnComps.classList.remove('btn-primary'); }
             if (btnRepl) { btnRepl.classList.add('btn-primary'); btnRepl.classList.remove('btn-ghost'); }
+        } else if (tab === 'rental') {
+            if (rentalWrap) rentalWrap.style.display = 'block';
+            if (btnRental) { btnRental.classList.add('btn-primary'); btnRental.classList.remove('btn-ghost'); }
         }
+    }
+
+    function calcRentalValue() {
+        const monthlyIncome = parseFloat(document.getElementById('rental-monthly-income')?.value) || 0;
+        const occupancy = (parseFloat(document.getElementById('rental-occupancy')?.value) || 0) / 100;
+        const maint = parseFloat(document.getElementById('rental-maint')?.value) || 0;
+        const insurance = parseFloat(document.getElementById('rental-insurance')?.value) || 0;
+        const taxes = parseFloat(document.getElementById('rental-taxes')?.value) || 0;
+        const admin = parseFloat(document.getElementById('rental-admin')?.value) || 0;
+        const other = parseFloat(document.getElementById('rental-other')?.value) || 0;
+        const capRate = (parseFloat(document.getElementById('rental-cap-rate')?.value) || 0) / 100;
+
+        const grossAnnual = monthlyIncome * 12 * occupancy;
+        const totalExpenses = maint + insurance + taxes + admin + other;
+        const noi = grossAnnual - totalExpenses;
+        const propertyValue = capRate > 0 ? Math.round(noi / capRate) : 0;
+
+        // Store in STATE for printable
+        STATE.rentalAnalysis = { monthlyIncome, occupancy, grossAnnual, totalExpenses, noi, capRate, propertyValue };
+
+        // Update UI
+        document.getElementById('rental-total-expenses').value = '$' + totalExpenses.toLocaleString();
+        document.getElementById('rental-gross-income').textContent = '$' + Math.round(grossAnnual).toLocaleString();
+        document.getElementById('rental-noi').textContent = '$' + Math.round(noi).toLocaleString();
+        document.getElementById('rental-property-value').textContent = propertyValue > 0 ? '$' + propertyValue.toLocaleString() : '$0';
     }
 
     function calcSuggestedDepreciation() {
@@ -3571,31 +3764,6 @@
             html += '</tr>';
         }
 
-        const propName = getVal('prop-name') || '-';
-        html += `<tr style="background:var(--bg-hover);">
-            <td><strong>Nombre de la Propiedad</strong></td>
-            <td class="prop-col editable-cell" ondblclick="editSummaryCell(this,'prop','name','text')" title="Doble clic para editar">${propName}</td>`;
-        compsData.forEach((comp, ci) => {
-            html += `<td class="editable-cell" ondblclick="editSummaryCell(this,'comp${ci+1}','name','text')" title="Doble clic para editar">${comp.name || '-'}</td>`;
-        });
-        html += '</tr>';
-
-        html += `<tr>
-            <td><strong>Estatus</strong></td>
-            <td class="prop-col editable-cell" ondblclick="editSummaryCell(this,'prop','status','text')" title="Doble clic para editar">-</td>`;
-        compsData.forEach((comp, ci) => {
-            html += `<td class="editable-cell" ondblclick="editSummaryCell(this,'comp${ci+1}','status','select')" title="Doble clic para editar">${comp.status || '-'}</td>`;
-        });
-        html += '</tr>';
-
-        html += `<tr>
-            <td><strong>Tiempo Publicado</strong></td>
-            <td class="prop-col editable-cell" ondblclick="editSummaryCell(this,'prop','time','text')" title="Doble clic para editar">-</td>`;
-        compsData.forEach((comp, ci) => {
-            html += `<td class="editable-cell" ondblclick="editSummaryCell(this,'comp${ci+1}','time','text')" title="Doble clic para editar">${comp.time || '-'}</td>`;
-        });
-        html += '</tr>';
-
         // Indicator rows (editable on double-click)
         indicators.forEach(ind => {
             const propVal = propData[ind.key];
@@ -3743,8 +3911,6 @@
     function collectCompData(index) {
         const comp = {
             address: getVal(`comp-address-${index}`),
-            name: getVal(`comp-name-${index}`),
-            status: getVal(`comp-status-${index}`),
             barrio: getVal(`comp-barrio-${index}`),
             price: getVal(`comp-price-${index}`),
             source: getVal(`comp-source-${index}`),
@@ -4399,28 +4565,8 @@
         const totalCols = 2 + compsData.length;
 
         let indicatorRows = '';
-        
-        // Custom fields Name, Status, Time
-        const customRows = [
-            { label: 'Nombre de la Propiedad', propVal: propName, compKey: 'name' },
-            { label: 'Estatus', propVal: '-', compKey: 'status' },
-            { label: 'Tiempo Publicado', propVal: '-', compKey: 'time' }
-        ];
-        
-        customRows.forEach((cr, idx) => {
-            const bg = idx % 2 === 0 ? '#f8fafc' : '#ffffff';
-            const cellStyle = `padding:6px 10px;border-bottom:1px solid #edf0f4;font-size:10px;`;
-            indicatorRows += `<tr style="background:${bg};">
-                <td style="${cellStyle}font-weight:600;color:#374151;white-space:nowrap;"><span style="display:inline-block;width:4px;height:4px;background:${remaxBlue};border-radius:50%;margin-right:6px;vertical-align:middle;"></span>${cr.label}</td>
-                <td style="${cellStyle}text-align:center;background:rgba(0,61,165,0.04);font-weight:700;color:#1f2937;">${cr.propVal || '-'}</td>`;
-            compsData.forEach(comp => {
-                indicatorRows += `<td style="${cellStyle}text-align:center;color:#4b5563;">${comp[cr.compKey] || '-'}</td>`;
-            });
-            indicatorRows += '</tr>';
-        });
-
         indicators.forEach((ind, idx) => {
-            const bg = (idx + customRows.length) % 2 === 0 ? '#f8fafc' : '#ffffff';
+            const bg = idx % 2 === 0 ? '#f8fafc' : '#ffffff';
             const cellStyle = `padding:6px 10px;border-bottom:1px solid #edf0f4;font-size:10px;`;
             indicatorRows += `<tr style="background:${bg};">
                 <td style="${cellStyle}font-weight:600;color:#374151;white-space:nowrap;"><span style="display:inline-block;width:4px;height:4px;background:${remaxBlue};border-radius:50%;margin-right:6px;vertical-align:middle;"></span>${ind.label}</td>
@@ -5523,32 +5669,113 @@
         }
     }
 
+    // Property marker layer group for filtering
+    let propertyMarkersLayer = null;
+    STATE.propertyMarkersData = []; // [{marker, type, status}]
+    let currentMapTypeFilter = 'all';
+
     async function loadPropertyDots() {
         try {
-            const res = await fetch(`/api/properties?office=${STATE.office}`);
+            const res = await fetch(`/api/properties?office=${STATE.office}&include_sold=true`);
             if (!res.ok) return;
             const data = await res.json();
             STATE.propertiesFeed = data.properties || [];
 
+            // Clear previous markers
+            if (propertyMarkersLayer) {
+                mapInstance.removeLayer(propertyMarkersLayer);
+            }
+            propertyMarkersLayer = L.layerGroup().addTo(mapInstance);
+            STATE.propertyMarkersData = [];
+
             STATE.propertiesFeed.forEach(p => {
                 if (p.lat && p.lng) {
-                    const color = '#4ade80'; // green = active listings
-                    L.circleMarker([p.lat, p.lng], {
-                        radius: 6,
+                    const isSold = (p.status || '').toLowerCase().includes('sold') || 
+                                   (p.status || '').toLowerCase().includes('vendid') ||
+                                   (p.status || '') === 'closed';
+                    const color = isSold ? '#8b5cf6' : '#4ade80';
+                    const statusLabel = isSold ? '🏷️ Vendida' : '✅ Activa';
+                    
+                    // Classify property type
+                    const typeRaw = (p.type_en || p.type_es || p.property_type || '').toLowerCase();
+                    let typeKey = 'other';
+                    if (typeRaw.includes('house') || typeRaw.includes('villa') || typeRaw.includes('casa')) typeKey = 'house';
+                    else if (typeRaw.includes('lot') || typeRaw.includes('land') || typeRaw.includes('lote') || typeRaw.includes('terreno')) typeKey = 'lot';
+                    else if (typeRaw.includes('apart') || typeRaw.includes('condo') || typeRaw.includes('depto')) typeKey = 'condo';
+                    else if (typeRaw.includes('farm') || typeRaw.includes('ranch') || typeRaw.includes('finca')) typeKey = 'farm';
+                    else if (typeRaw.includes('commercial') || typeRaw.includes('hotel') || typeRaw.includes('bodega') || typeRaw.includes('local') || typeRaw.includes('negocio') || typeRaw.includes('retail') || typeRaw.includes('warehouse')) typeKey = 'commercial';
+
+                    const marker = L.circleMarker([p.lat, p.lng], {
+                        radius: isSold ? 5 : 6,
                         fillColor: color,
                         color: '#fff',
                         weight: 1,
-                        fillOpacity: 0.8
-                    }).addTo(mapInstance)
-                    .bindPopup(`<strong>${p.title_es || p.title_en || 'Propiedad'}</strong><br>$${(p.price||0).toLocaleString()} ${p.currency||'USD'}<br><span style="color:${color};font-weight:700;">Listado activo</span>`);
+                        fillOpacity: isSold ? 0.6 : 0.8
+                    }).bindPopup(`<strong>${p.title_es || p.title_en || 'Propiedad'}</strong><br>$${(p.price||0).toLocaleString()} ${p.currency||'USD'}<br><span style="color:${color};font-weight:700;">${statusLabel}</span><br><small style="color:#888;">${p.type_en || p.type_es || ''}</small>`);
+
+                    STATE.propertyMarkersData.push({ marker, typeKey, isSold });
+
+                    // Only show active by default (sold hidden until toggle)
+                    if (!isSold) {
+                        propertyMarkersLayer.addLayer(marker);
+                    }
                 }
             });
+
+            // Update count
+            updateMapFilterCount();
 
             // Load saved CMAs as orange dots
             loadCMADots();
         } catch (err) {
             console.warn('Could not load property dots', err);
         }
+    }
+
+    function filterMapMarkers(typeFilter) {
+        if (typeFilter) currentMapTypeFilter = typeFilter;
+        const showSold = document.getElementById('show-sold-toggle')?.checked || false;
+
+        // Update button styles
+        document.querySelectorAll('.map-filter-btn').forEach(btn => {
+            if (btn.dataset.filter === currentMapTypeFilter) {
+                btn.style.background = 'var(--accent)';
+                btn.style.color = 'white';
+                btn.classList.add('active');
+            } else {
+                btn.style.background = 'var(--bg-hover)';
+                btn.style.color = 'var(--text-secondary)';
+                btn.classList.remove('active');
+            }
+        });
+
+        // Filter and re-add markers
+        if (!propertyMarkersLayer) return;
+        propertyMarkersLayer.clearLayers();
+
+        STATE.propertyMarkersData.forEach(({ marker, typeKey, isSold }) => {
+            // Status filter
+            if (isSold && !showSold) return;
+            // Type filter
+            if (currentMapTypeFilter !== 'all' && typeKey !== currentMapTypeFilter) return;
+            propertyMarkersLayer.addLayer(marker);
+        });
+
+        updateMapFilterCount();
+    }
+
+    function updateMapFilterCount() {
+        const el = document.getElementById('map-filter-count');
+        if (!el) return;
+        const showSold = document.getElementById('show-sold-toggle')?.checked || false;
+        const visible = STATE.propertyMarkersData.filter(({ typeKey, isSold }) => {
+            if (isSold && !showSold) return false;
+            if (currentMapTypeFilter !== 'all' && typeKey !== currentMapTypeFilter) return false;
+            return true;
+        }).length;
+        const total = STATE.propertyMarkersData.length;
+        const soldCount = STATE.propertyMarkersData.filter(d => d.isSold).length;
+        el.textContent = `Mostrando ${visible} de ${total} propiedades` + (soldCount ? ` (${soldCount} vendidas)` : '');
     }
 
     async function loadCMADots() {

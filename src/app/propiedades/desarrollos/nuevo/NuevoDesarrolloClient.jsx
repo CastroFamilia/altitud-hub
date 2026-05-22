@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
+import { insertDevelopment } from '@/lib/dal/developments';
 import TopNav from '@/components/layout/TopNav';
 import Link from 'next/link';
 
@@ -20,7 +20,7 @@ function slugify(text) {
 
 export default function NuevoDesarrolloClient() {
   const { t, lang } = useApp();
-  const { user } = useAuth();
+  const { user, supabase } = useAuth();
   const router = useRouter();
 
   const [saving, setSaving] = useState(false);
@@ -34,6 +34,7 @@ export default function NuevoDesarrolloClient() {
     developer_contact: '',
     unit_label: 'Lotes',
     custom_unit_label: '',
+    total_units: '',
     logo_url: '',
     og_image_url: '',
     office_code: 'altitud',
@@ -54,7 +55,7 @@ export default function NuevoDesarrolloClient() {
     setSaving(true);
     try {
       const unitLabel = form.unit_label === 'custom' ? form.custom_unit_label : form.unit_label;
-      const { data, error } = await supabase.from('developments').insert({
+      const data = await insertDevelopment({
         name: form.name.trim(),
         slug: form.slug.trim(),
         tagline_es: form.tagline_es || null,
@@ -62,6 +63,8 @@ export default function NuevoDesarrolloClient() {
         developer_name: form.developer_name || null,
         developer_contact: form.developer_contact || null,
         unit_label: unitLabel || 'Lotes',
+        total_units: form.total_units ? parseInt(form.total_units, 10) : 0,
+        available_units: form.total_units ? parseInt(form.total_units, 10) : 0,
         logo_url: form.logo_url || null,
         og_image_url: form.og_image_url || null,
         office_code: form.office_code,
@@ -69,13 +72,13 @@ export default function NuevoDesarrolloClient() {
         status: asDraft ? 'draft' : 'pending_approval',
         submitted_at: asDraft ? null : new Date().toISOString(),
         sections: [],
-      }).select().single();
+      }, supabase);
 
-      if (error) throw error;
       router.push(`/propiedades/desarrollos/${data.id}`);
     } catch (err) {
-      console.error('Save error:', err);
-      alert(err.message?.includes('unique') ? (lang === 'en' ? 'This slug is already in use' : 'Este slug ya está en uso') : err.message);
+      console.error('Save error:', err?.message || err);
+      const msg = err?.message || JSON.stringify(err);
+      alert(msg?.includes('unique') ? (lang === 'en' ? 'This slug is already in use' : 'Este slug ya está en uso') : (msg || 'Error desconocido'));
     } finally {
       setSaving(false);
     }
@@ -144,6 +147,15 @@ export default function NuevoDesarrolloClient() {
                     <input type="text" value={form.custom_unit_label} onChange={e => update('custom_unit_label', e.target.value)}
                       placeholder={lang === 'en' ? 'Custom label...' : 'Etiqueta personalizada...'} className={`${inputCls} mt-2`} />
                   )}
+                </div>
+
+                <div>
+                  <label className={labelCls}>{lang === 'en' ? 'Total Units in Development' : 'Cantidad Total de Unidades'}</label>
+                  <input type="number" min="0" value={form.total_units} onChange={e => update('total_units', e.target.value)}
+                    placeholder={lang === 'en' ? 'e.g. 24' : 'Ej: 24'} className={inputCls} />
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    {lang === 'en' ? 'How many units does the development have in total? Not all need to be listed.' : '¿Cuántas unidades tiene el desarrollo en total? No todas necesitan estar publicadas.'}
+                  </p>
                 </div>
               </div>
             </div>

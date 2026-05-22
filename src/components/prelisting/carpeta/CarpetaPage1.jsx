@@ -11,7 +11,7 @@ export default function CarpetaPage1({ cfg, agentName, agentPhone, agentEmail, a
         <div style={{ position:'absolute',bottom:-40,right:100,width:100,height:100,borderRadius:'50%',background:'rgba(255,255,255,0.03)' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <Image src="/assets/logo-altitud.png" alt="Logo" style={{ height: 20, marginBottom: 16, filter: 'brightness(10)' }} width={100} height={100} unoptimized />
+            <Image src={cfg.logo || '/assets/logo-altitud.png'} alt="Logo" style={{ height: 20, marginBottom: 16, filter: 'brightness(10)' }} width={100} height={100} unoptimized />
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, fontWeight: 700, color: 'white', letterSpacing: '0.02em', lineHeight: 1.1, textTransform: 'uppercase' }}>
               {t.p1_title1}<br/>{t.p1_title2}
             </h2>

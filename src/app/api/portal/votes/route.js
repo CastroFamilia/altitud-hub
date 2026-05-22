@@ -1,11 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { insertVote, getPipelineItem, getSearchById } from '@/lib/dal/searches';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
 
 export async function POST(request) {
+  const supabase = getSupabase();
   try {
     const body = await request.json();
     const { pipeline_id, voter_name, rating, decision, notes } = body;
@@ -15,19 +20,16 @@ export async function POST(request) {
     }
 
     // Insert the vote
-    const { data: vote, error: voteError } = await supabase
-      .from('buyer_search_votes')
-      .insert({
+    let vote;
+    try {
+      vote = await insertVote({
         pipeline_id,
         voter_name,
         rating: rating || null,
         decision: decision || null,
         notes: notes || null
-      })
-      .select()
-      .single();
-
-    if (voteError) {
+      }, supabase);
+    } catch (voteError) {
       console.error(voteError);
       return NextResponse.json({ error: 'Error al registrar el voto' }, { status: 500 });
     }
@@ -41,18 +43,10 @@ export async function POST(request) {
     // }
 
     // Fetch pipeline and search to get the agent_id for notification
-    const { data: pipelineItem } = await supabase
-      .from('buyer_search_pipeline')
-      .select('search_id')
-      .eq('id', pipeline_id)
-      .single();
+    const pipelineItem = await getPipelineItem(pipeline_id, supabase);
 
     if (pipelineItem) {
-      const { data: search } = await supabase
-        .from('buyer_searches')
-        .select('agent_id, client_name')
-        .eq('id', pipelineItem.search_id)
-        .single();
+      const search = await getSearchById(pipelineItem.search_id, supabase);
 
       if (search) {
         // Create Notification

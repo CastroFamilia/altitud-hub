@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useApp } from '@/lib/context';
-import { supabase } from '@/lib/supabase';
+import { getActiveCommissionTiers, insertAgentCommission } from '@/lib/dal/commissions';
+import { updateProperty, upsertListingMilestone } from '@/lib/dal/properties';
 
 /* ═══════════════════════════════════════════════════════════════
    COMMISSION CALCULATOR
@@ -40,11 +41,7 @@ export default function CommissionCalculator({
   // Load commission tiers
   useEffect(() => {
     const loadTiers = async () => {
-      const { data } = await supabase
-        .from('commission_tiers')
-        .select('*')
-        .eq('active', true)
-        .order('sort_order');
+        const data = await getActiveCommissionTiers();
       if (data) {
         setTiers(data);
         // Auto-select the agent's tier if set
@@ -132,38 +129,25 @@ export default function CommissionCalculator({
         status: 'pending',
       };
 
-      // Insert commission record
-      const { error: commError } = await supabase
-        .from('agent_commissions')
-        .insert(commissionData);
+      await insertAgentCommission(commissionData);
 
-      if (commError) throw commError;
-
-      // Update property to sold
-      const { error: propError } = await supabase
-        .from('properties')
-        .update({
-          status: 'sold',
-          sold_price: price,
-          sold_date: closingDate,
-          buyer_name: buyerName || null,
-          buyer_agent: buyerAgent || null,
-          buyer_agent_office: buyerAgentOffice || null,
-          days_on_market: property.submitted_at
-            ? Math.floor((new Date(closingDate).getTime() - new Date(property.submitted_at).getTime()) / (1000 * 60 * 60 * 24))
-            : null,
-        })
-        .eq('id', property.id);
-
-      if (propError) throw propError;
+      await updateProperty(property.id, {
+        status: 'sold',
+        sold_price: price,
+        sold_date: closingDate,
+        buyer_name: buyerName || null,
+        buyer_agent: buyerAgent || null,
+        buyer_agent_office: buyerAgentOffice || null,
+        days_on_market: property.submitted_at
+          ? Math.floor((new Date(closingDate).getTime() - new Date(property.submitted_at).getTime()) / (1000 * 60 * 60 * 24))
+          : null,
+      });
 
       // Update listing milestones
-      await supabase
-        .from('listing_milestones')
-        .upsert({
-          property_id: property.id,
-          agent_id: property.agent_id,
-        }, { onConflict: 'property_id' });
+      await upsertListingMilestone({
+        property_id: property.id,
+        agent_id: property.agent_id,
+      });
 
       onConfirm?.({
         agentAmount,

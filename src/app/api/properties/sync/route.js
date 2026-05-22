@@ -44,7 +44,7 @@ export async function POST(req) {
       );
     }
 
-    if (!isWriteConfigured()) {
+    if (true || !isWriteConfigured()) { // FUTURE EPIC 13: Push disabled for now
       return NextResponse.json({
         success: false,
         scaffolded: true,
@@ -52,9 +52,17 @@ export async function POST(req) {
       });
     }
 
-    const result = await updateProperty(property.reconnect_listing_key, property);
+    const officeCode = property.office_code || 'altitud';
+    const result = await updateProperty(property.reconnect_listing_key, property, officeCode);
 
     if (!result.success) {
+      await supabaseAdmin.from('property_syndication').upsert({
+        property_id: propertyId,
+        portal_name: 'reconnect',
+        status: 'error',
+        last_synced_at: new Date().toISOString(),
+      }, { onConflict: 'property_id,portal_name' });
+
       return NextResponse.json(
         { error: 'RECONNECT sync failed', details: result.error },
         { status: 502 }

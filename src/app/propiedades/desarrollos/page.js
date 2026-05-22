@@ -9,14 +9,20 @@ export default async function DesarrollosPage() {
 
   if (user) {
     try {
-      const { data } = await supabase
+      // Fetch developments with a count of linked properties
+      const { data, error } = await supabase
         .from('developments')
-        .select('*')
+        .select('*, properties:properties(id)')
         .eq('agent_id', user.id)
         .order('updated_at', { ascending: false });
 
-      if (data) {
-        initialDevelopments = data;
+      if (!error && data) {
+        // Flatten: replace nested properties array with a count
+        initialDevelopments = data.map(d => ({
+          ...d,
+          properties_count: d.properties?.length || 0,
+          properties: undefined, // don't send the full array to client
+        }));
       }
     } catch (err) {
       console.error('DesarrollosPage: Error loading developments:', err);

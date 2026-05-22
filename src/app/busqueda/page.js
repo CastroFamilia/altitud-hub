@@ -1,5 +1,7 @@
 import BusquedaClient from './BusquedaClient';
+import TopNav from '@/components/layout/TopNav';
 import { createClient } from '@/lib/supabase-server';
+import { getSearchesByAgentId, getActiveSearches } from '@/lib/dal/searches';
 
 export const metadata = {
   title: 'Búsqueda | ALTITUD HUB',
@@ -14,27 +16,28 @@ export default async function BusquedaPage() {
   let initialAllSearches = [];
 
   if (user) {
-    const { data: mySearches } = await supabase
-      .from('buyer_searches')
-      .select('*, profiles!buyer_searches_agent_id_fkey(full_name, avatar_url, phone)')
-      .eq('agent_id', user.id)
-      .order('created_at', { ascending: false });
-    
-    if (mySearches) initialSearches = mySearches;
+    try {
+      const mySearches = await getSearchesByAgentId(user.id, supabase);
+      if (mySearches) initialSearches = mySearches;
 
-    const { data: allSearches } = await supabase
-      .from('buyer_searches')
-      .select('*, profiles!buyer_searches_agent_id_fkey(full_name, avatar_url, phone)')
-      .eq('status', 'activa')
-      .order('created_at', { ascending: false });
-      
-    if (allSearches) initialAllSearches = allSearches;
+      const allSearches = await getActiveSearches(supabase);
+      if (allSearches) initialAllSearches = allSearches;
+    } catch (err) {
+      console.error('BusquedaPage: Error loading searches:', err?.message || err?.code || err);
+    }
   }
 
   return (
-    <BusquedaClient 
-      initialSearches={initialSearches} 
-      initialAllSearches={initialAllSearches} 
-    />
+    <>
+      <TopNav title="Centro de Búsqueda" subtitle="Gestión inteligente de requerimientos y matching" />
+      <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50 dark:bg-dark-bg w-full">
+        <div className="max-w-7xl mx-auto space-y-8">
+          <BusquedaClient 
+            initialSearches={initialSearches} 
+            initialAllSearches={initialAllSearches} 
+          />
+        </div>
+      </div>
+    </>
   );
 }

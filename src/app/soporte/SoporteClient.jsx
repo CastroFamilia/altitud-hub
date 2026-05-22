@@ -37,6 +37,19 @@ export default function SoporteClient({ initialTickets = [] }) {
     fetchTickets();
   };
 
+  const getCategoryBadge = (category) => {
+    switch (category) {
+      case 'location_request':
+        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">📍 {t('sup_cat_location') || 'Ubicación'}</span>;
+      case 'feature_request':
+        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">💡 {t('sup_cat_feature') || 'Función'}</span>;
+      case 'other':
+        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">📋 {t('sup_cat_other') || 'Otro'}</span>;
+      default:
+        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">🐛 Bug</span>;
+    }
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'resolved':
@@ -89,6 +102,7 @@ export default function SoporteClient({ initialTickets = [] }) {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-base font-bold text-gray-900 dark:text-white">{ticket.title}</h3>
+                        {getCategoryBadge(ticket.category)}
                         {getStatusBadge(ticket.status)}
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{ticket.description}</p>

@@ -9,7 +9,7 @@ export default function CarpetaPage2({ cfg, t }) {
         <Image src="/assets/carpeta-luxury-villa.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} fill />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(255,255,255,0) 20%, rgba(255,255,255,0.95) 100%)' }} />
         <div style={{ position: 'absolute', top: 16, left: 44, right: 44, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Image src="/assets/logo-altitud.png" alt="Logo" style={{ height: 20 }} width={100} height={100} unoptimized />
+          <Image src={cfg.logo || '/assets/logo-altitud.png'} alt="Logo" style={{ height: 20 }} width={100} height={100} unoptimized />
           <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', textShadow: '0 1px 4px rgba(0,0,0,0.3)' }}>{t.p2_header}</span>
         </div>
         <div style={{ position: 'absolute', bottom: 16, left: 44 }}>

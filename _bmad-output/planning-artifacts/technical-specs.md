@@ -1,8 +1,9 @@
 # Altitud Hub - Technical Specifications
 
-## 1. Database Schema & RLS (Supabase)
-- **RLS Policy Design:** 
-  - `STABLE` and `SECURITY DEFINER` functions are used to bypass recursive subquery limitations when checking hierarchical roles (e.g., `is_broker(user_id)`).
+## 1. Database Schema & Access Control (Self-Hosted PostgreSQL)
+- **Access Control Design (Application-Layer):** 
+  - Role-based access control (RBAC) implemented at the application layer via middleware, replacing Supabase RLS.
+  - Helper functions (e.g., `isBroker(userId)`) enforce hierarchical role checks in API routes and server components.
   - Users can read/write their own properties.
   - Brokers have overarching read/write access to all records in the office.
 - **Key Tables:**
@@ -29,6 +30,6 @@
   - Images placed in this folder by the office photographer are indexed and served via direct-link manipulation (`export=view`) for syndication.
 
 ## 3. Frontend Architecture (Next.js App Router)
-- **Component Boundary:** Strict separation of Server Components (fetching data directly from Supabase via `supabase-server`) and Client Components (handling interactive UI like forms or block reordering via `supabase-browser`).
+- **Component Boundary:** Strict separation of Server Components (fetching data directly from PostgreSQL via a server-side query layer) and Client Components (handling interactive UI like forms or block reordering via API routes).
 - **Data Fetching:** Page-level fetching is handled in `page.js` Server Components. Loading states are managed via `loading.js` skeletons.
 - **Public Routing:** All dynamic development landing pages use the `/d/[slug]` route, leveraging Next.js dynamic routing and metadata generation for SEO tags.

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
+import { getPropertiesWithDriveFolders, updateProperty } from '@/lib/dal/properties';
 import TopNav from '@/components/layout/TopNav';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -35,19 +35,7 @@ export default function FotosClient({ initialProperties = [] }) {
   const fetchProperties = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select(`
-          id, name, listing_title_es, listing_title_en,
-          unparsed_address, owner_name, agent_id,
-          drive_photos_folder_id, drive_photos_folder_url,
-          photos_ready, status, created_at,
-          property_images(id)
-        `)
-        .not('drive_photos_folder_id', 'is', null)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await getPropertiesWithDriveFolders();
 
       // Enrich with image counts
       const enriched = (data || []).map(p => ({
@@ -102,11 +90,7 @@ export default function FotosClient({ initialProperties = [] }) {
   const handleMarkReady = async (propertyId, ready) => {
     setMarkingId(propertyId);
     try {
-      const { error } = await supabase
-        .from('properties')
-        .update({ photos_ready: ready })
-        .eq('id', propertyId);
-      if (error) throw error;
+      await updateProperty(propertyId, { photos_ready: ready });
       fetchProperties();
     } catch (err) {
       alert('Error: ' + err.message);

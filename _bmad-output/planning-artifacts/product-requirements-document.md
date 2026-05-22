@@ -73,6 +73,6 @@
 
 ## 4. Non-Functional Requirements
 - **Internationalization (i18n):** Full bilingual support (English/Spanish) without hardcoded strings, utilizing the central `t()` context dictionary.
-- **Performance & Scale:** Hosted on Vercel utilizing Next.js App Router for optimal Edge rendering.
+- **Performance & Scale:** Self-hosted on **Coolify** utilizing Next.js App Router. PostgreSQL database managed directly (no Supabase dependency).
 - **Aesthetics & UI:** Must adhere to strict "premium" aesthetics—dynamic modern design, dark mode compatibility, and high-fidelity micro-animations.
 - **Hub-First Architecture:** The Hub is the single source of truth for all listing data. External systems (RECONNECT, portals, website) consume data from the Hub, not the other way around.

@@ -2,6 +2,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useApp } from '@/lib/context';
+import { getAllInquiries, getLeadSources, getLeadCommunications, getPendingLeadFollowUps, updatePropertyInquiry } from '@/lib/dal/contacts';
+import { insertPropertyInquiry } from '@/lib/dal/properties';
 import CommunicationPanel from './CommunicationPanel';
 import Image from 'next/image';
 
@@ -26,7 +28,7 @@ const LANG_FLAGS = { es: '🇪🇸', en: '🇺🇸', other: '🌐' };
 
 const EMPTY_FORM = { lead_name:'', lead_email:'', lead_phone:'', lead_type:'otro', source:'manual', lead_language:'es', property_id:'', assigned_agent_id:'', notes:'' };
 
-export default function LeadManagementTab({ profiles = [], initialLeads = [], initialSources = [], initialCommunications = [], initialFollowUps = [] }) {
+export default function LeadManagementTab({ profiles = [], initialLeads = [], initialSources = [], initialCommunications = [], initialFollowUps = [], properties = [] }) {
   const { lang, t } = useApp();
 
 
@@ -45,24 +47,40 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from('property_inquiries').select('*, properties(name, listing_title_es, listing_title_en)').order('created_at', { ascending: false });
-    setLeads(data || []);
+    try {
+      const data = await getAllInquiries(supabase);
+      setLeads(data || []);
+    } catch (e) {
+      console.error(e);
+    }
     setLoading(false);
   }, []);
 
   const fetchSources = useCallback(async () => {
-    const { data } = await supabase.from('lead_sources').select('*').eq('active', true).order('sort_order');
-    setSources(data || []);
+    try {
+      const data = await getLeadSources(supabase);
+      setSources(data || []);
+    } catch (e) {
+      console.error(e);
+    }
   }, []);
 
   const fetchComms = useCallback(async () => {
-    const { data } = await supabase.from('lead_communications').select('*').order('created_at', { ascending: false });
-    setCommunications(data || []);
+    try {
+      const data = await getLeadCommunications(supabase);
+      setCommunications(data || []);
+    } catch (e) {
+      console.error(e);
+    }
   }, []);
 
   const fetchFollowUps = useCallback(async () => {
-    const { data } = await supabase.from('lead_follow_ups').select('*, property_inquiries(lead_name)').eq('status', 'pending').order('due_date');
-    setFollowUps(data || []);
+    try {
+      const data = await getPendingLeadFollowUps(supabase);
+      setFollowUps(data || []);
+    } catch (e) {
+      console.error(e);
+    }
   }, []);
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -111,13 +129,56 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
     converted: leads.filter(l => l.status === 'converted').length,
   }), [leads]);
 
+  // Build searchable property list — filtered by selected agent
+  const propertyOptions = useMemo(() => {
+    return (properties || []).filter(p => p.status !== 'sold').map(p => ({
+      id: p.id,
+      label: (lang === 'es' ? p.listing_title_es : p.listing_title_en) || p.name || `Propiedad ${p.id.slice(0, 8)}`,
+      agent_id: p.agent_id,
+    }));
+  }, [properties, lang]);
+
+  // Filtered by selected agent
+  const agentProperties = useMemo(() => {
+    if (!form.assigned_agent_id) return [];
+    return propertyOptions.filter(p => p.agent_id === form.assigned_agent_id);
+  }, [propertyOptions, form.assigned_agent_id]);
+
+  // Property search autocomplete state
+  const [propSearch, setPropSearch] = useState('');
+  const [showPropDropdown, setShowPropDropdown] = useState(false);
+  const selectedPropLabel = propertyOptions.find(p => p.id === form.property_id)?.label || '';
+
+  const filteredProps = useMemo(() => {
+    if (!propSearch) return agentProperties;
+    const q = propSearch.toLowerCase();
+    return agentProperties.filter(p => p.label.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
+  }, [agentProperties, propSearch]);
+
+  const handleAgentChange = (agentId) => {
+    setForm(prev => ({ ...prev, assigned_agent_id: agentId, property_id: '' }));
+    setPropSearch('');
+  };
+
+  const handlePropertySelect = (propId) => {
+    const prop = propertyOptions.find(p => p.id === propId);
+    setForm(prev => ({ ...prev, property_id: propId }));
+    setPropSearch('');
+    setShowPropDropdown(false);
+  };
+
+
   const handleCreate = async () => {
     if (!form.lead_name) return;
     setSaving(true);
     const payload = { ...form, status: 'new', property_id: form.property_id || null, assigned_agent_id: form.assigned_agent_id || null };
     if (!payload.property_id) delete payload.property_id;
     if (!payload.assigned_agent_id) delete payload.assigned_agent_id;
-    await supabase.from('property_inquiries').insert(payload);
+    try {
+      await insertPropertyInquiry(payload, supabase);
+    } catch (e) {
+      console.error(e);
+    }
     setShowCreate(false);
     setForm({...EMPTY_FORM});
     setSaving(false);
@@ -125,12 +186,20 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
   };
 
   const handleStatusChange = async (id, status) => {
-    await supabase.from('property_inquiries').update({ status }).eq('id', id);
+    try {
+      await updatePropertyInquiry(id, { status }, supabase);
+    } catch (e) {
+      console.error(e);
+    }
     fetchLeads();
   };
 
   const handleAssign = async (id, agentId) => {
-    await supabase.from('property_inquiries').update({ assigned_agent_id: agentId || null }).eq('id', id);
+    try {
+      await updatePropertyInquiry(id, { assigned_agent_id: agentId || null }, supabase);
+    } catch (e) {
+      console.error(e);
+    }
     fetchLeads();
   };
 
@@ -227,6 +296,12 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
                       {lead.lead_phone && <span>{lead.lead_phone}</span>}
                       {lead.lead_email && <span className="truncate">{lead.lead_email}</span>}
                     </div>
+                    {/* Property linked — visible in list */}
+                    {propTitle && (
+                      <p className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 mt-0.5 truncate flex items-center gap-1">
+                        <span>🏠</span> {propTitle}
+                      </p>
+                    )}
                   </div>
                   {/* Follow-up badge */}
                   {isBreached(lead) && <span className="text-[9px] font-black px-2 py-1 rounded-full bg-red-600 text-white flex-shrink-0 animate-pulse shadow-lg shadow-red-500/30">🚨 SLA Vencido</span>}
@@ -392,20 +467,73 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
               </div>
             </div>
 
+            {/* 1. Agent selector — FIRST */}
             <div>
-              <label className={labelCls}>{t('ofc_leads_lead_source')}</label>
-              <select value={form.source} onChange={e => setForm(p=>({...p, source: e.target.value}))} className={inputCls}>
-                <option value="manual">Manual</option>
-                {sources.map(s => <option key={s.id} value={s.name}>{s.icon} {lang==='es'?s.label_es:s.label_en}</option>)}
+              <label className={labelCls}>{t('ofc_leads_assign_agent')} *</label>
+              <select value={form.assigned_agent_id} onChange={e => handleAgentChange(e.target.value)} className={inputCls}>
+                <option value="">{t('ofc_leads_select')}</option>
+                {agents.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
               </select>
             </div>
 
+            {/* 2. Property autocomplete — only shows after agent selected */}
+            {form.assigned_agent_id && (
+              <div className="relative">
+                <label className={labelCls}>{lang === 'en' ? 'Property' : 'Propiedad'}</label>
+                {form.property_id ? (
+                  <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3">
+                    <span className="text-sm">🏠</span>
+                    <span className="text-sm font-semibold text-blue-800 dark:text-blue-200 flex-1 truncate">{selectedPropLabel}</span>
+                    <button type="button" onClick={() => { setForm(p => ({...p, property_id: ''})); setPropSearch(''); }} className="text-blue-400 hover:text-red-500 transition-colors flex-shrink-0">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      value={propSearch}
+                      onChange={e => { setPropSearch(e.target.value); setShowPropDropdown(true); }}
+                      onFocus={() => setShowPropDropdown(true)}
+                      placeholder={lang === 'en' ? 'Type property title or ID...' : 'Escriba título o ID de propiedad...'}
+                      className={inputCls}
+                    />
+                    {showPropDropdown && (
+                      <div className="absolute z-20 left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
+                        {filteredProps.length === 0 ? (
+                          <p className="px-4 py-3 text-xs text-slate-400 text-center">
+                            {agentProperties.length === 0
+                              ? (lang === 'en' ? 'No properties for this agent' : 'Sin propiedades para este agente')
+                              : (lang === 'en' ? 'No matches found' : 'No se encontraron coincidencias')
+                            }
+                          </p>
+                        ) : filteredProps.map(p => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => handlePropertySelect(p.id)}
+                            className="w-full text-left px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border-b border-slate-100 dark:border-slate-700/50 last:border-0"
+                          >
+                            <p className="text-xs font-semibold text-slate-800 dark:text-white truncate">🏠 {p.label}</p>
+                            <p className="text-[9px] text-slate-400 font-mono">{p.id.slice(0, 8)}...</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+                {!form.property_id && agentProperties.length > 0 && (
+                  <p className="text-[10px] text-slate-400 mt-1">{agentProperties.length} {lang === 'en' ? 'properties available' : 'propiedades disponibles'}</p>
+                )}
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelCls}>{t('ofc_leads_assign_agent')}</label>
-                <select value={form.assigned_agent_id} onChange={e => setForm(p=>({...p, assigned_agent_id: e.target.value}))} className={inputCls}>
-                  <option value="">{t('ofc_leads_select')}</option>
-                  {agents.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
+                <label className={labelCls}>{t('ofc_leads_lead_source')}</label>
+                <select value={form.source} onChange={e => setForm(p=>({...p, source: e.target.value}))} className={inputCls}>
+                  <option value="manual">Manual</option>
+                  {sources.map(s => <option key={s.id} value={s.name}>{s.icon} {lang==='es'?s.label_es:s.label_en}</option>)}
                 </select>
               </div>
               <div>
