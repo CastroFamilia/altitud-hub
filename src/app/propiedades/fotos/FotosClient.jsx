@@ -23,7 +23,7 @@ const FILTERS = [
 ];
 
 export default function FotosClient({ initialProperties = [] }) {
-  const { lang } = useApp();
+  const { t, lang } = useApp();
   const { user } = useAuth();
   const [properties, setProperties] = useState(initialProperties);
   const [loading, setLoading] = useState(false);
@@ -115,7 +115,7 @@ export default function FotosClient({ initialProperties = [] }) {
                 <span className="text-3xl">📸</span>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {lang === 'en' ? 'Photographer Panel' : 'Panel del Fotógrafo'}
+                    {t('auto_photographer_panel')}
                   </h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                     {lang === 'en'
@@ -131,8 +131,8 @@ export default function FotosClient({ initialProperties = [] }) {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 mb-6">
             {[
-              { label: lang === 'en' ? 'Pending' : 'Pendientes', value: pendingCount, color: 'from-amber-400 to-amber-500' },
-              { label: lang === 'en' ? 'Ready' : 'Listas', value: readyCount, color: 'from-green-400 to-green-500' },
+              { label: t('auto_pending'), value: pendingCount, color: 'from-amber-400 to-amber-500' },
+              { label: t('auto_ready'), value: readyCount, color: 'from-green-400 to-green-500' },
               { label: 'Total', value: properties.length, color: 'from-gray-400 to-gray-500' },
             ].map((s, i) => (
               <div key={i} className="glass-panel p-4 rounded-xl text-center">
@@ -164,7 +164,7 @@ export default function FotosClient({ initialProperties = [] }) {
             <div className="glass-panel rounded-2xl p-12 text-center">
               <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-                {lang === 'en' ? 'Loading...' : 'Cargando...'}
+                {t('auto_loading')}
               </p>
             </div>
           ) : filtered.length === 0 ? (
@@ -172,14 +172,14 @@ export default function FotosClient({ initialProperties = [] }) {
               <span className="text-5xl">📷</span>
               <h3 className="text-lg font-bold text-gray-800 dark:text-white mt-4">
                 {filter === 'pending'
-                  ? (lang === 'en' ? 'All caught up!' : '¡Todo al día!')
-                  : (lang === 'en' ? 'No properties found' : 'Sin propiedades')
+                  ? (t('auto_all_caught_up'))
+                  : (t('auto_no_properties_found'))
                 }
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 {filter === 'pending'
-                  ? (lang === 'en' ? 'No properties are waiting for photos' : 'Ninguna propiedad está esperando fotos')
-                  : (lang === 'en' ? 'No properties in this category' : 'Sin propiedades en esta categoría')
+                  ? (t('auto_no_properties_are_waiting'))
+                  : (t('auto_no_properties_in_this'))
                 }
               </p>
             </div>
@@ -213,7 +213,7 @@ export default function FotosClient({ initialProperties = [] }) {
                             </span>
                           )}
                           <span className="flex items-center gap-1">
-                            🖼️ {p.photo_count} {lang === 'en' ? 'photos' : 'fotos'}
+                            🖼️ {p.photo_count} {t('auto_photos')}
                           </span>
                         </div>
                       </div>
@@ -244,7 +244,7 @@ export default function FotosClient({ initialProperties = [] }) {
                           ) : (
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                           )}
-                          {lang === 'en' ? 'Sync' : 'Sincronizar'}
+                          {t('auto_sync')}
                         </button>
 
                         {/* Mark Ready / Unready */}
@@ -258,8 +258,8 @@ export default function FotosClient({ initialProperties = [] }) {
                           }`}
                         >
                           {p.photos_ready
-                            ? (lang === 'en' ? '↩ Reopen' : '↩ Reabrir')
-                            : (lang === 'en' ? '✓ Mark Ready' : '✓ Marcar Lista')
+                            ? (t('auto_reopen'))
+                            : (t('auto_mark_ready'))
                           }
                         </button>
                       </div>

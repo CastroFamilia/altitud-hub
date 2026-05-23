@@ -98,16 +98,16 @@ export default function DevelopmentCard({ development, lang = 'es' }) {
         <div className="flex items-center gap-4 mt-3 pt-2 border-t border-gray-100 dark:border-dark-border text-[10px] text-gray-400 dark:text-gray-500">
           <span className="flex items-center gap-1">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-            {d.total_units || 0} {lang === 'en' ? 'total' : 'total'}
+            {d.total_units || 0} {t('auto_total_1')}
           </span>
           <span className="flex items-center gap-1">
             <svg className="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-            {d.available_units || 0} {lang === 'en' ? 'available' : 'disponibles'}
+            {d.available_units || 0} {t('auto_available')}
           </span>
           {Array.isArray(d.sections) && d.sections.length > 0 && (
             <span className="flex items-center gap-1 ml-auto">
               <svg className="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z" /></svg>
-              {d.sections.length} {lang === 'en' ? 'blocks' : 'bloques'}
+              {d.sections.length} {t('auto_blocks')}
             </span>
           )}
         </div>

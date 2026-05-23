@@ -35,7 +35,7 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
   const [loading, setLoading] = useState(true);
   const [filterAgent, setFilterAgent] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [timeframe, setTimeframe] = useState('ytd');
+  const [timeframe, setTimeframe] = useState('ytd_2026');
   const [tierModal, setTierModal] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -66,42 +66,65 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
     const y = d.getFullYear();
     const m = d.getMonth();
     
+    // Helper to safely build YYYY-MM-DD for local dates without UTC shifts
+    const safeDate = (year, month, day) => {
+      const date = new Date(year, month, day);
+      const dy = date.getFullYear();
+      const dm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${dy}-${dm}-${dd}`;
+    };
+
+    if (timeframe.startsWith('m')) {
+      const match = timeframe.match(/^m(\d+)_(\d+)$/);
+      if (match) {
+        const monthIdx = parseInt(match[1], 10);
+        const year = parseInt(match[2], 10);
+        return {
+          start: safeDate(year, monthIdx, 1),
+          end: safeDate(year, monthIdx + 1, 0)
+        };
+      }
+    }
+    
     switch (timeframe) {
-      case 'this_month': {
-        const start = new Date(y, m, 1).toISOString().slice(0,10);
-        const end = new Date(y, m + 1, 0).toISOString().slice(0,10);
-        return { start, end };
-      }
-      case 'last_month': {
-        const start = new Date(y, m - 1, 1).toISOString().slice(0,10);
-        const end = new Date(y, m, 0).toISOString().slice(0,10);
-        return { start, end };
-      }
-      case 'next_month': {
-        const start = new Date(y, m + 1, 1).toISOString().slice(0,10);
-        const end = new Date(y, m + 2, 0).toISOString().slice(0,10);
-        return { start, end };
-      }
-      case 'all': {
-        return { start: '1900-01-01', end: '2100-12-31' };
-      }
+      case 'total_2025':
+        return { start: '2025-01-01', end: '2025-12-31' };
+      case 'ytd_2026':
       case 'ytd':
-      default: {
-        const start = `${y}-01-01`;
-        const end = new Date(y, 11, 31).toISOString().slice(0,10);
-        return { start, end };
-      }
+        return { start: '2026-01-01', end: '2026-12-31' };
+      case 'this_month':
+        return { start: safeDate(y, m, 1), end: safeDate(y, m + 1, 0) };
+      case 'last_month':
+        return { start: safeDate(y, m - 1, 1), end: safeDate(y, m, 0) };
+      case 'next_month':
+        return { start: safeDate(y, m + 1, 1), end: safeDate(y, m + 2, 0) };
+      case 'all':
+        return { start: '1900-01-01', end: '2100-12-31' };
+      default:
+        return { start: '2026-01-01', end: '2026-12-31' };
     }
   }, [timeframe]);
 
   const getTimeframeLabel = (tf) => {
     const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     const m = new Date().getMonth();
+    
+    if (tf.startsWith('m')) {
+      const match = tf.match(/^m(\d+)_(\d+)$/);
+      if (match) {
+        const monthIdx = parseInt(match[1], 10);
+        const year = parseInt(match[2], 10);
+        return `${monthNames[monthIdx]} ${year}`;
+      }
+    }
+    
+    if (tf === 'total_2025') return 'Total Año 2025';
+    if (tf === 'ytd_2026' || tf === 'ytd') return 'YTD - Año a la Fecha (2026)';
     if (tf === 'this_month') return monthNames[m];
     if (tf === 'last_month') return monthNames[(m - 1 + 12) % 12];
     if (tf === 'next_month') return monthNames[(m + 1) % 12];
-    if (tf === 'ytd') return 'YTD - Año a la Fecha';
-    if (tf === 'all') return 'Total';
+    if (tf === 'all') return 'Total Histórico';
     return tf;
   };
 
@@ -119,7 +142,7 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
     const map = {};
     activeData.forEach(c => {
       if (!map[c.agent_id]) map[c.agent_id] = { id: c.agent_id, name: c.profiles?.full_name || '—', avatar: c.profiles?.avatar_url, tierId: c.profiles?.commission_tier_id, earned: 0, closings: 0 };
-      map[c.agent_id].earned += Number(c.agent_amount) || 0;
+      map[c.agent_id].earned += Number(c.side_amount || c.gross_commission) || 0;
       map[c.agent_id].closings += 1;
     });
     return Object.values(map).sort((a, b) => b.earned - a.earned);
@@ -189,10 +212,39 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
       <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-2">Periodo</span>
         <select value={timeframe} onChange={e => setTimeframe(e.target.value)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm focus:ring-2 focus:ring-nexus-blue outline-none transition-all">
-          <option value="this_month">{getTimeframeLabel('this_month')}</option>
-          <option value="last_month">{getTimeframeLabel('last_month')}</option>
-          <option value="ytd">{getTimeframeLabel('ytd')}</option>
-          <option value="all">{getTimeframeLabel('all')}</option>
+          <optgroup label="Año 2026">
+            <option value="ytd_2026">YTD - Año a la Fecha (2026)</option>
+            <option value="m0_2026">Enero 2026</option>
+            <option value="m1_2026">Febrero 2026</option>
+            <option value="m2_2026">Marzo 2026</option>
+            <option value="m3_2026">Abril 2026</option>
+            <option value="m4_2026">Mayo 2026</option>
+            <option value="m5_2026">Junio 2026</option>
+            <option value="m6_2026">Julio 2026</option>
+            <option value="m7_2026">Agosto 2026</option>
+            <option value="m8_2026">Septiembre 2026</option>
+            <option value="m9_2026">Octubre 2026</option>
+            <option value="m10_2026">Noviembre 2026</option>
+            <option value="m11_2026">Diciembre 2026</option>
+          </optgroup>
+          <optgroup label="Año 2025">
+            <option value="total_2025">Total Año 2025</option>
+            <option value="m0_2025">Enero 2025</option>
+            <option value="m1_2025">Febrero 2025</option>
+            <option value="m2_2025">Marzo 2025</option>
+            <option value="m3_2025">Abril 2025</option>
+            <option value="m4_2025">Mayo 2025</option>
+            <option value="m5_2025">Junio 2025</option>
+            <option value="m6_2025">Julio 2025</option>
+            <option value="m7_2025">Agosto 2025</option>
+            <option value="m8_2025">Septiembre 2025</option>
+            <option value="m9_2025">Octubre 2025</option>
+            <option value="m10_2025">Noviembre 2025</option>
+            <option value="m11_2025">Diciembre 2025</option>
+          </optgroup>
+          <optgroup label="Histórico">
+            <option value="all">Total Histórico</option>
+          </optgroup>
         </select>
       </div>
 
@@ -256,7 +308,7 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
                 <div key={td.id}>
                   <div className="flex justify-between items-center mb-1.5">
                     <span className="text-xs font-bold text-slate-700 dark:text-white capitalize">{lang === 'en' ? td.label_en : td.label_es}</span>
-                    <span className="text-xs font-black text-slate-500">{td.count} {lang === 'en' ? 'agents' : 'agentes'} · {td.agent_split_pct}%</span>
+                    <span className="text-xs font-black text-slate-500">{td.count} {t('auto_agents')} · {td.agent_split_pct}%</span>
                   </div>
                   <div className="w-full h-5 bg-slate-100 dark:bg-slate-700/50 rounded-full overflow-hidden">
                     <div className={`h-full bg-gradient-to-r ${gradClass} rounded-full transition-all duration-700`} style={{ width: `${Math.max((td.count / maxCount) * 100, 8)}%` }} />
@@ -291,7 +343,18 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
             <table className="w-full text-left min-w-[800px]">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-white/10">
-                  {[t('comm_date'), t('ofc_comm_agent'), t('comm_property'), t('comm_sale_price'), t('comm_agent_amount'), t('comm_office'), t('comm_status'), ''].map((h, i) => (
+                  {[
+                    t('comm_date'), 
+                    t('ofc_comm_agent'), 
+                    t('comm_property'), 
+                    t('comm_sale_price'), 
+                    t('comm_total_col'), 
+                    t('comm_agent_col'), 
+                    t('comm_office_col'), 
+                    t('comm_rcca_col'), 
+                    t('comm_status'), 
+                    ''
+                  ].map((h, i) => (
                     <th key={i} className="px-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">{h}</th>
                   ))}
                 </tr>
@@ -303,8 +366,10 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
                     <td className="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-white">{c.profiles?.full_name || '—'}</td>
                     <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 truncate max-w-[150px]">{c.properties?.listing_title_es || c.properties?.name || '—'}</td>
                     <td className="px-4 py-3 text-sm font-medium tabular-nums">{fmt(c.sale_price)}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white tabular-nums">{fmt(c.gross_commission)}</td>
                     <td className="px-4 py-3 text-sm font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{fmt(c.agent_amount)}</td>
                     <td className="px-4 py-3 text-sm font-medium text-nexus-blue tabular-nums">{fmt(c.office_amount)}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-red-500 tabular-nums">{fmt(c.rcca_fee_amount || 0)}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border ${STATUS_STYLES[c.status] || STATUS_STYLES.pending}`}>{t(`comm_status_${c.status}`)}</span>
                     </td>

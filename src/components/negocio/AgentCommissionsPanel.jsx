@@ -229,9 +229,9 @@ export default function AgentCommissionsPanel({ initialCommissions = [], initial
                     ? (lang === 'en' ? c.properties.listing_title_en : c.properties.listing_title_es) || c.properties.name || c.properties.unparsed_address
                     : '—';
                   const isExpanded = expandedId === c.id;
-                  const sideLabel = c.side === 'listing' ? (lang === 'en' ? 'Listing' : 'Captación')
-                    : c.side === 'selling' ? (lang === 'en' ? 'Selling' : 'Venta')
-                    : (lang === 'en' ? 'Both' : 'Ambos');
+                  const sideLabel = c.side === 'listing' ? (t('auto_listing'))
+                    : c.side === 'selling' ? (t('auto_selling'))
+                    : (t('auto_both'));
                   const statusKey = `comm_status_${c.status}`;
 
                   return (
@@ -274,12 +274,12 @@ export default function AgentCommissionsPanel({ initialCommissions = [], initial
                               <div>
                                 <p className="text-[9px] text-slate-400 uppercase font-bold tracking-widest mb-1">{t('comm_gross')}</p>
                                 <p className="font-bold text-slate-900 dark:text-white">{fmt(c.gross_commission)}</p>
-                                <p className="text-[10px] text-slate-400">{c.total_commission_pct}% {lang === 'en' ? 'of sale' : 'de la venta'}</p>
+                                <p className="text-[10px] text-slate-400">{c.total_commission_pct}% {t('auto_of_sale')}</p>
                               </div>
                               <div>
                                 <p className="text-[9px] text-slate-400 uppercase font-bold tracking-widest mb-1">{t('comm_side_amount')}</p>
                                 <p className="font-bold text-slate-900 dark:text-white">{fmt(c.side_amount)}</p>
-                                <p className="text-[10px] text-slate-400">{c.side_pct}% {lang === 'en' ? 'of gross' : 'del bruto'}</p>
+                                <p className="text-[10px] text-slate-400">{c.side_pct}% {t('auto_of_gross')}</p>
                               </div>
                               <div>
                                 <p className="text-[9px] text-red-400 uppercase font-bold tracking-widest mb-1">{t('comm_rcca')}</p>

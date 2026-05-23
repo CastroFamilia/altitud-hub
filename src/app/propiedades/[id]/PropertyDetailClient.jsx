@@ -517,7 +517,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
             <div className="p-[1px] rounded-2xl bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 shadow-xl shadow-blue-500/10">
               <div className="bg-white dark:bg-dark-panel rounded-[15px] p-5">
                 <h3 className="text-sm font-bold text-gray-800 dark:text-white mb-3 flex items-center gap-2">
-                  <span className="text-lg">📩</span> {lang === 'en' ? 'Property Inquiries' : 'Consultas de la Propiedad'}
+                  <span className="text-lg">📩</span> {t('auto_property_inquiries')}
                 </h3>
                 <PropertyInquiriesPanel propertyId={p.id} />
               </div>

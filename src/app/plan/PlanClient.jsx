@@ -116,6 +116,7 @@ export default function PlanClient({ initialPlan, queriedYear }) {
     <>
       <TopNav titleKey="pw_page_title" subtitleKey="pw_page_subtitle" />
       <PlanWizard
+        key={queriedYear}
         existingPlan={existingPlan}
         queriedYear={queriedYear}
         onComplete={handleComplete}

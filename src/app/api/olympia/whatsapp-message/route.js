@@ -56,7 +56,7 @@ export async function POST(req) {
       desc   && `Descripción corta: ${desc.slice(0, 250)}`,
     ].filter(Boolean).join('\n');
 
-    const targetLang = lang === 'en' ? 'English' : 'Spanish';
+    const targetLang = t('auto_english_1');
     const greeting   = contactName ? `el cliente se llama ${contactName}` : 'no conocemos el nombre del cliente todavía';
 
     const prompt = `

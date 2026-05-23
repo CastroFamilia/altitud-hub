@@ -19,7 +19,7 @@ export async function POST(request) {
 
     const { data: callerProfile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('id, role')
       .eq('auth_user_id', user.id)
       .single();
 
@@ -27,9 +27,56 @@ export async function POST(request) {
       return Response.json({ error: 'Solo el broker puede invitar agentes' }, { status: 403 });
     }
 
+    // Helper to create pending transaction if fee is set
+    const checkAndCreatePendingFee = async (profileId, mFee, fStartDate) => {
+      if (mFee > 0 && fStartDate) {
+        // Check if there is already a pending or approved Fee Mensual for this profile on that date to avoid duplicates
+        const { data: existingTx } = await supabase
+          .from('account_transactions')
+          .select('id')
+          .eq('profile_id', profileId)
+          .eq('category', 'Fee Mensual')
+          .eq('date', fStartDate)
+          .maybeSingle();
+
+        if (!existingTx) {
+          const { error: txError } = await supabase
+            .from('account_transactions')
+            .insert({
+              profile_id: profileId,
+              type: 'office_charge',
+              amount: parseFloat(mFee),
+              category: 'Fee Mensual',
+              description: 'Cobro Inicial de Fee Mensual',
+              date: fStartDate,
+              status: 'pending',
+              added_by: callerProfile?.id || null,
+            });
+          if (txError) {
+            console.error('Error inserting pending fee transaction:', txError);
+          }
+        }
+      }
+    };
+
     // 2. Parse request body
     const body = await request.json();
-    const { email, full_name, role = 'agent', team_id, remax_agent_id, remax_agent_name, office = 'altitud', avatar_url, phone, status = 'invited' } = body;
+    const { 
+      email, 
+      full_name, 
+      role = 'agent', 
+      team_id, 
+      remax_agent_id, 
+      remax_agent_name, 
+      office = 'altitud', 
+      avatar_url, 
+      phone, 
+      status = 'invited',
+      start_date,
+      birth_date,
+      fee_start_date,
+      monthly_fee,
+    } = body;
 
     if (!email || !full_name) {
       return Response.json({ error: 'Email y nombre son requeridos' }, { status: 400 });
@@ -72,6 +119,10 @@ export async function POST(request) {
           office,
           avatar_url: avatar_url || null,
           phone: phone || null,
+          start_date: start_date || undefined,
+          birth_date: birth_date || undefined,
+          fee_start_date: fee_start_date || undefined,
+          monthly_fee: monthly_fee !== undefined ? monthly_fee : undefined,
         })
         .eq('id', existing.id)
         .select()
@@ -80,6 +131,51 @@ export async function POST(request) {
       if (updateError) {
         console.error('Profile update error:', updateError);
         return Response.json({ error: 'Error al actualizar perfil de borrador: ' + updateError.message }, { status: 500 });
+      }
+
+      // Create pending fee if conditions are met
+      await checkAndCreatePendingFee(updatedProfile.id, updatedProfile.monthly_fee, updatedProfile.fee_start_date);
+
+      // Handle Team Leader team creation/update for promoted draft agent
+      if (role === 'team_leader' && body.team_name) {
+        const { data: existingTeam } = await supabase
+          .from('teams')
+          .select('id')
+          .eq('leader_id', updatedProfile.id)
+          .maybeSingle();
+
+        if (existingTeam) {
+          await supabase
+            .from('teams')
+            .update({ name: body.team_name })
+            .eq('id', existingTeam.id);
+          
+          await supabase
+            .from('profiles')
+            .update({ team_id: existingTeam.id })
+            .eq('id', updatedProfile.id);
+          
+          updatedProfile.team_id = existingTeam.id;
+        } else {
+          const { data: newTeam } = await supabase
+            .from('teams')
+            .insert({
+              name: body.team_name,
+              leader_id: updatedProfile.id,
+              office: office || callerProfile.office || 'altitud'
+            })
+            .select()
+            .single();
+
+          if (newTeam) {
+            await supabase
+              .from('profiles')
+              .update({ team_id: newTeam.id })
+              .eq('id', updatedProfile.id);
+            
+            updatedProfile.team_id = newTeam.id;
+          }
+        }
       }
 
       // Send invitation email via Supabase Admin API
@@ -130,6 +226,10 @@ export async function POST(request) {
         phone: phone || null,
         status: status,
         invited_at: status === 'invited' ? new Date().toISOString() : null,
+        start_date: start_date || null,
+        birth_date: birth_date || null,
+        fee_start_date: fee_start_date || null,
+        monthly_fee: monthly_fee || 0,
       })
       .select()
       .single();
@@ -137,6 +237,31 @@ export async function POST(request) {
     if (insertError) {
       console.error('Profile insert error:', insertError);
       return Response.json({ error: 'Error al crear perfil: ' + insertError.message }, { status: 500 });
+    }
+
+    // Create pending fee if conditions are met
+    await checkAndCreatePendingFee(newProfile.id, newProfile.monthly_fee, newProfile.fee_start_date);
+
+    // Handle Team Leader team creation for brand new profile
+    if (role === 'team_leader' && body.team_name) {
+      const { data: newTeam, error: teamInsertError } = await supabase
+        .from('teams')
+        .insert({
+          name: body.team_name,
+          leader_id: newProfile.id,
+          office: office || callerProfile.office || 'altitud'
+        })
+        .select()
+        .single();
+      
+      if (!teamInsertError && newTeam) {
+        await supabase
+          .from('profiles')
+          .update({ team_id: newTeam.id })
+          .eq('id', newProfile.id);
+        
+        newProfile.team_id = newTeam.id;
+      }
     }
 
     // 5. Send invitation email via Supabase Admin API (ONLY if status is 'invited')

@@ -171,12 +171,12 @@ export default function PropiedadesClient({ initialProperties = [], isBroker = f
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div>
               <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
-                {lang === 'en' ? 'My Portfolio' : 'Mi Portafolio'}
+                {t('auto_my_portfolio')}
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                 {isBroker
-                  ? (lang === 'en' ? 'All office properties' : 'Todas las propiedades de la oficina')
-                  : (lang === 'en' ? 'Your active listings and pipeline' : 'Tus captaciones activas y pipeline')}
+                  ? (t('auto_all_office_properties'))
+                  : (t('auto_your_active_listings_and'))}
               </p>
             </div>
             <Link
@@ -200,9 +200,9 @@ export default function PropiedadesClient({ initialProperties = [], isBroker = f
                   {formatCurrency(kpis.totalValue)}
                 </p>
                 <p className="text-[10px] uppercase tracking-widest font-bold text-gray-500 dark:text-gray-400 mt-1">
-                  {lang === 'en' ? 'Portfolio Value' : 'Valor Cartera'}
+                  {t('auto_portfolio_value')}
                 </p>
-                <p className="text-[10px] text-gray-400 mt-0.5">{kpis.totalCount} {lang === 'en' ? 'properties' : 'propiedades'}</p>
+                <p className="text-[10px] text-gray-400 mt-0.5">{kpis.totalCount} {t('auto_properties')}</p>
               </div>
             </div>
 
@@ -226,7 +226,7 @@ export default function PropiedadesClient({ initialProperties = [], isBroker = f
                   <p className="text-[10px] uppercase tracking-widest font-bold text-gray-500 dark:text-gray-400">
                     {typeInfo[lang]}
                   </p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">{formatCurrency(data.avg)} {lang === 'en' ? 'avg' : 'prom'}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{formatCurrency(data.avg)} {t('auto_avg')}</p>
                 </button>
               );
             })}
@@ -238,9 +238,9 @@ export default function PropiedadesClient({ initialProperties = [], isBroker = f
                 {kpis.avgDOM}d
               </p>
               <p className="text-[10px] uppercase tracking-widest font-bold text-gray-500 dark:text-gray-400">
-                {lang === 'en' ? 'Avg DOM' : 'Días Prom'}
+                {t('auto_avg_dom')}
               </p>
-              <p className="text-[10px] text-gray-400 mt-0.5">{kpis.publishedCount} {lang === 'en' ? 'published' : 'publicadas'}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{kpis.publishedCount} {t('auto_published')}</p>
             </div>
           </div>
 
@@ -249,7 +249,7 @@ export default function PropiedadesClient({ initialProperties = [], isBroker = f
             {/* Average values by type */}
             <div className="glass-panel rounded-2xl p-5">
               <h3 className="text-[10px] uppercase tracking-widest font-bold text-gray-500 dark:text-gray-400 mb-3">
-                {lang === 'en' ? 'Average Value by Type' : 'Valor Promedio por Tipo'}
+                {t('auto_average_value_by_type')}
               </h3>
               <div className="space-y-2">
                 {Object.entries(kpis.byType)
@@ -285,25 +285,25 @@ export default function PropiedadesClient({ initialProperties = [], isBroker = f
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-emerald-600/10 dark:from-emerald-500/10 dark:to-emerald-600/15" />
               <div className="relative">
                 <h3 className="text-[10px] uppercase tracking-widest font-bold text-gray-500 dark:text-gray-400 mb-3">
-                  {lang === 'en' ? 'Potential Commissions' : 'Comisiones Potenciales'}
+                  {t('auto_potential_commissions')}
                 </h3>
                 <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mb-1">
                   {formatCurrency(kpis.totalCommission)}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {lang === 'en' ? 'Listing side commissions on active inventory' : 'Comisiones lado captación del inventario activo'}
+                  {t('auto_listing_side_commissions_on')}
                 </p>
                 <div className="mt-4 flex items-center gap-4">
                   <div>
                     <p className="text-sm font-black text-gray-700 dark:text-gray-300">{formatCurrency(kpis.avgValue)}</p>
-                    <p className="text-[10px] text-gray-400">{lang === 'en' ? 'Avg. price' : 'Precio prom.'}</p>
+                    <p className="text-[10px] text-gray-400">{t('auto_avg_price')}</p>
                   </div>
                   <div className="w-px h-8 bg-gray-200 dark:bg-dark-border" />
                   <div>
                     <p className="text-sm font-black text-gray-700 dark:text-gray-300">
                       {kpis.totalCount > 0 ? formatCurrency(kpis.totalCommission / kpis.totalCount) : '$0'}
                     </p>
-                    <p className="text-[10px] text-gray-400">{lang === 'en' ? 'Avg. commission' : 'Comisión prom.'}</p>
+                    <p className="text-[10px] text-gray-400">{t('auto_avg_commission')}</p>
                   </div>
                 </div>
               </div>
@@ -318,13 +318,13 @@ export default function PropiedadesClient({ initialProperties = [], isBroker = f
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
-                  {lang === 'en' ? 'Map' : 'Mapa'} ({mapProperties.length})
+                  {t('auto_map')} ({mapProperties.length})
                 </h3>
                 <button
                   onClick={() => setShowMap(!showMap)}
                   className="text-[10px] font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                 >
-                  {showMap ? (lang === 'en' ? 'Hide' : 'Ocultar') : (lang === 'en' ? 'Show' : 'Mostrar')}
+                  {showMap ? (t('auto_hide')) : (t('auto_show'))}
                 </button>
               </div>
               {showMap && (
@@ -347,7 +347,7 @@ export default function PropiedadesClient({ initialProperties = [], isBroker = f
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={lang === 'en' ? 'Search title, address, owner...' : 'Buscar título, dirección, dueño...'}
+                  placeholder={t('auto_search_title_address_owner')}
                   className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-dark-border rounded-xl bg-slate-50 dark:bg-dark-bg focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-colors"
                 />
               </div>
@@ -362,7 +362,7 @@ export default function PropiedadesClient({ initialProperties = [], isBroker = f
                       : 'bg-gray-100 dark:bg-dark-border text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'
                   }`}
                 >
-                  {lang === 'en' ? 'All' : 'Todos'}
+                  {t('auto_all')}
                 </button>
                 {availableTypes.map(tid => {
                   const typeInfo = PROPERTY_TYPES[tid];
@@ -412,7 +412,7 @@ export default function PropiedadesClient({ initialProperties = [], isBroker = f
                 );
               })}
               <span className="ml-auto text-[10px] text-gray-400 font-medium">
-                {filtered.length} {lang === 'en' ? 'shown' : 'mostradas'}
+                {filtered.length} {t('auto_shown')}
               </span>
             </div>
           </div>
@@ -424,10 +424,10 @@ export default function PropiedadesClient({ initialProperties = [], isBroker = f
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               <h3 className="text-lg font-bold text-gray-800 dark:text-white mt-4">
-                {lang === 'en' ? 'No properties found' : 'Sin propiedades'}
+                {t('auto_no_properties_found')}
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-md mx-auto">
-                {lang === 'en' ? 'Try adjusting your filters or create a new property.' : 'Ajustá los filtros o creá una nueva propiedad.'}
+                {t('auto_try_adjusting_your_filters')}
               </p>
               <Link
                 href="/propiedades/nueva"
@@ -436,7 +436,7 @@ export default function PropiedadesClient({ initialProperties = [], isBroker = f
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                 </svg>
-                {t('prop_btn_create') || (lang === 'en' ? 'New Property' : 'Nueva Propiedad')}
+                {t('prop_btn_create') || (t('auto_new_property'))}
               </Link>
             </div>
           ) : (

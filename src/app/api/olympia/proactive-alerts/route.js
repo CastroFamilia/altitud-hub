@@ -37,7 +37,7 @@ El mensaje debe ser sumamente profesional, natural y cálido, sin sonar robótic
 Estilo de tono a usar: ${toneDescription}
 Tipo de evento: ${eventType === 'birthday' ? 'Cumpleaños' : 'Aniversario de Compra/Mudanza de su propiedad'}
 Nombre del Cliente: ${clientName}
-Idioma: ${lang === 'en' ? 'ENGLISH' : 'SPANISH'}
+Idioma: ${t('auto_english')}
 
 Instrucciones Críticas:
 1. Retorna ÚNICAMENTE el mensaje redactado para el cliente. No agregues introducciones como "Aquí tienes tu mensaje:" o notas adicionales.
@@ -208,7 +208,7 @@ export async function POST(req) {
       if (prelistTarget > 0 && prelistVal === 0) {
         push(
           'no_prelisting',
-          lang === 'en' ? '📋 No Prelisting registered this week' : '📋 Sin Prelisting registrado esta semana',
+          t('auto_no_prelisting_registered_this'),
           lang === 'en'
             ? "You haven't registered a prelisting yet this week. Olympia can help you find your next prospect."
             : 'Aún no has registrado un prelisting esta semana. Olympia puede ayudarte a encontrar tu próximo prospecto.'
@@ -226,7 +226,7 @@ export async function POST(req) {
       if (allMet) {
         push(
           'week_complete',
-          lang === 'en' ? '🏆 Week Complete! All Goals Met' : '🏆 ¡Semana Completa! Todas las metas alcanzadas',
+          t('auto_week_complete_all_goals'),
           lang === 'en'
             ? "Incredible week! You've hit all your targets. Olympia is proud of you. 🚀"
             : '¡Semana increíble! Alcanzaste todas tus metas. ¡Olympia está orgullosa de ti! 🚀'

@@ -34,7 +34,7 @@ const STATUS_LABELS = {
 };
 
 export default function PropertyInquiriesPanel({ propertyId }) {
-  const { lang } = useApp();
+  const { t, lang } = useApp();
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,7 +61,7 @@ export default function PropertyInquiriesPanel({ propertyId }) {
   if (inquiries.length === 0) {
     return (
       <div className="text-center py-4">
-        <p className="text-xs text-slate-400">{lang === 'en' ? 'No inquiries yet' : 'Sin consultas aún'}</p>
+        <p className="text-xs text-slate-400">{t('auto_no_inquiries_yet')}</p>
       </div>
     );
   }
@@ -87,12 +87,12 @@ export default function PropertyInquiriesPanel({ propertyId }) {
             {inquiries.length}
           </span>
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            {lang === 'en' ? 'Total Inquiries' : 'Consultas Recibidas'}
+            {t('auto_total_inquiries')}
           </span>
         </div>
         <div className="flex gap-1">
           <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-            {inquiries.filter(i => i.status === 'new').length} {lang === 'en' ? 'new' : 'nuevos'}
+            {inquiries.filter(i => i.status === 'new').length} {t('auto_new_1')}
           </span>
         </div>
       </div>
@@ -106,7 +106,7 @@ export default function PropertyInquiriesPanel({ propertyId }) {
                 <div className="flex items-center gap-2 mb-1">
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${STATUS_COLORS[inq.status] || STATUS_COLORS.new} ${inq.status === 'new' ? 'animate-pulse' : ''}`} />
                   <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                    {inq.lead_name || (lang === 'en' ? 'Anonymous' : 'Anónimo')}
+                    {inq.lead_name || (t('auto_anonymous'))}
                   </p>
                   <span className="text-xs flex-shrink-0">{langFlag(inq.lead_language)}</span>
                 </div>

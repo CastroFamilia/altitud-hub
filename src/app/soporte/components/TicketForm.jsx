@@ -48,7 +48,7 @@ export default function TicketForm({ onClose, onSuccess }) {
 
     if (isLocationRequest) {
       if (!locationData.provincia || !locationData.canton) {
-        setError(lang === 'en' ? 'Province and Canton are required for location requests.' : 'Provincia y Cantón son requeridos para solicitudes de ubicación.');
+        setError(t('auto_province_and_canton_are'));
         return;
       }
     } else {
@@ -113,16 +113,16 @@ export default function TicketForm({ onClose, onSuccess }) {
   const buildLocationDescription = () => {
     const l = locationData;
     const lines = [
-      `**${lang === 'en' ? 'Location Request' : 'Solicitud de Ubicación'}**`,
+      `**${t('auto_location_request')}**`,
       '',
-      `${lang === 'en' ? 'Province' : 'Provincia'}: ${l.provincia || '—'}`,
-      `${lang === 'en' ? 'Canton' : 'Cantón'}: ${l.canton || '—'}`,
-      `${lang === 'en' ? 'District' : 'Distrito'}: ${l.distrito || '—'}`,
-      `${lang === 'en' ? 'Barrio/Community' : 'Barrio/Comunidad'}: ${l.barrio || '—'}`,
-      `${lang === 'en' ? 'Place/Development Name' : 'Nombre del Lugar/Desarrollo'}: ${l.nombre_lugar || '—'}`,
+      `${t('auto_province')}: ${l.provincia || '—'}`,
+      `${t('auto_canton')}: ${l.canton || '—'}`,
+      `${t('auto_district')}: ${l.distrito || '—'}`,
+      `${t('auto_barrio_community')}: ${l.barrio || '—'}`,
+      `${t('auto_place_development_name')}: ${l.nombre_lugar || '—'}`,
     ];
     if (formData.description) {
-      lines.push('', `${lang === 'en' ? 'Additional Notes' : 'Notas Adicionales'}: ${formData.description}`);
+      lines.push('', `${t('auto_additional_notes')}: ${formData.description}`);
     }
     return lines.join('\n');
   };
@@ -153,7 +153,7 @@ export default function TicketForm({ onClose, onSuccess }) {
             {/* Category Selector */}
             <div>
               <label className={labelCls}>
-                {t('sup_form_category') || (lang === 'en' ? 'Category' : 'Categoría')} *
+                {t('sup_form_category') || (t('auto_category'))} *
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {TICKET_CATEGORIES.map(cat => (
@@ -182,14 +182,14 @@ export default function TicketForm({ onClose, onSuccess }) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   <span className="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">
-                    {lang === 'en' ? 'Location Hierarchy' : 'Jerarquía de Ubicación'}
+                    {t('auto_location_hierarchy')}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={labelCls}>
-                      {lang === 'en' ? 'Province' : 'Provincia'} *
+                      {t('auto_province')} *
                     </label>
                     <select
                       value={locationData.provincia}
@@ -197,7 +197,7 @@ export default function TicketForm({ onClose, onSuccess }) {
                       className={inputCls}
                       required
                     >
-                      <option value="">{lang === 'en' ? 'Select...' : 'Seleccionar...'}</option>
+                      <option value="">{t('auto_select')}</option>
                       {CR_PROVINCES.map(p => (
                         <option key={p} value={p}>{p}</option>
                       ))}
@@ -205,7 +205,7 @@ export default function TicketForm({ onClose, onSuccess }) {
                   </div>
                   <div>
                     <label className={labelCls}>
-                      {lang === 'en' ? 'Canton' : 'Cantón'} *
+                      {t('auto_canton')} *
                     </label>
                     <input
                       type="text"
@@ -213,31 +213,31 @@ export default function TicketForm({ onClose, onSuccess }) {
                       value={locationData.canton}
                       onChange={e => setLoc('canton', e.target.value)}
                       className={inputCls}
-                      placeholder={lang === 'en' ? 'e.g. Pérez Zeledón' : 'Ej. Pérez Zeledón'}
+                      placeholder={t('auto_e_g_pérez_zeledón')}
                     />
                   </div>
                   <div>
                     <label className={labelCls}>
-                      {lang === 'en' ? 'District' : 'Distrito'}
+                      {t('auto_district')}
                     </label>
                     <input
                       type="text"
                       value={locationData.distrito}
                       onChange={e => setLoc('distrito', e.target.value)}
                       className={inputCls}
-                      placeholder={lang === 'en' ? 'e.g. General Viejo' : 'Ej. General Viejo'}
+                      placeholder={t('auto_e_g_general_viejo')}
                     />
                   </div>
                   <div>
                     <label className={labelCls}>
-                      {lang === 'en' ? 'Barrio / Community' : 'Barrio / Comunidad'}
+                      {t('auto_barrio_community_1')}
                     </label>
                     <input
                       type="text"
                       value={locationData.barrio}
                       onChange={e => setLoc('barrio', e.target.value)}
                       className={inputCls}
-                      placeholder={lang === 'en' ? 'e.g. Santa Elena' : 'Ej. Santa Elena de El General'}
+                      placeholder={t('auto_e_g_santa_elena')}
                     />
                   </div>
                 </div>
@@ -245,8 +245,8 @@ export default function TicketForm({ onClose, onSuccess }) {
                 <div>
                   <label className={labelCls}>
                     <span className="flex items-center gap-1.5">
-                      {lang === 'en' ? 'Place / Development Name' : 'Nombre del Lugar / Desarrollo'}
-                      <span className="text-[10px] font-normal text-gray-400">{lang === 'en' ? '(if applicable)' : '(si aplica)'}</span>
+                      {t('auto_place_development_name_1')}
+                      <span className="text-[10px] font-normal text-gray-400">{t('auto_if_applicable')}</span>
                     </span>
                   </label>
                   <input
@@ -254,7 +254,7 @@ export default function TicketForm({ onClose, onSuccess }) {
                     value={locationData.nombre_lugar}
                     onChange={e => setLoc('nombre_lugar', e.target.value)}
                     className={inputCls}
-                    placeholder={lang === 'en' ? 'e.g. RISE Costa Rica' : 'Ej. RISE Costa Rica'}
+                    placeholder={t('auto_e_g_rise_costa')}
                   />
                 </div>
               </div>
@@ -280,7 +280,7 @@ export default function TicketForm({ onClose, onSuccess }) {
             <div>
               <label className={labelCls}>
                 {isLocationRequest
-                  ? (lang === 'en' ? 'Additional Notes (Optional)' : 'Notas Adicionales (Opcional)')
+                  ? (t('auto_additional_notes_optional'))
                   : (t('sup_form_desc') || 'Descripción detallada')} {!isLocationRequest && '*'}
               </label>
               <textarea
@@ -290,7 +290,7 @@ export default function TicketForm({ onClose, onSuccess }) {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className={`${inputCls} resize-none`}
                 placeholder={isLocationRequest
-                  ? (lang === 'en' ? 'Any extra context about this location...' : 'Cualquier contexto adicional sobre esta ubicación...')
+                  ? (t('auto_any_extra_context_about'))
                   : 'Describe qué estabas haciendo y qué sucedió...'}
               ></textarea>
             </div>

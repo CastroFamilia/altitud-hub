@@ -13,7 +13,7 @@
 // ── Title Quality (follows RE matrix: Subtype + Location + Differentiator) ──
 function scoreTitle(text, lang = 'es') {
   if (!text || text.trim().length === 0) {
-    return { score: 0, label: lang === 'en' ? 'Missing' : 'Falta', color: 'red', tips: [] };
+    return { score: 0, label: t('auto_missing'), color: 'red', tips: [] };
   }
   const t = text.trim();
   const tips = [];
@@ -21,30 +21,30 @@ function scoreTitle(text, lang = 'es') {
 
   // Length check (good titles: 40-80 chars)
   if (t.length >= 40) score += 20;
-  else if (t.length >= 25) { score += 10; tips.push(lang === 'en' ? 'Too short' : 'Muy corto'); }
-  else { tips.push(lang === 'en' ? 'Way too short (<25 chars)' : 'Demasiado corto (<25 car)'); }
+  else if (t.length >= 25) { score += 10; tips.push(t('auto_too_short')); }
+  else { tips.push(t('auto_way_too_short_25')); }
 
   // Has property subtype keyword (Casa, Lote, Finca, Apartamento, Local, Villa...)
   const subtypeRegex = /(casa|lote|finca|apartamento|villa|terreno|local|bodega|edificio|condominio|penthouse|town\s?house|house|lot|farm|land|condo|commercial)/i;
   if (subtypeRegex.test(t)) score += 25;
-  else tips.push(lang === 'en' ? 'Add property type' : 'Agregar tipo de propiedad');
+  else tips.push(t('auto_add_property_type'));
 
   // Has location reference
   const locationRegex = /[A-Z][a-záéíóúñ]{2,}/; // Capitalized place name
   const locationKeywords = /(playa|montaña|centro|ciudad|beach|mountain|downtown|near|cerca|en\s|in\s)/i;
   if (locationRegex.test(t) || locationKeywords.test(t)) score += 25;
-  else tips.push(lang === 'en' ? 'Add location' : 'Agregar ubicación');
+  else tips.push(t('auto_add_location'));
 
   // Has differentiator / USP (views, nature, investment, oceanfront, etc.)
   const uspRegex = /(vista|view|ocean|mar|naturaleza|nature|inversión|investment|oportunidad|opportunity|lujo|luxury|exclusiv|premium|privad|gated|piscina|pool|condominio|seguridad|security|río|river|bosque|forest|montaña|mountain|playa|beach|panorám|sunset|amanecer|ha\b|hectárea)/i;
   if (uspRegex.test(t)) score += 30;
-  else tips.push(lang === 'en' ? 'Add differentiator (views, nature, investment...)' : 'Agregar diferenciador (vistas, naturaleza, inversión...)');
+  else tips.push(t('auto_add_differentiator_views_nature'));
 
   // Score label
-  const label = score >= 80 ? (lang === 'en' ? 'Excellent' : 'Excelente')
-    : score >= 50 ? (lang === 'en' ? 'Good' : 'Bueno')
-    : score >= 25 ? (lang === 'en' ? 'Basic' : 'Básico')
-    : (lang === 'en' ? 'Poor' : 'Pobre');
+  const label = score >= 80 ? (t('auto_excellent'))
+    : score >= 50 ? (t('auto_good'))
+    : score >= 25 ? (t('auto_basic'))
+    : (t('auto_poor'));
   const color = score >= 70 ? 'emerald' : score >= 40 ? 'amber' : 'red';
 
   return { score, label, color, tips };
@@ -53,7 +53,7 @@ function scoreTitle(text, lang = 'es') {
 // ── Description Quality (Hook + Body + Ficha + Benefits + CTA) ──
 function scoreDescription(text, lang = 'es') {
   if (!text || text.trim().length === 0) {
-    return { score: 0, label: lang === 'en' ? 'Missing' : 'Falta', color: 'red', tips: [] };
+    return { score: 0, label: t('auto_missing'), color: 'red', tips: [] };
   }
   const t = text.trim();
   const wordCount = t.split(/\s+/).length;
@@ -62,34 +62,34 @@ function scoreDescription(text, lang = 'es') {
 
   // Word count (target: 80-200 words)
   if (wordCount >= 100) score += 20;
-  else if (wordCount >= 60) { score += 12; tips.push(`${wordCount} ${lang === 'en' ? 'words (aim 100+)' : 'palabras (ideal 100+)'}`); }
-  else if (wordCount >= 30) { score += 6; tips.push(`${wordCount} ${lang === 'en' ? 'words (too short)' : 'palabras (muy corto)'}`); }
-  else { tips.push(`${wordCount} ${lang === 'en' ? 'words (needs more)' : 'palabras (necesita más)'}`); }
+  else if (wordCount >= 60) { score += 12; tips.push(`${wordCount} ${t('auto_words_aim_100')}`); }
+  else if (wordCount >= 30) { score += 6; tips.push(`${wordCount} ${t('auto_words_too_short')}`); }
+  else { tips.push(`${wordCount} ${t('auto_words_needs_more')}`); }
 
   // Has technical bullets (📍📐🏠🛏️🛁🚗 or m², ha, habitaciones, etc.)
   const techRegex = /(m²|m2|hectárea|ha\b|habitacion|bedroom|baño|bathroom|parqueo|parking|📍|📐|🏠|🛏|🛁|🚗|\d+\s*(hab|bed|bath|baño|park))/i;
   if (techRegex.test(t)) score += 20;
-  else tips.push(lang === 'en' ? 'Add technical specs (m², beds, baths)' : 'Agregar ficha técnica (m², hab, baños)');
+  else tips.push(t('auto_add_technical_specs_m²'));
 
   // Has benefits / value props
   const benefitRegex = /(financiamiento|financing|diseño|design|gratis|free|inversión|investment|rentabilidad|return|plusvalía|appreciation|valor agregado|value|exclusiv|premium|oportunidad|opportunity)/i;
   if (benefitRegex.test(t)) score += 20;
-  else tips.push(lang === 'en' ? 'Mention benefits/value' : 'Mencionar beneficios/valor');
+  else tips.push(t('auto_mention_benefits_value'));
 
   // Has emotional/CTA language (not generic)
   const ctaRegex = /(despierte|imagine|visualice|wake up|imagine|picture|discover|descubr|capitalice|capitalize|brind|provide|asegur|secure|no dej|don't miss|contact|llam|agenda|schedule|visite)/i;
   if (ctaRegex.test(t)) score += 20;
-  else tips.push(lang === 'en' ? 'Add emotional CTA' : 'Agregar cierre emocional');
+  else tips.push(t('auto_add_emotional_cta'));
 
   // Has location context (nearby amenities: school, hospital, airport, beach)
   const contextRegex = /(escuela|school|hospital|aeropuerto|airport|playa|beach|centro|downtown|supermercado|mall|universidad|university|km|minutos|minutes|cerca|near|distancia|distance)/i;
   if (contextRegex.test(t)) score += 20;
-  else tips.push(lang === 'en' ? 'Add nearby amenities' : 'Agregar cercanías (escuelas, hospital...)');
+  else tips.push(t('auto_add_nearby_amenities'));
 
-  const label = score >= 80 ? (lang === 'en' ? 'Professional' : 'Profesional')
-    : score >= 50 ? (lang === 'en' ? 'Decent' : 'Aceptable')
-    : score >= 25 ? (lang === 'en' ? 'Needs work' : 'Necesita mejora')
-    : (lang === 'en' ? 'Poor' : 'Pobre');
+  const label = score >= 80 ? (t('auto_professional'))
+    : score >= 50 ? (t('auto_decent'))
+    : score >= 25 ? (t('auto_needs_work'))
+    : (t('auto_poor'));
   const color = score >= 70 ? 'emerald' : score >= 40 ? 'amber' : 'red';
 
   return { score, label, color, tips };

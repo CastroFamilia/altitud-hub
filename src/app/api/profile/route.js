@@ -36,10 +36,46 @@ export async function PATCH(request) {
     }
 
     // Only allow safe fields to be updated
-    const allowedFields = ['role', 'team_id', 'status', 'full_name', 'phone', 'office', 'remax_agent_id', 'remax_agent_name', 'avatar_url', 'psicotest_url', 'psicotest_file_id', 'olympia_behavior_analysis', 'commission_split', 'monthly_fee', 'fee_start_date'];
+    const allowedFields = ['role', 'team_id', 'status', 'full_name', 'phone', 'office', 'remax_agent_id', 'remax_agent_name', 'avatar_url', 'psicotest_url', 'psicotest_file_id', 'olympia_behavior_analysis', 'commission_split', 'monthly_fee', 'fee_start_date', 'start_date', 'birth_date'];
     const safeUpdates = {};
     for (const key of allowedFields) {
       if (key in updates) safeUpdates[key] = updates[key];
+    }
+
+    // Handle Team Leader team name creation/update
+    if (updates.role === 'team_leader' && updates.team_name) {
+      const { data: existingTeam, error: teamFindError } = await supabase
+        .from('teams')
+        .select('id')
+        .eq('leader_id', id)
+        .maybeSingle();
+
+      if (existingTeam) {
+        const { error: teamUpdateError } = await supabase
+          .from('teams')
+          .update({ name: updates.team_name })
+          .eq('id', existingTeam.id);
+        
+        if (teamUpdateError) {
+          return Response.json({ error: 'Error al actualizar el nombre del equipo: ' + teamUpdateError.message }, { status: 500 });
+        }
+        safeUpdates.team_id = existingTeam.id;
+      } else {
+        const { data: newTeam, error: teamInsertError } = await supabase
+          .from('teams')
+          .insert({
+            name: updates.team_name,
+            leader_id: id,
+            office: updates.office || callerProfile.office || 'altitud'
+          })
+          .select()
+          .single();
+
+        if (teamInsertError) {
+          return Response.json({ error: 'Error al crear el equipo: ' + teamInsertError.message }, { status: 500 });
+        }
+        safeUpdates.team_id = newTeam.id;
+      }
     }
 
     const { data, error: updateError } = await supabase

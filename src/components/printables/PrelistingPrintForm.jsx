@@ -11,7 +11,7 @@ import { useApp } from '@/lib/context';
  */
 export default function PrelistingPrintForm() {
   const { t, lang } = useApp();
-  const today = new Date().toLocaleDateString(lang === 'en' ? 'en-US' : 'es-CR', {
+  const today = new Date().toLocaleDateString(t('auto_en_us'), {
     year: 'numeric', month: 'long', day: 'numeric',
   });
 
@@ -64,12 +64,12 @@ export default function PrelistingPrintForm() {
             RE<span style={{ color: '#CC0000' }}>/</span>MAX <span style={{ fontWeight: 400 }}>Altitud</span>
           </h1>
           <p style={{ fontSize: '8px', color: '#6b7280', fontWeight: 600, marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            {lang === 'en' ? 'Pre-Listing Interview' : 'Entrevista Pre-Listing'}
+            {t('auto_pre_listing_interview')}
           </p>
         </div>
         <div style={{ textAlign: 'right' }}>
           <p style={{ fontSize: '8px', color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {lang === 'en' ? 'Date' : 'Fecha'}
+            {t('auto_date')}
           </p>
           <p style={{ fontSize: '10px', fontWeight: 700, color: '#374151' }}>{today}</p>
         </div>
@@ -77,14 +77,14 @@ export default function PrelistingPrintForm() {
 
       {/* Agent / Office Info */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '4px', marginTop: '16px' }}>
-        {fieldRow(lang === 'en' ? 'Agent Name' : 'Nombre del Agente')}
-        {fieldRow(lang === 'en' ? 'Office' : 'Oficina')}
+        {fieldRow(t('auto_agent_name'))}
+        {fieldRow(t('auto_office'))}
       </div>
 
       {/* ══════════════════════════════════════════════════════ */}
       {/* STEP 1 — OWNERS / CONTACT                            */}
       {/* ══════════════════════════════════════════════════════ */}
-      {sectionTitle(lang === 'en' ? '1 — Contact Information' : '1 — Información de Contacto')}
+      {sectionTitle(t('auto_1_contact_information'))}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
         {fieldRow(t('pre_s1_owner_name'), 2)}
@@ -94,7 +94,7 @@ export default function PrelistingPrintForm() {
       </div>
 
       {/* Decision Structure */}
-      {sectionTitle(lang === 'en' ? 'Decision Structure' : 'Estructura de Decisión')}
+      {sectionTitle(t('auto_decision_structure'))}
 
       {radioRow(
         t('pre_s1_agree_q'),
@@ -107,7 +107,7 @@ export default function PrelistingPrintForm() {
       </div>
 
       {/* Motivation & Urgency */}
-      {sectionTitle(lang === 'en' ? 'Motivation & Urgency' : 'Motivación y Urgencia')}
+      {sectionTitle(t('auto_motivation_urgency'))}
 
       {fieldRow(t('pre_s1_motive_q'), 1)}
 
@@ -121,7 +121,7 @@ export default function PrelistingPrintForm() {
       {/* ══════════════════════════════════════════════════════ */}
       {/* STEP 2 — PROPERTY                                     */}
       {/* ══════════════════════════════════════════════════════ */}
-      {sectionTitle(lang === 'en' ? '2 — Property Identification' : '2 — Identificación de la Propiedad')}
+      {sectionTitle(t('auto_2_property_identification'))}
 
       {fieldRow(t('pre_s2_prop_name'), 1)}
 
@@ -131,14 +131,14 @@ export default function PrelistingPrintForm() {
       </div>
 
       {radioRow(
-        lang === 'en' ? 'Property Type' : 'Tipo de Inmueble',
+        t('auto_property_type'),
         [t('pre_s2_type_house'), t('pre_s2_type_condo'), t('pre_s2_type_land'), t('pre_s2_type_com'), t('pre_s2_type_farm')]
       )}
 
       {/* ══════════════════════════════════════════════════════ */}
       {/* STEP 3 — TECHNICAL SHEET                              */}
       {/* ══════════════════════════════════════════════════════ */}
-      {sectionTitle(lang === 'en' ? '3 — Technical Sheet' : '3 — Ficha Técnica')}
+      {sectionTitle(t('auto_3_technical_sheet'))}
 
       <p style={{ fontSize: '8px', color: '#9ca3af', fontStyle: 'italic', marginBottom: '14px', marginTop: '-8px' }}>
         {lang === 'en' 
@@ -149,7 +149,7 @@ export default function PrelistingPrintForm() {
       {/* Residential Fields */}
       <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px', marginBottom: '14px' }}>
         <p style={{ fontSize: '8px', fontWeight: 800, color: '#003DA5', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>
-          {lang === 'en' ? 'Residential (House / Condo)' : 'Residencial (Casa / Condominio)'}
+          {t('auto_residential_house_condo')}
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 20px' }}>
           {fieldRow(t('pre_s3_m2_const'))}
@@ -165,7 +165,7 @@ export default function PrelistingPrintForm() {
       {/* Land / Farm Fields */}
       <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px', marginBottom: '14px' }}>
         <p style={{ fontSize: '8px', fontWeight: 800, color: '#003DA5', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>
-          {lang === 'en' ? 'Land / Farm' : 'Lote / Finca'}
+          {t('auto_land_farm')}
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 20px' }}>
           {fieldRow(t('pre_s3_area_ha'))}
@@ -177,7 +177,7 @@ export default function PrelistingPrintForm() {
       {/* Commercial Fields */}
       <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px', marginBottom: '14px' }}>
         <p style={{ fontSize: '8px', fontWeight: 800, color: '#003DA5', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>
-          {lang === 'en' ? 'Commercial' : 'Comercial'}
+          {t('auto_commercial')}
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
           {fieldRow(t('pre_s3_com_type'))}
@@ -188,20 +188,20 @@ export default function PrelistingPrintForm() {
       {/* Status */}
       {radioRow(
         t('pre_s3_status_title'),
-        ['Draft', lang === 'en' ? 'Presented' : 'Presentada', 'Follow Up', lang === 'en' ? 'Accepted' : 'Aceptada', lang === 'en' ? 'Rejected' : 'Rechazada']
+        ['Draft', t('auto_presented'), 'Follow Up', t('auto_accepted'), t('auto_rejected')]
       )}
 
       {/* Notes */}
-      {sectionTitle(lang === 'en' ? 'Additional Notes' : 'Notas Adicionales')}
+      {sectionTitle(t('auto_additional_notes'))}
       <div style={{ border: '1px solid #d1d5db', borderRadius: '6px', minHeight: '80px', padding: '8px' }} />
 
       {/* ── FOOTER ── */}
       <div style={{ marginTop: '32px', paddingTop: '12px', borderTop: '2px solid #003DA5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <p style={{ fontSize: '7px', color: '#9ca3af', fontWeight: 600 }}>
-          RE/MAX Altitud — {lang === 'en' ? 'Confidential' : 'Confidencial'} — altitudhub.com
+          RE/MAX Altitud — {t('auto_confidential')} — altitudhub.com
         </p>
         <p style={{ fontSize: '7px', color: '#9ca3af' }}>
-          {lang === 'en' ? 'Signature' : 'Firma'}: __________________________
+          {t('auto_signature')}: __________________________
         </p>
       </div>
     </div>

@@ -50,7 +50,7 @@ export default async function OficinaPage() {
   // Fetch properties for analytics and office goals
   const { data: properties } = await supabase
     .from('properties')
-    .select('id, name, listing_title_es, listing_title_en, status, property_type, property_type_id, created_at, updated_at, sold_date, days_on_market, list_price, list_price_currency_id, listing_agreement, listing_side_comm, selling_side_comm, contact_id, agent_id, unparsed_address, lot_size_area, submitted_at, office_code, property_images(image_url, priority), contacts(lead_origin)')
+    .select('id, name, listing_title_es, listing_title_en, status, property_type, property_type_id, created_at, updated_at, listing_contract_date, sold_date, days_on_market, list_price, list_price_currency_id, listing_agreement, listing_side_comm, selling_side_comm, contact_id, agent_id, unparsed_address, lot_size_area, submitted_at, office_code, property_images(image_url, priority), contacts(lead_origin)')
     .order('updated_at', { ascending: false });
 
   // Fetch developments for analytics

@@ -92,11 +92,11 @@ export default function DesarrollosClient({ initialDevelopments = [] }) {
           {/* Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
             {[
-              { label: lang === 'en' ? 'Developments' : 'Desarrollos', value: stats.total, color: 'from-gray-500 to-gray-600' },
+              { label: t('auto_developments'), value: stats.total, color: 'from-gray-500 to-gray-600' },
               { label: t('dev_stat_active'), value: stats.active, color: 'from-green-400 to-green-500' },
               { label: t('prop_stat_draft'), value: stats.draft, color: 'from-gray-400 to-gray-500' },
               { label: t('dev_stat_total_units'), value: stats.totalUnits, color: 'from-blue-400 to-blue-500' },
-              { label: lang === 'en' ? 'Props Listed' : 'Props Publicadas', value: `${stats.propertiesListed}/${stats.totalUnits}`, color: 'from-amber-400 to-amber-500' },
+              { label: t('auto_props_listed'), value: `${stats.propertiesListed}/${stats.totalUnits}`, color: 'from-amber-400 to-amber-500' },
               { label: t('dev_available_units'), value: stats.availableUnits, color: 'from-emerald-400 to-emerald-500' },
             ].map((stat, i) => (
               <div key={i} className="glass-panel p-3 rounded-xl text-center">

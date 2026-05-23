@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
-import { getAgentAcmReports, getAgentNotes } from '@/lib/dal/office';
+import { getAgentAcmReports, getAgentNotes, getAgentTransactions } from '@/lib/dal/office';
 import AgentOffboardModal from '@/components/oficina/AgentOffboardModal';
 import Image from 'next/image';
 
@@ -10,9 +10,13 @@ export default function AgentEditModal({ profile, profiles, teams, selectedOffic
   const [activeTab, setActiveTab] = useState('general');
   const [role, setRole] = useState(profile.role);
   const [teamId, setTeamId] = useState(profile.team_id || '');
+  const ledTeam = teams.find(t => t.leader_id === profile.id);
+  const [teamName, setTeamName] = useState(ledTeam?.name || '');
   const [commissionSplit, setCommissionSplit] = useState(profile.commission_split || '45/55');
   const [monthlyFee, setMonthlyFee] = useState(profile.monthly_fee || 0);
   const [feeStartDate, setFeeStartDate] = useState(profile.fee_start_date || '');
+  const [startDate, setStartDate] = useState(profile.start_date || '');
+  const [birthDate, setBirthDate] = useState(profile.birth_date || '');
   
   // Evaluation & Notes State
   const [notes, setNotes] = useState([]);
@@ -32,7 +36,7 @@ export default function AgentEditModal({ profile, profiles, teams, selectedOffic
   const fetchTransactions = useCallback(async () => {
     setLoadingTx(true);
     try {
-      const data = await getAgentAcmReports(profile.id, supabase);
+      const data = await getAgentTransactions(profile.id, supabase);
       if (data) setTransactions(data);
     } catch (e) {
       console.error(e);
@@ -40,7 +44,7 @@ export default function AgentEditModal({ profile, profiles, teams, selectedOffic
       setLoadingTx(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agent.id]);
+  }, [profile.id]);
 
   const fetchNotes = useCallback(async () => {
     setLoadingNotes(true);
@@ -53,7 +57,7 @@ export default function AgentEditModal({ profile, profiles, teams, selectedOffic
       setLoadingNotes(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agent.id]);
+  }, [profile.id]);
 
   useEffect(() => {
     if (activeTab === 'evaluacion') {
@@ -196,36 +200,48 @@ export default function AgentEditModal({ profile, profiles, teams, selectedOffic
             </div>
           </div>
           
-          <div className="flex bg-slate-100 dark:bg-slate-900 rounded-xl p-1 shadow-sm border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-3">
+            <div className="flex bg-slate-100 dark:bg-slate-900 rounded-xl p-1 shadow-sm border border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => setActiveTab('general')}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                  activeTab === 'general'
+                    ? 'bg-white dark:bg-slate-700 text-nexus-blue shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-white'
+                }`}
+              >
+                General
+              </button>
+              <button
+                onClick={() => setActiveTab('evaluacion')}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                  activeTab === 'evaluacion'
+                    ? 'bg-white dark:bg-slate-700 text-nexus-blue shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-white'
+                }`}
+              >
+                Evaluación & Notas
+              </button>
+              <button
+                onClick={() => setActiveTab('estado-cuenta')}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                  activeTab === 'estado-cuenta'
+                    ? 'bg-white dark:bg-slate-700 text-nexus-blue shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-white'
+                }`}
+              >
+                {t('ofc_acc_statement')}
+              </button>
+            </div>
+            
             <button
-              onClick={() => setActiveTab('general')}
-              className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                activeTab === 'general'
-                  ? 'bg-white dark:bg-slate-700 text-nexus-blue shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-white'
-              }`}
+              onClick={onClose}
+              className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-750 flex items-center justify-center text-slate-500 dark:text-slate-350 hover:text-slate-800 dark:hover:text-white transition-all shadow-sm flex-shrink-0"
+              title="Cerrar"
             >
-              General
-            </button>
-            <button
-              onClick={() => setActiveTab('evaluacion')}
-              className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                activeTab === 'evaluacion'
-                  ? 'bg-white dark:bg-slate-700 text-nexus-blue shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-white'
-              }`}
-            >
-              Evaluación & Notas
-            </button>
-            <button
-              onClick={() => setActiveTab('estado-cuenta')}
-              className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                activeTab === 'estado-cuenta'
-                  ? 'bg-white dark:bg-slate-700 text-nexus-blue shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-white'
-              }`}
-            >
-              {t('ofc_acc_statement')}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
         </div>
@@ -255,17 +271,33 @@ export default function AgentEditModal({ profile, profiles, teams, selectedOffic
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">{t('ofc_manual_team')}</label>
-                <select
-                  value={teamId}
-                  onChange={e => setTeamId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">{t('ofc_manual_no_team')}</option>
-                  {teams.filter(team => team.office === selectedOffice).map(team => (
-                    <option key={team.id} value={team.id}>{team.name}</option>
-                  ))}
-                </select>
+                {role === 'team_leader' ? (
+                  <div>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Nombre del Equipo que Lidera</label>
+                    <input
+                      type="text"
+                      value={teamName}
+                      onChange={e => setTeamName(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+                      placeholder="Ej. Equipo Debra"
+                      required
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">{t('ofc_manual_team')}</label>
+                    <select
+                      value={teamId}
+                      onChange={e => setTeamId(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">{t('ofc_manual_no_team')}</option>
+                      {teams.filter(team => team.office === selectedOffice).map(team => (
+                        <option key={team.id} value={team.id}>{team.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -282,6 +314,27 @@ export default function AgentEditModal({ profile, profiles, teams, selectedOffic
                     <option value={commissionSplit}>{commissionSplit} (Personalizado)</option>
                   )}
                 </select>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Fecha de Ingreso</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={e => setStartDate(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Fecha de Cumpleaños</label>
+                  <input
+                    type="date"
+                    value={birthDate}
+                    onChange={e => setBirthDate(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -314,18 +367,20 @@ export default function AgentEditModal({ profile, profiles, teams, selectedOffic
                   <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{t('ofc_acc_statement')}</h4>
                   <p className="text-xs text-slate-500">Historial financiero y saldo pendiente con la oficina.</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('ofc_balance_total')}</p>
-                  <p className={`text-2xl font-black italic ${
-                    transactions.reduce((acc, t) => acc + (t.type === 'office_charge' ? Number(t.amount) : -Number(t.amount)), 0) > 0 
-                      ? 'text-red-500' 
-                      : 'text-emerald-500'
-                  }`}>
-                    ${Math.abs(transactions.reduce((acc, t) => acc + (t.type === 'office_charge' ? Number(t.amount) : -Number(t.amount)), 0)).toLocaleString('en-US', {minimumFractionDigits: 2})}
-                  </p>
-                  {transactions.reduce((acc, t) => acc + (t.type === 'office_charge' ? Number(t.amount) : -Number(t.amount)), 0) > 0 && <p className="text-[9px] text-red-500/70 font-bold uppercase mt-1">{t('ofc_debt')}</p>}
-                  {transactions.reduce((acc, t) => acc + (t.type === 'office_charge' ? Number(t.amount) : -Number(t.amount)), 0) === 0 && <p className="text-[9px] text-emerald-500/70 font-bold uppercase mt-1">{t('ofc_up_to_date')}</p>}
-                </div>
+                {(() => {
+                  const approvedTx = transactions.filter(t => t.status !== 'pending');
+                  const balance = approvedTx.reduce((acc, t) => acc + (t.type === 'office_charge' ? Number(t.amount) : -Number(t.amount)), 0);
+                  return (
+                    <div className="text-right">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('ofc_balance_total')}</p>
+                      <p className={`text-2xl font-black italic ${balance > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                        ${Math.abs(balance).toLocaleString('en-US', {minimumFractionDigits: 2})}
+                      </p>
+                      {balance > 0 && <p className="text-[9px] text-red-500/70 font-bold uppercase mt-1">{t('ofc_debt')}</p>}
+                      {balance === 0 && <p className="text-[9px] text-emerald-500/70 font-bold uppercase mt-1">{t('ofc_up_to_date')}</p>}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Filtros */}
@@ -362,13 +417,20 @@ export default function AgentEditModal({ profile, profiles, teams, selectedOffic
                           <td className="px-6 py-4 text-xs font-medium text-slate-500">{new Date(t.date).toLocaleDateString()}</td>
                           <td className="px-6 py-4">
                             <p className="text-sm font-bold text-slate-900 dark:text-white">{t.description || t.category}</p>
-                            <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
-                              t.type === 'office_charge' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' : 
-                              t.type === 'agent_payment' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' : 
-                              'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                            }`}>
-                              {t.type === 'office_charge' ? 'Cargo Oficina' : t.type === 'agent_payment' ? 'Pago Recibido' : 'Gasto Personal'}
-                            </span>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
+                                t.type === 'office_charge' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' : 
+                                t.type === 'agent_payment' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' : 
+                                'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                              }`}>
+                                {t.type === 'office_charge' ? 'Cargo Oficina' : t.type === 'agent_payment' ? 'Pago Recibido' : 'Gasto Personal'}
+                              </span>
+                              {t.status === 'pending' && (
+                                <span className="bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider animate-pulse">
+                                  Pendiente
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className={`px-6 py-4 text-right font-black italic text-sm ${t.type === 'agent_payment' ? 'text-emerald-500' : t.type === 'office_charge' ? 'text-red-500' : 'text-slate-400'}`}>
                             {t.type === 'agent_payment' ? '+' : '-'}${Number(t.amount).toLocaleString('en-US', {minimumFractionDigits: 2})}
@@ -492,42 +554,76 @@ export default function AgentEditModal({ profile, profiles, teams, selectedOffic
           )}
         </div>
 
-        {/* Footer Actions (Only for General Tab to update role/team) */}
-        {activeTab === 'general' && (
-          <div className="p-6 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 rounded-b-[32px]">
-            <button
-              onClick={() => setShowOffboard(true)}
-              className="py-2.5 px-5 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-500 border border-red-200 dark:border-red-800/30 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
-              </svg>
-              {t('ofc_offboard_btn')}
-            </button>
-            <div className="flex gap-3">
+        {/* Footer Actions */}
+        <div className="p-6 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 rounded-b-[32px]">
+          {activeTab === 'general' ? (
+            <>
+              {profile.status === 'disabled' ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ok = window.confirm(`¿Estás seguro de que deseas re-activar al agente ${profile.full_name}? Volverá a estar activo en el roster de la oficina.`);
+                    if (ok) {
+                      onUpdateProfile(profile.id, { status: 'active' });
+                    }
+                  }}
+                  className="py-2.5 px-5 rounded-xl text-[10px] font-black uppercase tracking-widest text-emerald-600 border border-emerald-200 dark:border-emerald-800/30 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Re-activar Agente
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowOffboard(true)}
+                  className="py-2.5 px-5 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-500 border border-red-200 dark:border-red-800/30 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
+                  </svg>
+                  {t('ofc_offboard_btn')}
+                </button>
+              )}
+              <div className="flex gap-3">
+                <button
+                  onClick={onClose}
+                  className="py-2.5 px-6 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-500 border border-slate-200 dark:border-slate-700 hover:bg-white transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    onUpdateProfile(profile.id, { 
+                      role, 
+                      team_id: role === 'team_leader' ? (ledTeam?.id || null) : (teamId || null), 
+                      commission_split: commissionSplit,
+                      monthly_fee: Number(monthlyFee) || 0,
+                      fee_start_date: feeStartDate || null,
+                      team_name: role === 'team_leader' ? teamName : null,
+                      start_date: startDate || null,
+                      birth_date: birthDate || null,
+                    });
+                  }}
+                  className="py-2.5 px-8 rounded-xl text-[11px] font-black uppercase tracking-widest bg-nexus-blue text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all"
+                >
+                  {t('ofc_done')}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex-1"></div>
               <button
                 onClick={onClose}
-                className="py-2.5 px-6 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-500 border border-slate-200 dark:border-slate-700 hover:bg-white transition-colors"
+                className="py-2.5 px-8 rounded-xl text-[11px] font-black uppercase tracking-widest bg-slate-800 hover:bg-slate-900 dark:bg-slate-750 dark:hover:bg-slate-700 text-white shadow-lg transition-all"
               >
-                Cancelar
+                Cerrar
               </button>
-              <button
-                onClick={() => {
-                  onUpdateProfile(profile.id, { 
-                    role, 
-                    team_id: teamId || null, 
-                    commission_split: commissionSplit,
-                    monthly_fee: Number(monthlyFee) || 0,
-                    fee_start_date: feeStartDate || null
-                  });
-                }}
-                className="py-2.5 px-8 rounded-xl text-[11px] font-black uppercase tracking-widest bg-nexus-blue text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all"
-              >
-                {t('ofc_done')}
-              </button>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Offboarding Modal */}

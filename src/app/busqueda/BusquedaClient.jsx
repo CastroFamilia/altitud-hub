@@ -349,7 +349,7 @@ export default function BusquedaClient({ initialSearches = [], initialAllSearche
                             </span>
                           </div>
                           <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest mb-2">
-                            {s.operation_type === 'alquiler' ? (lang === 'en' ? 'RENT' : 'ALQUILER') : (lang === 'en' ? 'SALE' : 'VENTA')} • {s.property_type} • {(s.zones && s.zones.length > 0) ? s.zones.join(', ') : '-'}
+                            {s.operation_type === 'alquiler' ? (t('auto_rent_1')) : (t('auto_sale_1'))} • {s.property_type} • {(s.zones && s.zones.length > 0) ? s.zones.join(', ') : '-'}
                           </p>
                           <p className="text-xs font-black italic text-nexus-blue mb-3">
                             ${Number(s.price_min || 0).toLocaleString()} - ${Number(s.price_max || 0).toLocaleString()}
@@ -383,7 +383,7 @@ export default function BusquedaClient({ initialSearches = [], initialAllSearche
                         </div>
                         <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">{s.property_type}</h4>
                         <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest mb-2">
-                          {s.operation_type === 'alquiler' ? (lang === 'en' ? 'RENT' : 'ALQ') : (lang === 'en' ? 'SALE' : 'VTA')} • {(s.zones && s.zones.length > 0) ? s.zones.join(', ') : '-'}
+                          {s.operation_type === 'alquiler' ? (t('auto_rent_1')) : (t('auto_sale_1'))} • {(s.zones && s.zones.length > 0) ? s.zones.join(', ') : '-'}
                         </p>
                         <p className="text-xs font-black italic text-nexus-blue">
                           ${Number(s.price_min || 0).toLocaleString()} - ${Number(s.price_max || 0).toLocaleString()}

@@ -171,16 +171,16 @@ export default function EditorClient({ initialDevelopment }) {
                   </div>
                   {form.unit_label === 'custom' && (
                     <input type="text" value={form.custom_unit_label} onChange={e => update('custom_unit_label', e.target.value)}
-                      placeholder={lang === 'en' ? 'Custom label...' : 'Etiqueta personalizada...'} className={`${inputCls} mt-2`} />
+                      placeholder={t('auto_custom_label')} className={`${inputCls} mt-2`} />
                   )}
                 </div>
 
                 <div>
-                  <label className={labelCls}>{lang === 'en' ? 'Total Units in Development' : 'Cantidad Total de Unidades'}</label>
+                  <label className={labelCls}>{t('auto_total_units_in_development')}</label>
                   <input type="number" min="0" value={form.total_units} onChange={e => update('total_units', e.target.value)}
-                    placeholder={lang === 'en' ? 'e.g. 24' : 'Ej: 24'} className={inputCls} />
+                    placeholder={t('auto_e_g_24')} className={inputCls} />
                   <p className="text-[10px] text-gray-400 mt-1">
-                    {lang === 'en' ? 'How many units does the development have in total? Not all need to be listed.' : '¿Cuántas unidades tiene el desarrollo en total? No todas necesitan estar publicadas.'}
+                    {t('auto_how_many_units_does')}
                   </p>
                 </div>
               </div>

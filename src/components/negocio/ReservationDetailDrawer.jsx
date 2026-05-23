@@ -77,6 +77,24 @@ export default function ReservationDetailDrawer({ selectedRes, onClose, onReques
             >
               ✏️ {t('neg_edit')}
             </button>
+            {selectedRes.status !== 'closed' && (
+              <button 
+                onClick={async () => {
+                  if (confirm(t('neg_confirm_close_deal') || '¿Estás seguro que deseas marcar este trato como CERRADO? \\n\\nIMPORTANTE: Recuerda ir al Hub de Propiedades y presionar "Marcar como Vendido" para registrar tu comisión y dividirla con la oficina.')) {
+                    try {
+                      const { error } = await supabase.from('office_reservations').update({ status: 'closed', updated_at: new Date().toISOString() }).eq('id', selectedRes.id);
+                      if (error) throw error;
+                      alert('Trato marcado como cerrado exitosamente.');
+                      onClose();
+                      router.refresh();
+                    } catch (err) { alert(err.message); }
+                  }
+                }}
+                className="px-4 py-3 rounded-xl font-medium border-2 border-emerald-500 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-emerald-600 transition-colors"
+              >
+                🎉 Cerrar Trato
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-white/10">

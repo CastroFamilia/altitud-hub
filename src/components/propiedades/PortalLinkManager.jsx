@@ -18,7 +18,7 @@ import { useApp } from '@/lib/context';
    ═══════════════════════════════════════════════════════════════ */
 
 export default function PortalLinkManager({ propertyId, onUpdate }) {
-  const { lang } = useApp();
+  const { t, lang } = useApp();
   const [portals, setPortals] = useState([]);
   const [syndications, setSyndications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -129,7 +129,7 @@ export default function PortalLinkManager({ propertyId, onUpdate }) {
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-          {lang === 'en' ? 'Manage Links' : 'Gestionar Enlaces'}
+          {t('auto_manage_links')}
         </h4>
         {!showForm && (
           <button
@@ -137,7 +137,7 @@ export default function PortalLinkManager({ propertyId, onUpdate }) {
             className="px-2.5 py-1 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-[10px] font-bold transition-colors flex items-center gap-1"
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-            {lang === 'en' ? 'Add Link' : 'Agregar'}
+            {t('auto_add_link')}
           </button>
         )}
       </div>
@@ -162,14 +162,14 @@ export default function PortalLinkManager({ propertyId, onUpdate }) {
                   <button
                     onClick={() => handleEdit(syn)}
                     className="p-1 text-slate-400 hover:text-brand-500 transition-colors"
-                    title={lang === 'en' ? 'Edit' : 'Editar'}
+                    title={t('auto_edit')}
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                   </button>
                   <button
                     onClick={() => handleRemove(syn)}
                     className="p-1 text-slate-400 hover:text-red-500 transition-colors"
-                    title={lang === 'en' ? 'Remove' : 'Eliminar'}
+                    title={t('auto_remove')}
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
@@ -194,7 +194,7 @@ export default function PortalLinkManager({ propertyId, onUpdate }) {
               disabled={!!editingSyn}
               className="w-full text-xs bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-dark-border rounded-lg px-3 py-2 text-slate-700 dark:text-white disabled:opacity-50"
             >
-              <option value="">{lang === 'en' ? 'Select portal...' : 'Seleccionar portal...'}</option>
+              <option value="">{t('auto_select_portal')}</option>
               {availablePortals.map(p => (
                 <option key={p.slug} value={p.slug}>
                   {p.icon_emoji} {p.display_name}
@@ -206,7 +206,7 @@ export default function PortalLinkManager({ propertyId, onUpdate }) {
           {/* URL */}
           <div>
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">
-              {lang === 'en' ? 'Listing URL' : 'URL del Listado'}
+              {t('auto_listing_url')}
             </label>
             <input
               type="url"
@@ -220,7 +220,7 @@ export default function PortalLinkManager({ propertyId, onUpdate }) {
           {/* External ID (optional) */}
           <div>
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">
-              {lang === 'en' ? 'External ID (optional)' : 'ID Externo (opcional)'}
+              {t('auto_external_id_optional')}
             </label>
             <input
               type="text"
@@ -234,13 +234,13 @@ export default function PortalLinkManager({ propertyId, onUpdate }) {
           {/* Notes */}
           <div>
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">
-              {lang === 'en' ? 'Notes' : 'Notas'}
+              {t('auto_notes')}
             </label>
             <input
               type="text"
               value={formNotes}
               onChange={e => setFormNotes(e.target.value)}
-              placeholder={lang === 'en' ? 'e.g. Published on May 20' : 'ej. Publicado el 20 de mayo'}
+              placeholder={t('auto_e_g_published_on')}
               className="w-full text-xs bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-dark-border rounded-lg px-3 py-2 text-slate-700 dark:text-white placeholder:text-slate-300"
             />
           </div>
@@ -257,13 +257,13 @@ export default function PortalLinkManager({ propertyId, onUpdate }) {
               ) : (
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
               )}
-              {lang === 'en' ? 'Save' : 'Guardar'}
+              {t('auto_save')}
             </button>
             <button
               onClick={resetForm}
               className="px-3 py-2 rounded-lg border border-slate-200 dark:border-dark-border text-slate-500 dark:text-slate-400 text-xs font-medium hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
             >
-              {lang === 'en' ? 'Cancel' : 'Cancelar'}
+              {t('auto_cancel')}
             </button>
           </div>
         </div>

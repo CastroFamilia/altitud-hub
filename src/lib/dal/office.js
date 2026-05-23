@@ -127,7 +127,7 @@ export async function getOfficeBusinessPlans(officeId, yearStr, client = null) {
   const supabaseClient = getClient(client);
   const { data, error } = await supabaseClient
     .from('office_business_plans')
-    .select('month, revenue_goal')
+    .select('*')
     .eq('office', officeId)
     .gte('month', `${yearStr}-01-01`)
     .lte('month', `${yearStr}-12-31`);
@@ -246,11 +246,22 @@ export async function getAgentAcmReports(agentId, client = null) {
   return data;
 }
 
+export async function getAgentTransactions(profileId, client = null) {
+  const supabaseClient = getClient(client);
+  const { data, error } = await supabaseClient
+    .from('account_transactions')
+    .select('*')
+    .eq('profile_id', profileId)
+    .order('date', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
 export async function getAgentNotes(agentId, client = null) {
   const supabaseClient = getClient(client);
   const { data, error } = await supabaseClient
     .from('agent_notes')
-    .select('*, author:author_id(full_name)')
+    .select('*, author:profiles!agent_notes_author_id_fkey(full_name, avatar_url)')
     .eq('agent_id', agentId)
     .order('created_at', { ascending: false });
   if (error) throw error;

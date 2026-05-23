@@ -3,7 +3,7 @@
 import { useAuth } from '@/lib/auth-context';
 import { useApp } from '@/lib/context';
 import TopNav from '@/components/layout/TopNav';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Fragment } from 'react';
 import Image from 'next/image';
 
 // --- Local Translation Dictionary ---
@@ -1104,12 +1104,18 @@ export default function EquipoClient({
                               </defs>
                             </svg>
 
-                            <div className="absolute inset-0 flex items-center justify-between px-6 md:px-12 text-white font-bold text-xs pointer-events-none">
-                              <span className="truncate max-w-[140px] uppercase text-[9px] tracking-wide opacity-90">{stage.label}</span>
-                              <div className="flex items-center gap-4">
-                                <span className="text-sm font-black">{stage.count}</span>
+                            <div 
+                              className="absolute inset-y-0 flex items-center justify-between px-3 md:px-6 text-white font-bold pointer-events-none"
+                              style={{ 
+                                width: `${(topWidth + bottomWidth) / 2}%`, 
+                                left: `${50 - (topWidth + bottomWidth) / 4}%` 
+                              }}
+                            >
+                              <span className="truncate max-w-[100px] sm:max-w-[160px] uppercase text-[9px] tracking-wide opacity-90">{stage.label}</span>
+                              <div className="flex items-center gap-2 sm:gap-4">
+                                <span className="text-xs sm:text-sm font-black">{stage.count}</span>
                                 {idx > 0 && (
-                                  <span className="text-[9px] px-1.5 py-0.5 bg-white/20 rounded-md font-medium">
+                                  <span className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 bg-white/20 rounded-md font-medium whitespace-nowrap">
                                     {dropPct}% conv.
                                   </span>
                                 )}
@@ -1228,7 +1234,7 @@ export default function EquipoClient({
                       {filteredAgents.map(ag => {
                         const agData = viewMode === 'ytd' ? ag.ytd : ag.monthly;
                         return (
-                          <g key={ag.profile.id} className="group">
+                          <Fragment key={ag.profile.id}>
                             {/* Main Row */}
                             <tr className={`hover:bg-slate-50 dark:hover:bg-slate-850/50 transition-colors ${expandedAgentId === ag.profile.id ? 'bg-indigo-50/20 dark:bg-indigo-950/10' : ''}`}>
                               <td className="px-5 py-4 font-bold text-xs text-slate-900 dark:text-white flex items-center gap-3">
@@ -1354,7 +1360,7 @@ export default function EquipoClient({
                                 </td>
                               </tr>
                             )}
-                          </g>
+                          </Fragment>
                         );
                       })}
                       {filteredAgents.length === 0 && (

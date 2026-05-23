@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useApp } from '@/lib/context';
 import { PROPERTY_TYPES } from '@/lib/constants/property-constants';
 
 const STATUS_TABS = [
@@ -23,6 +24,7 @@ function formatCurrency(value) {
 }
 
 export default function OfficePortfolioSection({ properties = [], profiles = [], lang = 'es' }) {
+  const { t } = useApp();
   const [activeTypeFilter, setActiveTypeFilter] = useState('all');
   const [activeStatusTab, setActiveStatusTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -132,9 +134,9 @@ export default function OfficePortfolioSection({ properties = [], profiles = [],
               {formatCurrency(kpis.totalValue)}
             </p>
             <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400 mt-1">
-              {lang === 'en' ? 'Portfolio Value' : 'Valor Cartera'}
+              {t('auto_portfolio_value')}
             </p>
-            <p className="text-[10px] text-slate-400 mt-0.5">{kpis.totalCount} {lang === 'en' ? 'properties' : 'propiedades'}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">{kpis.totalCount} {t('auto_properties')}</p>
           </div>
         </div>
 
@@ -170,7 +172,7 @@ export default function OfficePortfolioSection({ properties = [], profiles = [],
             {kpis.avgDOM}d
           </p>
           <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">
-            {lang === 'en' ? 'Avg DOM' : 'Días Prom'}
+            {t('auto_avg_dom')}
           </p>
           <p className="text-[10px] text-slate-400 mt-0.5">{kpis.publishedCount} publicadas</p>
         </div>
@@ -180,7 +182,7 @@ export default function OfficePortfolioSection({ properties = [], profiles = [],
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white dark:bg-slate-800/80 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-700/50">
           <h3 className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400 mb-3">
-            {lang === 'en' ? 'Average Value by Type' : 'Valor Promedio por Tipo'}
+            {t('auto_average_value_by_type')}
           </h3>
           <div className="space-y-2">
             {Object.entries(kpis.byType)
@@ -216,7 +218,7 @@ export default function OfficePortfolioSection({ properties = [], profiles = [],
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-emerald-600/10 dark:from-emerald-500/10 dark:to-emerald-600/15" />
           <div className="relative">
             <h3 className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400 mb-3">
-              {lang === 'en' ? 'Potential Commissions' : 'Comisiones Potenciales'}
+              {t('auto_potential_commissions')}
             </h3>
             <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mb-1">
               {formatCurrency(kpis.totalCommission)}
@@ -245,7 +247,7 @@ export default function OfficePortfolioSection({ properties = [], profiles = [],
       {topAgents.length > 0 && (
         <div className="bg-white dark:bg-slate-800/80 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-700/50">
           <h3 className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400 mb-4">
-            📊 {lang === 'en' ? 'Portfolio by Agent' : 'Cartera por Agente'}
+            📊 {t('auto_portfolio_by_agent')}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {topAgents.map(a => (

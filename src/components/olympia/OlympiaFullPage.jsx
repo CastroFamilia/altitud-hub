@@ -217,7 +217,7 @@ export default function OlympiaFullPage() {
       const data = await response.json();
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: lang === 'en' ? 'Sorry, I had a problem. Please try again.' : 'Lo siento, tuve un problema. Por favor intenta de nuevo.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: t('auto_sorry_i_had_a_1') }]);
     } finally {
       setIsLoading(false);
     }
@@ -246,7 +246,7 @@ export default function OlympiaFullPage() {
       }, 1500);
     } catch (e) {
       console.error(e);
-      alert(lang === 'en' ? 'Error saving preferences' : 'Error al guardar preferencias');
+      alert(t('auto_error_saving_preferences'));
     } finally {
       setIsSavingPrefs(false);
     }
@@ -287,7 +287,7 @@ export default function OlympiaFullPage() {
       setProactiveRecommendations(prev => prev.filter(r => r.id !== rec.id));
     } catch (err) {
       console.error('Error fetching contact for WhatsApp:', err);
-      alert(lang === 'en' ? 'Failed to fetch contact details' : 'Error al obtener datos del contacto');
+      alert(t('auto_failed_to_fetch_contact'));
     }
   };
 
@@ -347,7 +347,7 @@ export default function OlympiaFullPage() {
 
     } catch (err) {
       console.error('Error scheduling follow-up:', err);
-      alert(lang === 'en' ? 'Failed to schedule follow-up' : 'Error al programar el seguimiento');
+      alert(t('auto_failed_to_schedule_follow'));
     } finally {
       setSchedulingId(null);
     }
@@ -364,7 +364,7 @@ export default function OlympiaFullPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-dark-bg overflow-hidden">
-      <TopNav title="Olympia" subtitle={lang === 'en' ? 'Your AI Business Coach' : 'Tu Coach de Negocios con IA'} />
+      <TopNav title="Olympia" subtitle={t('auto_your_ai_business_coach')} />
 
       <div className="flex flex-1 overflow-hidden">
         {/* ── LEFT PANEL — Agent Snapshot & Outreach ──────────── */}
@@ -412,7 +412,7 @@ export default function OlympiaFullPage() {
                     {overdueLeads} {lang === 'en' ? `lead${overdueLeads > 1 ? 's' : ''} overdue >48h` : `lead${overdueLeads > 1 ? 's' : ''} sin contactar >48h`}
                   </p>
                   <p className="text-[10px] text-red-500 dark:text-red-500 mt-0.5">
-                    {lang === 'en' ? 'Requires immediate action' : 'Requiere acción inmediata'}
+                    {t('auto_requires_immediate_action')}
                   </p>
                 </div>
               </div>
@@ -420,7 +420,7 @@ export default function OlympiaFullPage() {
 
             <div>
               <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">
-                {lang === 'en' ? '📊 This Week vs. Goal' : '📊 Esta Semana vs. Meta'}
+                {t('auto_this_week_vs_goal')}
               </h3>
 
               <div className="space-y-2.5">
@@ -453,7 +453,7 @@ export default function OlympiaFullPage() {
               {/* Month & YTD totals */}
               <div className="mt-5 grid grid-cols-2 gap-2">
                 <div className="bg-gray-50 dark:bg-dark-bg rounded-xl p-3 text-center border border-gray-100 dark:border-dark-border">
-                  <p className="text-[9px] text-gray-400 uppercase font-bold tracking-wider">{lang === 'en' ? 'Month Acts.' : 'Actos Mes'}</p>
+                  <p className="text-[9px] text-gray-400 uppercase font-bold tracking-wider">{t('auto_month_acts')}</p>
                   <p className="text-xl font-black text-gray-900 dark:text-white mt-0.5">
                     {ACTIVITIES.reduce((s, a) => s + sumEntries(okrEntries, monthDates, a.key), 0)}
                   </p>
@@ -570,7 +570,7 @@ export default function OlympiaFullPage() {
                   <div className="w-12 h-12 rounded-full overflow-hidden relative ring-4 ring-brand-100 dark:ring-brand-900 animate-pulse">
                     <Image src="/assets/olympia-avatar.png" alt="Olympia" fill className="object-cover" />
                   </div>
-                  <p className="text-sm font-medium">{lang === 'en' ? 'Olympia is warming up...' : 'Olympia está cargando tus datos...'}</p>
+                  <p className="text-sm font-medium">{t('auto_olympia_is_warming_up')}</p>
                 </div>
               </div>
             ) : (
@@ -637,7 +637,7 @@ export default function OlympiaFullPage() {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={lang === 'en' ? 'Ask Olympia anything...' : 'Pregúntale a Olympia lo que sea...'}
+                placeholder={t('auto_ask_olympia_anything')}
                 className="flex-1 bg-gray-100 dark:bg-dark-bg border border-gray-200 dark:border-dark-border focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-2xl px-5 py-3.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 transition-all outline-none"
                 disabled={isLoading || !dataLoaded}
               />
@@ -668,7 +668,7 @@ export default function OlympiaFullPage() {
                     {t('olympia_pref_title')}
                   </h3>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {lang === 'en' ? 'Customize your AI Assistant and alerts' : 'Personaliza tu asistente de IA y alertas'}
+                    {t('auto_customize_your_ai_assistant')}
                   </p>
                 </div>
               </div>
@@ -694,10 +694,10 @@ export default function OlympiaFullPage() {
                   onChange={(e) => setOlympiaTone(e.target.value)}
                   className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border focus:border-brand-500 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white outline-none transition-all"
                 >
-                  <option value="buffini">🏆 {lang === 'en' ? 'Coaching (Buffini)' : 'Coaching (Buffini)'}</option>
-                  <option value="empathetic">❤️ {lang === 'en' ? 'Empathetic' : 'Empático'}</option>
-                  <option value="direct">💼 {lang === 'en' ? 'Direct / Executive' : 'Directo / Ejecutivo'}</option>
-                  <option value="creative">🎨 {lang === 'en' ? 'Creative / Enthusiastic' : 'Creativo / Entusiasta'}</option>
+                  <option value="buffini">🏆 {t('auto_coaching_buffini')}</option>
+                  <option value="empathetic">❤️ {t('auto_empathetic')}</option>
+                  <option value="direct">💼 {t('auto_direct_executive')}</option>
+                  <option value="creative">🎨 {t('auto_creative_enthusiastic')}</option>
                 </select>
               </div>
 
@@ -768,11 +768,11 @@ export default function OlympiaFullPage() {
                   {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map(day => {
                     const isChecked = preferredDays.includes(day);
                     const label = {
-                      Monday: lang === 'en' ? 'Mon' : 'Lun',
-                      Tuesday: lang === 'en' ? 'Tue' : 'Mar',
-                      Wednesday: lang === 'en' ? 'Wed' : 'Mié',
-                      Thursday: lang === 'en' ? 'Thu' : 'Jue',
-                      Friday: lang === 'en' ? 'Fri' : 'Vie'
+                      Monday: t('auto_mon'),
+                      Tuesday: t('auto_tue'),
+                      Wednesday: t('auto_wed'),
+                      Thursday: t('auto_thu'),
+                      Friday: t('auto_fri')
                     }[day];
 
                     return (

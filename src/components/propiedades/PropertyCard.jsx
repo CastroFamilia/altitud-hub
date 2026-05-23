@@ -40,8 +40,8 @@ export default function PropertyCard({ property, lang = 'es', zonePriceMap = {} 
   const location = property.unparsed_address || '';
   const mainImage = property.main_image_url || null;
   const contractType = property.listing_contract_type === 2
-    ? (lang === 'en' ? 'Rent' : 'Alquiler')
-    : (lang === 'en' ? 'Sale' : 'Venta');
+    ? (t('auto_rent'))
+    : (t('auto_sale'));
 
   // Days on market
   const daysOnMarket = property.submitted_at
@@ -145,7 +145,7 @@ export default function PropertyCard({ property, lang = 'es', zonePriceMap = {} 
         <div className={`hidden md:flex shrink-0 w-24 flex-col items-center justify-center border-l border-r border-gray-100 dark:border-dark-border px-2 ${getQualityBg(quality.total)}`}>
           <span className={`text-2xl font-black ${getQualityColor(quality.total)}`}>{quality.total}</span>
           <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">
-            {lang === 'en' ? 'Quality' : 'Calidad'}
+            {t('auto_quality')}
           </span>
           <div className="w-full h-1.5 rounded-full bg-gray-200 dark:bg-dark-border overflow-hidden mt-1.5">
             <div
@@ -161,7 +161,7 @@ export default function PropertyCard({ property, lang = 'es', zonePriceMap = {} 
             {daysOnMarket !== null ? daysOnMarket : '—'}
           </span>
           <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">
-            {lang === 'en' ? 'Days' : 'Días'}
+            {t('auto_days_1')}
           </span>
         </div>
 
@@ -204,7 +204,7 @@ export default function PropertyCard({ property, lang = 'es', zonePriceMap = {} 
           {/* Quality breakdown */}
           <div>
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-2">
-              {lang === 'en' ? 'Listing Quality Breakdown' : 'Desglose de Calidad'}
+              {t('auto_listing_quality_breakdown')}
             </h4>
             <PortfolioQualityMeter property={property} />
           </div>
@@ -215,7 +215,7 @@ export default function PropertyCard({ property, lang = 'es', zonePriceMap = {} 
             {zoneDiffPct !== null && (
               <div className="p-3 rounded-xl bg-white dark:bg-dark-panel border border-gray-100 dark:border-dark-border">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">
-                  {lang === 'en' ? 'Zone Avg $/m²' : 'Zona Prom $/m²'}
+                  {t('auto_zone_avg_m²')}
                 </p>
                 <div className="flex items-baseline gap-2">
                   <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
@@ -226,7 +226,7 @@ export default function PropertyCard({ property, lang = 'es', zonePriceMap = {} 
                 <p className={`text-xs font-black mt-0.5 ${zoneDiffPct > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
                   {zoneDiffPct > 0 ? '↑' : '↓'} {zoneDiffPct > 0 ? '+' : ''}{zoneDiffPct.toFixed(1)}%
                   <span className="text-gray-400 font-normal ml-1">
-                    {zoneDiffPct > 0 ? (lang === 'en' ? 'above avg' : 'sobre prom') : (lang === 'en' ? 'below avg' : 'bajo prom')}
+                    {zoneDiffPct > 0 ? (t('auto_above_avg')) : (t('auto_below_avg'))}
                   </span>
                 </p>
               </div>
@@ -235,7 +235,7 @@ export default function PropertyCard({ property, lang = 'es', zonePriceMap = {} 
             {/* Inquiries */}
             <div className="p-3 rounded-xl bg-white dark:bg-dark-panel border border-gray-100 dark:border-dark-border">
               <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">
-                {lang === 'en' ? 'Inquiries' : 'Consultas'}
+                {t('auto_inquiries')}
               </p>
               <p className="text-lg font-black text-gray-700 dark:text-gray-300">{inquiryCount}</p>
             </div>
@@ -243,7 +243,7 @@ export default function PropertyCard({ property, lang = 'es', zonePriceMap = {} 
             {/* Photos */}
             <div className="p-3 rounded-xl bg-white dark:bg-dark-panel border border-gray-100 dark:border-dark-border">
               <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">
-                {lang === 'en' ? 'Photos' : 'Fotos'}
+                {t('auto_photos_1')}
               </p>
               <p className="text-lg font-black text-gray-700 dark:text-gray-300">{property.image_count || 0}</p>
             </div>
@@ -253,7 +253,7 @@ export default function PropertyCard({ property, lang = 'es', zonePriceMap = {} 
           {portalLinks.length > 0 && (
             <div>
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-2">
-                {lang === 'en' ? 'Published on Portals' : 'Publicada en Portales'}
+                {t('auto_published_on_portals')}
               </h4>
               <div className="flex items-center gap-2 flex-wrap">
                 {portalLinks.map((link, i) => {

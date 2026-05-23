@@ -80,8 +80,8 @@ export default function EstadoCuentaTab() {
   // Calculate global balances per agent
   const agentBalances = agents.map(agent => {
     const agentTx = transactions.filter(t => t.profile_id === agent.id);
-    const charges = agentTx.filter(t => t.type === 'office_charge').reduce((s, t) => s + Number(t.amount), 0);
-    const payments = agentTx.filter(t => t.type === 'agent_payment').reduce((s, t) => s + Number(t.amount), 0);
+    const charges = agentTx.filter(t => t.type === 'office_charge' && t.status !== 'pending').reduce((s, t) => s + Number(t.amount), 0);
+    const payments = agentTx.filter(t => t.type === 'agent_payment' && t.status !== 'pending').reduce((s, t) => s + Number(t.amount), 0);
     return {
       ...agent,
       debt: charges - payments
@@ -93,6 +93,27 @@ export default function EstadoCuentaTab() {
   const selectedAgentTx = selectedAgentId 
     ? transactions.filter(t => t.profile_id === selectedAgentId && t.date.startsWith(selectedMonth))
     : [];
+
+  const pendingAgentTx = selectedAgentId
+    ? transactions.filter(t => t.profile_id === selectedAgentId && t.status === 'pending')
+    : [];
+
+  const handleApproveTx = async (txId) => {
+    if (!supabase) return;
+    try {
+      const { error } = await supabase
+        .from('account_transactions')
+        .update({ status: 'approved' })
+        .eq('id', txId);
+
+      if (error) throw error;
+      alert('Cargo aprobado y aplicado exitosamente.');
+      loadData();
+    } catch (err) {
+      console.error('Error approving transaction:', err);
+      alert('Error al aprobar cargo: ' + err.message);
+    }
+  };
 
   const handleOpenModal = (type) => {
     setTransactionType(type);
@@ -249,7 +270,7 @@ export default function EstadoCuentaTab() {
           ) : (
             <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col h-full">
               {/* Header Profile */}
-              <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/50 dark:bg-slate-900/50">
+              <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/50 dark:bg-nexus-blue/10">
                 <div className="flex items-center gap-4">
                   <Image src={selectedAgent?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedAgent?.full_name || '')}&background=5a82bf&color=fff`} 
                     alt="" 
@@ -278,6 +299,41 @@ export default function EstadoCuentaTab() {
                   </button>
                 </div>
               </div>
+
+              {/* Pending Charges Section */}
+              {pendingAgentTx.length > 0 && (
+                <div className="bg-amber-50/50 dark:bg-amber-950/20 border-b border-amber-100 dark:border-amber-900/40 p-6 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-amber-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <h4 className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-400">Cargos Pendientes de Aprobación</h4>
+                  </div>
+                  <div className="space-y-3">
+                    {pendingAgentTx.map(t => (
+                      <div key={t.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-slate-900 rounded-2xl p-4 border border-amber-200/60 dark:border-amber-900/30 shadow-sm gap-3">
+                        <div>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">{t.description || t.category}</p>
+                          <div className="flex items-center gap-3 mt-1.5 text-[10px] text-slate-400 font-bold uppercase">
+                            <span>{t.category}</span>
+                            <span>•</span>
+                            <span>{new Date(t.date).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 justify-between sm:justify-end">
+                          <p className="text-base font-black italic text-red-500">
+                            ${Number(t.amount).toLocaleString('en-US', {minimumFractionDigits: 2})}
+                          </p>
+                          <button
+                            onClick={() => handleApproveTx(t.id)}
+                            className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-amber-500/10"
+                          >
+                            Aprobar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Filters */}
               <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
@@ -321,13 +377,20 @@ export default function EstadoCuentaTab() {
                             {t.description && <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{t.category}</p>}
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${
-                              t.type === 'office_charge' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' : 
-                              t.type === 'agent_payment' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' : 
-                              'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                            }`}>
-                              {t.type === 'office_charge' ? 'Cargo Oficina' : t.type === 'agent_payment' ? 'Pago Recibido' : 'Gasto Personal'}
-                            </span>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                              <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest self-start ${
+                                t.type === 'office_charge' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' : 
+                                t.type === 'agent_payment' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' : 
+                                'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                              }`}>
+                                {t.type === 'office_charge' ? 'Cargo Oficina' : t.type === 'agent_payment' ? 'Pago Recibido' : 'Gasto Personal'}
+                              </span>
+                              {t.status === 'pending' && (
+                                <span className="bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider self-start animate-pulse">
+                                  Pendiente
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className={`px-6 py-4 text-right font-black italic text-base ${t.type === 'agent_payment' ? 'text-emerald-500' : t.type === 'office_charge' ? 'text-red-500' : 'text-slate-400'}`}>
                             {t.type === 'agent_payment' ? '+' : '-'}${Number(t.amount).toLocaleString('en-US', {minimumFractionDigits: 2})}

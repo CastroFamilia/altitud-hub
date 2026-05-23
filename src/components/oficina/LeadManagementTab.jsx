@@ -87,7 +87,16 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
   useEffect(() => { fetchLeads(); fetchSources(); fetchComms(); fetchFollowUps(); }, [fetchLeads, fetchSources, fetchComms, fetchFollowUps]);
 
   const agents = profiles.filter(p => p.role !== 'photographer');
-  const agentMap = useMemo(() => Object.fromEntries(agents.map(a => [a.id, a])), [agents]);
+  const agentMap = useMemo(() => {
+    const map = {};
+    agents.forEach(a => {
+      map[a.id] = a;
+      if (a.auth_user_id) {
+        map[a.auth_user_id] = a;
+      }
+    });
+    return map;
+  }, [agents]);
 
   // Follow-up lookup: inquiry_id → pending follow-ups
   const followUpMap = useMemo(() => {
@@ -141,8 +150,10 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
   // Filtered by selected agent
   const agentProperties = useMemo(() => {
     if (!form.assigned_agent_id) return [];
-    return propertyOptions.filter(p => p.agent_id === form.assigned_agent_id);
-  }, [propertyOptions, form.assigned_agent_id]);
+    const agentProfile = profiles.find(p => p.id === form.assigned_agent_id);
+    if (!agentProfile) return [];
+    return propertyOptions.filter(p => p.agent_id === agentProfile.auth_user_id || p.agent_id === agentProfile.id);
+  }, [propertyOptions, form.assigned_agent_id, profiles]);
 
   // Property search autocomplete state
   const [propSearch, setPropSearch] = useState('');
@@ -171,7 +182,12 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
   const handleCreate = async () => {
     if (!form.lead_name) return;
     setSaving(true);
-    const payload = { ...form, status: 'new', property_id: form.property_id || null, assigned_agent_id: form.assigned_agent_id || null };
+    let dbAgentId = null;
+    if (form.assigned_agent_id) {
+      const selectedAgentProfile = profiles.find(p => p.id === form.assigned_agent_id);
+      dbAgentId = selectedAgentProfile?.auth_user_id || selectedAgentProfile?.id || null;
+    }
+    const payload = { ...form, status: 'new', property_id: form.property_id || null, assigned_agent_id: dbAgentId };
     if (!payload.property_id) delete payload.property_id;
     if (!payload.assigned_agent_id) delete payload.assigned_agent_id;
     try {
@@ -195,8 +211,13 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
   };
 
   const handleAssign = async (id, agentId) => {
+    let dbAgentId = null;
+    if (agentId) {
+      const selectedAgentProfile = profiles.find(p => p.id === agentId);
+      dbAgentId = selectedAgentProfile?.auth_user_id || selectedAgentProfile?.id || null;
+    }
     try {
-      await updatePropertyInquiry(id, { assigned_agent_id: agentId || null }, supabase);
+      await updatePropertyInquiry(id, { assigned_agent_id: dbAgentId }, supabase);
     } catch (e) {
       console.error(e);
     }
@@ -407,7 +428,7 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
                   </div>
                   <div>
                     <label className="text-[9px] text-slate-400 uppercase font-bold mb-1 block">{t('ofc_leads_agent')}</label>
-                    <select value={lead.assigned_agent_id||''} onChange={e => handleAssign(lead.id, e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-nexus-blue outline-none transition-all">
+                    <select value={agentMap[lead.assigned_agent_id]?.id || ''} onChange={e => handleAssign(lead.id, e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-nexus-blue outline-none transition-all">
                       <option value="">{t('ofc_leads_unassigned')}</option>
                       {agents.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
                     </select>
@@ -418,7 +439,7 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
                 <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
                   <CommunicationPanel
                     lead={lead}
-                    agentId={lead.assigned_agent_id}
+                    agentId={agentMap[lead.assigned_agent_id]?.id || null}
                     communications={communications}
                     onUpdate={() => { fetchComms(); fetchFollowUps(); }}
                     onFollowUpCreated={fetchFollowUps}
@@ -479,7 +500,7 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
             {/* 2. Property autocomplete — only shows after agent selected */}
             {form.assigned_agent_id && (
               <div className="relative">
-                <label className={labelCls}>{lang === 'en' ? 'Property' : 'Propiedad'}</label>
+                <label className={labelCls}>{t('auto_property')}</label>
                 {form.property_id ? (
                   <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3">
                     <span className="text-sm">🏠</span>
@@ -495,7 +516,7 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
                       value={propSearch}
                       onChange={e => { setPropSearch(e.target.value); setShowPropDropdown(true); }}
                       onFocus={() => setShowPropDropdown(true)}
-                      placeholder={lang === 'en' ? 'Type property title or ID...' : 'Escriba título o ID de propiedad...'}
+                      placeholder={t('auto_type_property_title_or')}
                       className={inputCls}
                     />
                     {showPropDropdown && (
@@ -503,8 +524,8 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
                         {filteredProps.length === 0 ? (
                           <p className="px-4 py-3 text-xs text-slate-400 text-center">
                             {agentProperties.length === 0
-                              ? (lang === 'en' ? 'No properties for this agent' : 'Sin propiedades para este agente')
-                              : (lang === 'en' ? 'No matches found' : 'No se encontraron coincidencias')
+                              ? (t('auto_no_properties_for_this'))
+                              : (t('auto_no_matches_found'))
                             }
                           </p>
                         ) : filteredProps.map(p => (
@@ -523,7 +544,7 @@ export default function LeadManagementTab({ profiles = [], initialLeads = [], in
                   </>
                 )}
                 {!form.property_id && agentProperties.length > 0 && (
-                  <p className="text-[10px] text-slate-400 mt-1">{agentProperties.length} {lang === 'en' ? 'properties available' : 'propiedades disponibles'}</p>
+                  <p className="text-[10px] text-slate-400 mt-1">{agentProperties.length} {t('auto_properties_available')}</p>
                 )}
               </div>
             )}

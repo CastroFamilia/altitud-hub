@@ -148,10 +148,10 @@ export default function SoldCongratsModal({
             <div className="relative z-10">
               <p className="text-5xl mb-3">🎉</p>
               <h2 className="text-3xl font-black uppercase tracking-tight mb-1">
-                {lang === 'en' ? 'CONGRATULATIONS!' : '¡FELICIDADES!'}
+                {t('auto_congratulations')}
               </h2>
               <p className="text-emerald-100 text-sm font-medium">
-                {lang === 'en' ? 'Property Sold Successfully' : 'Propiedad Vendida Exitosamente'}
+                {t('auto_property_sold_successfully')}
               </p>
             </div>
           </div>
@@ -161,14 +161,14 @@ export default function SoldCongratsModal({
             {/* Property */}
             <div className="text-center">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                {lang === 'en' ? 'Property' : 'Propiedad'}
+                {t('auto_property')}
               </p>
               <p className="text-lg font-bold text-slate-900 dark:text-white">
-                {propertyTitle || (lang === 'en' ? 'Property' : 'Propiedad')}
+                {propertyTitle || (t('auto_property'))}
               </p>
               {buyerName && (
                 <p className="text-xs text-slate-500 mt-1">
-                  {lang === 'en' ? 'Buyer' : 'Comprador'}: {buyerName}
+                  {t('auto_buyer')}: {buyerName}
                 </p>
               )}
               {closingDate && (
@@ -183,7 +183,7 @@ export default function SoldCongratsModal({
             {/* Agent Earnings — Big Number */}
             <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl p-5 text-center border border-emerald-200 dark:border-emerald-800">
               <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-2">
-                🏆 {lang === 'en' ? 'Your Commission' : 'Tu Comisión'}
+                🏆 {t('auto_your_commission')}
               </p>
               <p className="text-4xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums transition-all duration-300">
                 {fmt(countUp)}
@@ -194,7 +194,7 @@ export default function SoldCongratsModal({
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 text-center">
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                  {lang === 'en' ? 'Gross Commission' : 'Comisión Bruta'}
+                  {t('auto_gross_commission')}
                 </p>
                 <p className="text-sm font-bold text-slate-900 dark:text-white">
                   {fmt(grossCommission)}
@@ -202,7 +202,7 @@ export default function SoldCongratsModal({
               </div>
               <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-center">
                 <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-1">
-                  🏢 {lang === 'en' ? 'Office' : 'Oficina'}
+                  🏢 {t('auto_office')}
                 </p>
                 <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
                   {fmt(officeAmount)}
@@ -215,7 +215,7 @@ export default function SoldCongratsModal({
               onClick={onClose}
               className="w-full py-3.5 rounded-2xl bg-slate-900 dark:bg-slate-700 text-white text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-slate-600 transition-all shadow-xl"
             >
-              {lang === 'en' ? 'Awesome! Back to Dashboard' : '¡Genial! Volver al Dashboard'}
+              {t('auto_awesome_back_to_dashboard')}
             </button>
           </div>
         </div>

@@ -18,13 +18,13 @@ const ACTIVITIES = [
   { key: 'prelistings',    labelKey: 'act_prelistings',    icon: 'clipboard', color: 'indigo',  auto: true, source: 'Pre-Listing' },
   { key: 'acm',            labelKey: 'act_acm',            icon: 'chart',     color: 'blue',    auto: true, source: 'Registro ACM' },
   { key: 'listings',       labelKey: 'act_listings',       icon: 'presentation', color: 'purple', auto: false },
-  { key: 'captaciones',    labelKey: 'act_captaciones',    icon: 'home',      color: 'teal',    auto: true, source: 'API' },
+  { key: 'captaciones',    labelKey: 'act_captaciones',    icon: 'home',      color: 'teal',    auto: true, source: 'HUB' },
   { key: 'busquedas',      labelKey: 'act_busquedas',      icon: 'search',    color: 'indigo',  auto: true, source: 'Portal' },
   { key: 'consultas',      labelKey: 'act_consultas',      icon: 'search',    color: 'cyan',    auto: false },
   { key: 'muestras',       labelKey: 'act_muestras',       icon: 'eye',       color: 'amber',   auto: false },
-  { key: 'reservas',       labelKey: 'act_reservas',       icon: 'bookmark',  color: 'orange',  auto: false },
+  { key: 'reservas',       labelKey: 'act_reservas',       icon: 'bookmark',  color: 'orange',  auto: true, source: 'HUB' },
   { key: 'transacciones',  labelKey: 'act_transacciones',  icon: 'repeat',    color: 'rose',    auto: false },
-  { key: 'cierres',        labelKey: 'act_cierres',        icon: 'check',     color: 'emerald', auto: false },
+  { key: 'cierres',        labelKey: 'act_cierres',        icon: 'check',     color: 'emerald', auto: true, source: 'HUB' },
 ];
 
 /* ═══════════════════════════════════════════════════════
@@ -301,9 +301,17 @@ function DailyFormModal({ isOpen, onClose, onSave, existingEntry, t }) {
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-                  <button onClick={()=>update(a.key,-1)} className="w-8 h-8 md:w-7 md:h-7 rounded-md bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border flex items-center justify-center text-gray-500 hover:text-red-500 hover:border-red-300 active:scale-95 transition-all text-base md:text-sm font-bold">−</button>
-                  <span className="w-7 md:w-8 text-center text-sm font-black text-gray-900 dark:text-white tabular-nums">{values[a.key]||0}</span>
-                  <button onClick={()=>update(a.key,1)} className="w-8 h-8 md:w-7 md:h-7 rounded-md bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border flex items-center justify-center text-gray-500 hover:text-emerald-500 hover:border-emerald-300 active:scale-95 transition-all text-base md:text-sm font-bold">+</button>
+                  {a.auto ? (
+                    <span className="px-3 py-1 rounded bg-slate-100 dark:bg-dark-bg border border-slate-200 dark:border-dark-border text-center text-xs font-black text-slate-500 dark:text-slate-400 tabular-nums">
+                      {values[a.key]||0}
+                    </span>
+                  ) : (
+                    <>
+                      <button onClick={()=>update(a.key,-1)} className="w-8 h-8 md:w-7 md:h-7 rounded-md bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border flex items-center justify-center text-gray-500 hover:text-red-500 hover:border-red-300 active:scale-95 transition-all text-base md:text-sm font-bold">−</button>
+                      <span className="w-7 md:w-8 text-center text-sm font-black text-gray-900 dark:text-white tabular-nums">{values[a.key]||0}</span>
+                      <button onClick={()=>update(a.key,1)} className="w-8 h-8 md:w-7 md:h-7 rounded-md bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border flex items-center justify-center text-gray-500 hover:text-emerald-500 hover:border-emerald-300 active:scale-95 transition-all text-base md:text-sm font-bold">+</button>
+                    </>
+                  )}
                 </div>
               </div>
             );

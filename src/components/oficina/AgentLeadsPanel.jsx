@@ -134,7 +134,7 @@ export default function AgentLeadsPanel() {
                 {lead.properties && (
                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded-lg p-2.5 mb-2">
                     <p className="text-[9px] text-blue-500 dark:text-blue-400 uppercase font-black tracking-wider mb-0.5">
-                      {lang === 'en' ? 'Property' : 'Propiedad'}
+                      {t('auto_property')}
                     </p>
                     <p className="text-xs font-bold text-blue-800 dark:text-blue-200 line-clamp-2">
                       🏠 {lang === 'es' ? (lead.properties.listing_title_es || lead.properties.name) : (lead.properties.listing_title_en || lead.properties.name)}

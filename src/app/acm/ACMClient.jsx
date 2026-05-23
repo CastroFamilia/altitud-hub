@@ -543,7 +543,7 @@ export default function ACMClient({ initialProperties = [] }) {
 
               {/* ACM Reports Table/List */}
               {loading ? (
-                <div className="text-center py-20 text-xs font-bold text-gray-400 uppercase tracking-widest">{lang === 'en' ? 'Loading workspace...' : 'Cargando reportes...'}</div>
+                <div className="text-center py-20 text-xs font-bold text-gray-400 uppercase tracking-widest">{t('auto_loading_workspace')}</div>
               ) : filteredReports.length > 0 ? (
                 <div className="glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-xl">
                   <div className="overflow-x-auto">
@@ -553,7 +553,7 @@ export default function ACMClient({ initialProperties = [] }) {
                           <th className="p-4">{t('acm_linked_property')}</th>
                           <th className="p-4">{t('acm_client')}</th>
                           <th className="p-4">{t('acm_date')}</th>
-                          <th className="p-4">{lang === 'en' ? 'Active Methods' : 'Métodos Activos'}</th>
+                          <th className="p-4">{t('auto_active_methods')}</th>
                           <th className="p-4 text-right">{t('acm_suggested_short')}</th>
                           <th className="p-4 text-center">{t('acm_actions')}</th>
                         </tr>
@@ -595,7 +595,7 @@ export default function ACMClient({ initialProperties = [] }) {
                                     onClick={() => handleEdit(report)}
                                     className="bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-3 py-2 rounded-lg font-bold transition-all"
                                   >
-                                    {lang === 'en' ? 'Edit' : 'Editar'}
+                                    {t('auto_edit')}
                                   </button>
                                   <button
                                     onClick={() => handleDelete(report.id)}
@@ -685,7 +685,7 @@ export default function ACMClient({ initialProperties = [] }) {
                     onClick={() => setIsEditing(false)}
                     className="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-gray-700 dark:text-gray-300 text-xs font-bold uppercase tracking-wider rounded-xl transition-all"
                   >
-                    {lang === 'en' ? 'Back to List' : 'Volver al Listado'}
+                    {t('auto_back_to_list')}
                   </button>
                 </div>
               </div>
@@ -1327,7 +1327,7 @@ export default function ACMClient({ initialProperties = [] }) {
                     {/* Bottom Save bar */}
                     <div className="pt-6 border-t border-white/5 mt-8 flex flex-col md:flex-row justify-between items-center gap-3">
                       <p className="text-[10px] text-gray-400 font-semibold text-center md:text-left">
-                        {lang === 'en' ? 'Review all sections in the left sidebar before saving.' : 'Revisa todas las metodologías activas en la barra lateral antes de guardar.'}
+                        {t('auto_review_all_sections_in')}
                       </p>
                       
                       <button

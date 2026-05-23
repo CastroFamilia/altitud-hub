@@ -252,7 +252,7 @@ export default function AgentOffboardModal({ profile, profiles, onClose, onCompl
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-400">Desvinculado:</span>
+                      <span className="text-xs text-slate-400">{t('ofc_offboard_in_profile')}:</span>
                       <span className="text-[10px] bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full font-black">
                         {totalPlaceholder}
                       </span>
@@ -358,7 +358,7 @@ export default function AgentOffboardModal({ profile, profiles, onClose, onCompl
                 </div>
                 <div className="bg-slate-100 dark:bg-slate-900 rounded-xl p-4 text-center border border-slate-200 dark:border-slate-700">
                   <p className="text-2xl font-black text-slate-500 italic">{totalPlaceholder}</p>
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mt-1">{t('ofc_agent_unlinked')}</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mt-1">{t('ofc_offboard_keep_in_profile')}</p>
                 </div>
               </div>
 
@@ -400,7 +400,7 @@ export default function AgentOffboardModal({ profile, profiles, onClose, onCompl
                   <p className="text-xl font-black text-slate-500 italic">
                     {Object.values(result.placeholderCounts || {}).reduce((a, b) => a + b, 0)}
                   </p>
-                  <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400 mt-1">Desvinculado</p>
+                  <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400 mt-1">{t('ofc_offboard_in_profile')}</p>
                 </div>
                 <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-3 border border-red-200 dark:border-red-800/30">
                   <p className="text-xl font-black text-red-500 italic">{result.businessPlansDeleted || 0}</p>

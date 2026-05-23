@@ -85,8 +85,8 @@ export default function ReportGeneratorClient({ developments }) {
   return (
     <>
       <TopNav
-        title={lang === 'en' ? 'Report Generator' : 'Generador de Reportes'}
-        subtitle={lang === 'en' ? 'Build & share development performance reports' : 'Crea y comparte reportes de rendimiento de desarrollos'}
+        title={t('auto_report_generator')}
+        subtitle={t('auto_build_share_development_performance')}
       />
 
       <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50 dark:bg-dark-bg">
@@ -100,7 +100,7 @@ export default function ReportGeneratorClient({ developments }) {
               </div>
               <div>
                 <h2 className="text-2xl font-black uppercase tracking-wide mb-1">
-                  {lang === 'en' ? 'Performance Report Builder' : 'Constructor de Reportes'}
+                  {t('auto_performance_report_builder')}
                 </h2>
                 <p className="text-blue-200 text-sm leading-relaxed max-w-lg">
                   {lang === 'en'
@@ -118,14 +118,14 @@ export default function ReportGeneratorClient({ developments }) {
 
               {/* Development Selector */}
               <Card>
-                <CardTitle icon="🏗️" label={lang === 'en' ? 'Select Development' : 'Seleccionar Desarrollo'} />
+                <CardTitle icon="🏗️" label={t('auto_select_development')} />
                 {developments.length === 0 ? (
                   <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-4 border border-amber-100 dark:border-amber-900/20">
                     <p className="text-sm text-amber-700 dark:text-amber-400 font-medium">
-                      {lang === 'en' ? 'No developments found. Create one first.' : 'No hay desarrollos. Crea uno primero.'}
+                      {t('auto_no_developments_found_create')}
                     </p>
                     <Link href="/propiedades/desarrollos" className="inline-block mt-2 text-xs font-bold text-amber-600 hover:underline">
-                      {lang === 'en' ? '→ Go to Developments' : '→ Ir a Desarrollos'}
+                      {t('auto_go_to_developments')}
                     </Link>
                   </div>
                 ) : (
@@ -155,7 +155,7 @@ export default function ReportGeneratorClient({ developments }) {
 
               {/* Period */}
               <Card>
-                <CardTitle icon="📅" label={lang === 'en' ? 'Time Period' : 'Período'} />
+                <CardTitle icon="📅" label={t('auto_time_period')} />
                 <div className="grid grid-cols-2 gap-2">
                   {PERIODS.map(p => (
                     <button
@@ -175,7 +175,7 @@ export default function ReportGeneratorClient({ developments }) {
 
               {/* Sections */}
               <Card>
-                <CardTitle icon="📑" label={lang === 'en' ? 'Report Sections' : 'Secciones del Reporte'} />
+                <CardTitle icon="📑" label={t('auto_report_sections')} />
                 <div className="grid grid-cols-2 gap-2">
                   {SECTIONS.map(s => {
                     const active = selectedSections.has(s.key);
@@ -204,12 +204,12 @@ export default function ReportGeneratorClient({ developments }) {
 
               {/* Language & Agent */}
               <Card>
-                <CardTitle icon="⚙️" label={lang === 'en' ? 'Options' : 'Opciones'} />
+                <CardTitle icon="⚙️" label={t('auto_options')} />
                 <div className="space-y-4">
                   {/* Language toggle */}
                   <div>
                     <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">
-                      {lang === 'en' ? 'Report Language' : 'Idioma del Reporte'}
+                      {t('auto_report_language')}
                     </label>
                     <div className="flex gap-2">
                       {[{ key: 'es', label: '🇨🇷 Español' }, { key: 'en', label: '🇺🇸 English' }].map(l => (
@@ -229,13 +229,13 @@ export default function ReportGeneratorClient({ developments }) {
                   {/* Agent name */}
                   <div>
                     <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">
-                      {lang === 'en' ? 'Prepared By' : 'Preparado Por'}
+                      {t('auto_prepared_by')}
                     </label>
                     <input
                       type="text"
                       value={agentName}
                       onChange={e => setAgentName(e.target.value)}
-                      placeholder={lang === 'en' ? 'Agent name (optional)' : 'Nombre del agente (opcional)'}
+                      placeholder={t('auto_agent_name_optional')}
                       className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400"
                     />
                   </div>
@@ -244,13 +244,13 @@ export default function ReportGeneratorClient({ developments }) {
                   {selectedSections.has('commentary') && (
                     <div>
                       <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">
-                        {lang === 'en' ? 'Agent Commentary' : 'Comentarios del Agente'}
+                        {t('auto_agent_commentary')}
                       </label>
                       <textarea
                         value={commentary}
                         onChange={e => setCommentary(e.target.value)}
                         rows={4}
-                        placeholder={lang === 'en' ? 'Add notes or context for your client...' : 'Agrega notas o contexto para tu cliente...'}
+                        placeholder={t('auto_add_notes_or_context')}
                         className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 resize-none"
                       />
                     </div>
@@ -265,11 +265,11 @@ export default function ReportGeneratorClient({ developments }) {
 
                 {/* Live URL Preview */}
                 <Card>
-                  <CardTitle icon="🔗" label={lang === 'en' ? 'Report Link' : 'Link del Reporte'} />
+                  <CardTitle icon="🔗" label={t('auto_report_link')} />
                   {!selectedDev ? (
                     <div className="bg-slate-100 dark:bg-slate-700/50 rounded-xl p-4 text-center">
                       <p className="text-slate-400 text-xs font-medium">
-                        {lang === 'en' ? 'Select a development to generate the link' : 'Selecciona un desarrollo para generar el link'}
+                        {t('auto_select_a_development_to')}
                       </p>
                     </div>
                   ) : (
@@ -286,7 +286,7 @@ export default function ReportGeneratorClient({ developments }) {
                             : 'bg-white dark:bg-slate-800 text-[#003DA5] dark:text-blue-400 border-[#003DA5] dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
                         }`}
                       >
-                        {copied ? `✓ ${lang === 'en' ? 'Copied!' : '¡Copiado!'}` : `🔗 ${lang === 'en' ? 'Copy Link' : 'Copiar Link'}`}
+                        {copied ? `✓ ${t('auto_copied')}` : `🔗 ${t('auto_copy_link')}`}
                       </button>
 
                       <Link
@@ -295,7 +295,7 @@ export default function ReportGeneratorClient({ developments }) {
                         rel="noopener noreferrer"
                         className="block w-full py-3.5 rounded-xl text-xs font-black uppercase tracking-widest text-center bg-[#003DA5] text-white shadow-xl shadow-blue-500/25 hover:bg-[#002d7a] transition-all"
                       >
-                        👁️ {lang === 'en' ? 'Preview Report' : 'Ver Reporte'}
+                        👁️ {t('auto_preview_report')}
                       </Link>
                     </div>
                   )}
@@ -304,22 +304,22 @@ export default function ReportGeneratorClient({ developments }) {
                 {/* Summary */}
                 {selectedDev && (
                   <Card>
-                    <CardTitle icon="📋" label={lang === 'en' ? 'Summary' : 'Resumen'} />
+                    <CardTitle icon="📋" label={t('auto_summary')} />
                     <div className="space-y-2 text-sm">
                       <SummaryRow
-                        label={lang === 'en' ? 'Development' : 'Desarrollo'}
+                        label={t('auto_development')}
                         value={developments.find(d => d.id === selectedDev)?.name || '—'}
                       />
                       <SummaryRow
-                        label={lang === 'en' ? 'Period' : 'Período'}
+                        label={t('auto_period')}
                         value={pLabel(PERIODS.find(p => p.key === period))}
                       />
                       <SummaryRow
-                        label={lang === 'en' ? 'Sections' : 'Secciones'}
+                        label={t('auto_sections')}
                         value={`${selectedSections.size} / ${SECTIONS.length}`}
                       />
                       <SummaryRow
-                        label={lang === 'en' ? 'Language' : 'Idioma'}
+                        label={t('auto_language')}
                         value={reportLang === 'es' ? '🇨🇷 Español' : '🇺🇸 English'}
                       />
                     </div>
@@ -329,12 +329,12 @@ export default function ReportGeneratorClient({ developments }) {
                 {/* Tips */}
                 <div className="bg-blue-50 dark:bg-blue-900/10 rounded-2xl p-4 border border-blue-100 dark:border-blue-900/20">
                   <p className="text-[10px] font-black text-[#003DA5] dark:text-blue-400 uppercase tracking-widest mb-2">
-                    💡 {lang === 'en' ? 'Tips' : 'Consejos'}
+                    💡 {t('auto_tips')}
                   </p>
                   <ul className="text-[10px] text-slate-500 dark:text-slate-400 space-y-1 leading-relaxed">
-                    <li>• {lang === 'en' ? 'The link is public — anyone with it can view' : 'El link es público — cualquiera con él puede verlo'}</li>
-                    <li>• {lang === 'en' ? 'Use Print → Save as PDF to get a branded PDF' : 'Usa Imprimir → Guardar como PDF para obtener un PDF con marca'}</li>
-                    <li>• {lang === 'en' ? 'Toggle sections to hide irrelevant data' : 'Desactiva secciones para ocultar datos innecesarios'}</li>
+                    <li>• {t('auto_the_link_is_public')}</li>
+                    <li>• {t('auto_use_print_save_as')}</li>
+                    <li>• {t('auto_toggle_sections_to_hide')}</li>
                   </ul>
                 </div>
               </div>

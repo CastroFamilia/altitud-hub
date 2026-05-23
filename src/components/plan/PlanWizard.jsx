@@ -81,7 +81,12 @@ export function convertCurrency(amount, fromCurrency, exchangeRate) {
 export default function PlanWizard({ existingPlan, queriedYear = new Date().getFullYear(), onComplete, onSaveDraft }) {
   const { t } = useApp();
   const [step, setStep] = useState(0);
-  const [plan, setPlan] = useState(DEFAULT_PLAN);
+  const [plan, setPlan] = useState(() => {
+    if (existingPlan && Object.keys(existingPlan).length > 0) {
+      return { ...DEFAULT_PLAN, ...existingPlan };
+    }
+    return DEFAULT_PLAN;
+  });
   const [direction, setDirection] = useState(1); // 1=forward, -1=back
   const [saving, setSaving] = useState(false);
 
@@ -135,7 +140,7 @@ export default function PlanWizard({ existingPlan, queriedYear = new Date().getF
   const currentStep = STEPS[step];
 
   return (
-    <div className="min-h-full flex flex-col bg-slate-50 dark:bg-dark-bg">
+    <div className="flex-1 min-h-0 flex flex-col bg-slate-50 dark:bg-dark-bg">
 
       {/* ── Progress Bar ── */}
       <div className="sticky top-0 z-30 bg-white/90 dark:bg-dark-panel/90 backdrop-blur-xl border-b border-gray-200 dark:border-dark-border px-4 md:px-8 py-3">

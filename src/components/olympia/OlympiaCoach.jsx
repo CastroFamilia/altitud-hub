@@ -171,7 +171,7 @@ export default function OlympiaCoach() {
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
     } catch (error) {
       console.error(error);
-      setMessages(prev => [...prev, { role: 'assistant', content: lang === 'en' ? 'Sorry, I had a problem processing your request. Please try again.' : 'Lo siento, tuve un problema al procesar tu solicitud. Por favor intenta de nuevo.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: t('auto_sorry_i_had_a') }]);
     } finally {
       setIsLoading(false);
     }
@@ -224,7 +224,7 @@ export default function OlympiaCoach() {
               <h2 className="text-base font-black text-gray-900 dark:text-white">Olympia</h2>
               <p className="text-[10px] text-emerald-500 font-bold flex items-center gap-1">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                {lang === 'en' ? 'RE/MAX Altitud AI Coach' : 'AI Coach de RE/MAX Altitud'}
+                {t('auto_re_max_altitud_ai')}
               </p>
             </div>
           </div>
@@ -232,7 +232,7 @@ export default function OlympiaCoach() {
             <Link
               href="/olimpia"
               onClick={() => setIsOpen(false)}
-              title={lang === 'en' ? 'Open full Olympia page' : 'Abrir página completa de Olympia'}
+              title={t('auto_open_full_olympia_page')}
               className="p-2 text-gray-400 hover:text-brand-500 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
@@ -316,7 +316,7 @@ export default function OlympiaCoach() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={lang === 'en' ? 'Ask Olympia...' : 'Pregúntale a Olympia...'}
+              placeholder={t('auto_ask_olympia')}
               className="w-full bg-gray-100 dark:bg-dark-bg border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-dark-card focus:ring-0 rounded-full pl-4 pr-12 py-3 text-sm text-gray-900 dark:text-white transition-colors"
               disabled={isLoading}
             />

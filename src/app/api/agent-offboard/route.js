@@ -15,7 +15,7 @@ import { rateLimit } from '@/lib/rate-limit';
  * }
  * 
  * Categories that are NOT in selectedCategories will be reassigned to
- * the system "Agente Desvinculado" placeholder profile.
+ * the system "Otros" placeholder profile.
  */
 
 const ALL_CATEGORIES = [
@@ -93,7 +93,7 @@ export async function POST(request) {
       return Response.json({ error: 'Perfil del agente receptor no encontrado' }, { status: 404 });
     }
 
-    // Get placeholder profile ("Agente Desvinculado")
+    // Get placeholder profile ("Otros")
     const { data: placeholderProfile } = await db
       .from('profiles')
       .select('id, auth_user_id')
@@ -101,7 +101,7 @@ export async function POST(request) {
       .single();
 
     if (!placeholderProfile) {
-      return Response.json({ error: 'Perfil placeholder "Agente Desvinculado" no encontrado. Ejecute la migración primero.' }, { status: 500 });
+      return Response.json({ error: 'Perfil placeholder "Otros" no encontrado. Ejecute la migración primero.' }, { status: 500 });
     }
 
     const departingUserId = departingProfile.auth_user_id;
@@ -202,14 +202,13 @@ export async function POST(request) {
       if (!count) return;
 
       const isSelected = selectedCategories.includes(key);
-      let targetId;
-
-      if (isUserId) {
-        targetId = isSelected ? receivingUserId : (placeholderUserId || receivingUserId);
-      } else {
-        targetId = isSelected ? receivingProfileId : placeholderProfile.id;
+      if (!isSelected) {
+        // If not selected, do not reassign (it stays with the departing agent)
+        placeholderCounts[key] = count;
+        return;
       }
 
+      const targetId = isUserId ? receivingUserId : receivingProfileId;
       const lookupId = isUserId ? departingUserId : departingProfileId;
       if (!lookupId) return;
 
@@ -219,11 +218,7 @@ export async function POST(request) {
         .eq(column, lookupId);
 
       if (!error) {
-        if (isSelected) {
-          reassignedCounts[key] = count;
-        } else {
-          placeholderCounts[key] = count;
-        }
+        reassignedCounts[key] = count;
       }
     }
 
@@ -240,19 +235,19 @@ export async function POST(request) {
     // Handle referrals (two columns)
     if (counts.agent_referrals > 0) {
       const isSelected = selectedCategories.includes('agent_referrals');
-      const targetProfileId = isSelected ? receivingProfileId : placeholderProfile.id;
-
-      await db
-        .from('agent_referrals')
-        .update({ referring_agent_id: targetProfileId })
-        .eq('referring_agent_id', departingProfileId);
-
-      await db
-        .from('agent_referrals')
-        .update({ receiving_agent_id: targetProfileId })
-        .eq('receiving_agent_id', departingProfileId);
-
       if (isSelected) {
+        const targetProfileId = receivingProfileId;
+
+        await db
+          .from('agent_referrals')
+          .update({ referring_agent_id: targetProfileId })
+          .eq('referring_agent_id', departingProfileId);
+
+        await db
+          .from('agent_referrals')
+          .update({ receiving_agent_id: targetProfileId })
+          .eq('receiving_agent_id', departingProfileId);
+
         reassignedCounts.agent_referrals = counts.agent_referrals;
       } else {
         placeholderCounts.agent_referrals = counts.agent_referrals;

@@ -12,7 +12,7 @@ import { getListingDailyStats, getListingPageViewsReferrers, getListingLeadsCoun
    ═══════════════════════════════════════════════════════════════ */
 
 export default function ListingAnalyticsPanel({ propertyId, developmentId }) {
-  const { lang } = useApp();
+  const { t, lang } = useApp();
   const [stats, setStats] = useState({ views7d: 0, views30d: 0, viewsAll: 0, uniqueAll: 0, avgDuration: 0, mobile: 0, desktop: 0, leads: 0 });
   const [dailyData, setDailyData] = useState([]);
   const [topReferrers, setTopReferrers] = useState([]);
@@ -103,15 +103,15 @@ export default function ListingAnalyticsPanel({ propertyId, developmentId }) {
       <div className="grid grid-cols-3 gap-2">
         <div className="text-center">
           <p className="text-lg font-black text-slate-900 dark:text-white tabular-nums">{stats.views7d}</p>
-          <p className="text-[8px] text-slate-400 uppercase font-bold">7 {lang === 'en' ? 'days' : 'días'}</p>
+          <p className="text-[8px] text-slate-400 uppercase font-bold">7 {t('auto_days')}</p>
         </div>
         <div className="text-center">
           <p className="text-lg font-black text-slate-900 dark:text-white tabular-nums">{stats.views30d}</p>
-          <p className="text-[8px] text-slate-400 uppercase font-bold">30 {lang === 'en' ? 'days' : 'días'}</p>
+          <p className="text-[8px] text-slate-400 uppercase font-bold">30 {t('auto_days')}</p>
         </div>
         <div className="text-center">
           <p className="text-lg font-black text-blue-600 dark:text-blue-400 tabular-nums">{stats.viewsAll}</p>
-          <p className="text-[8px] text-slate-400 uppercase font-bold">{lang === 'en' ? 'Total' : 'Total'}</p>
+          <p className="text-[8px] text-slate-400 uppercase font-bold">{t('auto_total')}</p>
         </div>
       </div>
 
@@ -132,22 +132,22 @@ export default function ListingAnalyticsPanel({ propertyId, developmentId }) {
       {/* Detail rows */}
       <div className="space-y-1.5 text-xs">
         <div className="flex justify-between">
-          <span className="text-slate-400">{lang === 'en' ? 'Unique Visitors' : 'Visitantes Únicos'}</span>
+          <span className="text-slate-400">{t('auto_unique_visitors')}</span>
           <span className="font-bold text-slate-700 dark:text-slate-300">{stats.uniqueAll}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-400">{lang === 'en' ? 'Avg. Time' : 'Tiempo Prom.'}</span>
+          <span className="text-slate-400">{t('auto_avg_time')}</span>
           <span className="font-bold text-slate-700 dark:text-slate-300">{formatDuration(stats.avgDuration)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-400">{lang === 'en' ? 'Device' : 'Dispositivo'}</span>
+          <span className="text-slate-400">{t('auto_device')}</span>
           <span className="font-bold text-slate-700 dark:text-slate-300">
             📱 {stats.mobile}% · 🖥️ {stats.desktop}%
           </span>
         </div>
         {stats.leads > 0 && (
           <div className="flex justify-between">
-            <span className="text-slate-400">{lang === 'en' ? 'Leads' : 'Consultas'}</span>
+            <span className="text-slate-400">{t('auto_leads')}</span>
             <span className="font-bold text-emerald-600 dark:text-emerald-400">{stats.leads}</span>
           </div>
         )}
@@ -156,7 +156,7 @@ export default function ListingAnalyticsPanel({ propertyId, developmentId }) {
       {/* Top Referrers */}
       {topReferrers.length > 0 && (
         <div>
-          <p className="text-[8px] text-slate-400 uppercase font-bold mb-1">{lang === 'en' ? 'Top Sources' : 'Top Fuentes'}</p>
+          <p className="text-[8px] text-slate-400 uppercase font-bold mb-1">{t('auto_top_sources')}</p>
           <div className="space-y-1">
             {topReferrers.map((r, i) => (
               <div key={i} className="flex justify-between text-[10px]">

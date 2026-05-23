@@ -23,7 +23,7 @@ const AMENITY_FIELDS = [
 
 const INITIAL_FORM = {
   name: '', listing_title_es: '', listing_title_en: '',
-  property_type_id: 3, listing_contract_type: 1,
+  property_type_id: 3, listing_contract_type: 1, listing_contract_date: '',
   owner_name: '', owner_phones: '', owner_email: '', listing_agreement: false,
   unparsed_address: '', latitude: '', longitude: '',
   bedrooms_total: 0, bathrooms_full: 0, bathrooms_half: 0, stories: 1,
@@ -118,6 +118,7 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
         construction_size: form.construction_size ? Number(form.construction_size) : null,
         list_price: form.list_price ? Number(form.list_price) : null,
         year_built: form.year_built ? Number(form.year_built) : null,
+        listing_contract_date: form.listing_contract_date || null,
       };
 
       // Defense-in-depth: strip contact fields if locked
@@ -189,9 +190,9 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
   };
 
   const steps = [
-    { label: lang === 'en' ? 'Basics & Owner' : 'Básicos y Propietario' },
-    { label: lang === 'en' ? 'Details & Amenities' : 'Detalles y Amenidades' },
-    { label: lang === 'en' ? 'Marketing & Pricing' : 'Marketing y Precio' },
+    { label: t('auto_basics_owner') },
+    { label: t('auto_details_amenities') },
+    { label: t('auto_marketing_pricing') },
   ];
 
   const inputCls = "w-full px-4 py-2 border border-gray-200 dark:border-dark-border rounded-xl bg-slate-50 dark:bg-dark-bg focus:ring-2 focus:ring-brand-500 outline-none transition-colors text-sm";
@@ -210,14 +211,14 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
             <span className="text-gray-800 dark:text-white font-medium">
               {editId
                 ? (lang === 'en' ? `Editing: ${form.name || 'Property'}` : `Editando: ${form.name || 'Propiedad'}`)
-                : (lang === 'en' ? 'New Property' : 'Nueva Propiedad')}
+                : (t('auto_new_property'))}
             </span>
           </div>
 
           {editLoading && (
             <div className="glass-panel rounded-2xl p-12 text-center">
               <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">{lang === 'en' ? 'Loading property...' : 'Cargando propiedad...'}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">{t('auto_loading_property')}</p>
             </div>
           )}
 
@@ -237,45 +238,49 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
             {step === 0 && (
               <>
                 <div className="mb-8 p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 rounded-xl">
-                  <label className={labelCls}>⚡ {lang === 'en' ? 'Import from Pre-Listing / ACM Report' : 'Importar de Carpeta Pre-Listing / Reporte ACM'}</label>
+                  <label className={labelCls}>⚡ {t('auto_import_from_pre_listing')}</label>
                   <select value={selectedAcmId} onChange={handleSelectAcm} className={inputCls}>
-                    <option value="">{lang === 'en' ? 'Select a report to auto-fill...' : 'Selecciona un reporte para auto-completar...'}</option>
+                    <option value="">{t('auto_select_a_report_to')}</option>
                     {acmReports.map(r => (
                       <option key={r.id} value={r.id}>{r.client_name} - {r.property_address} ({new Date(r.created_at).toLocaleDateString()})</option>
                     ))}
                   </select>
                 </div>
 
-                <SectionTitle icon="🏠" title={lang === 'en' ? 'Property Basics' : 'Datos Básicos'} subtitle={lang === 'en' ? 'Type, title, and classification' : 'Tipo, título y clasificación'} />
+                <SectionTitle icon="🏠" title={t('auto_property_basics')} subtitle={t('auto_type_title_and_classification')} />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Internal Name *' : 'Nombre Interno *'}</label>
+                    <label className={labelCls}>{t('auto_internal_name')}</label>
                     <input required value={form.name} onChange={e => set('name', e.target.value)} className={inputCls} placeholder="Ej: Lote Vista Chirripó #12" />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Property Type' : 'Tipo de Propiedad'}</label>
+                    <label className={labelCls}>{t('auto_property_type')}</label>
                     <select value={form.property_type_id} onChange={e => setNum('property_type_id', e.target.value)} className={inputCls}>
                       {PROPERTY_TYPES_LIST.map(pt => (<option key={pt.id} value={pt.id}>{lang === 'en' ? pt.en : pt.es}</option>))}
                     </select>
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Title (Spanish)' : 'Título (Español)'}</label>
+                    <label className={labelCls}>{t('auto_title_spanish')}</label>
                     <input value={form.listing_title_es} onChange={e => set('listing_title_es', e.target.value)} className={inputCls} placeholder="Lote con vista panorámica en..." />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Title (English)' : 'Título (Inglés)'}</label>
+                    <label className={labelCls}>{t('auto_title_english')}</label>
                     <input value={form.listing_title_en} onChange={e => set('listing_title_en', e.target.value)} className={inputCls} placeholder="Panoramic view lot in..." />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Contract Type' : 'Tipo de Contrato'}</label>
+                    <label className={labelCls}>{t('auto_contract_type')}</label>
                     <select value={form.listing_contract_type} onChange={e => setNum('listing_contract_type', e.target.value)} className={inputCls}>
-                      <option value={1}>{lang === 'en' ? 'Sale' : 'Venta'}</option>
-                      <option value={2}>{lang === 'en' ? 'Rent' : 'Alquiler'}</option>
+                      <option value={1}>{t('auto_sale')}</option>
+                      <option value={2}>{t('auto_rent')}</option>
                     </select>
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Office' : 'Oficina'}</label>
+                    <label className={labelCls}>{t('auto_listing_contract_date')}</label>
+                    <input type="date" value={form.listing_contract_date || ''} onChange={e => set('listing_contract_date', e.target.value || '')} className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>{t('auto_office')}</label>
                     <select value={form.office_code} onChange={e => set('office_code', e.target.value)} className={`${inputCls} opacity-70 cursor-not-allowed`} disabled>
                       <option value="">—</option>
                       <option value="R0700130">RE/MAX Altitud</option>
@@ -284,7 +289,7 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
                   </div>
                 </div>
 
-                <SectionTitle icon="👤" title={lang === 'en' ? 'Owner Information' : 'Información del Propietario'} subtitle={lang === 'en' ? 'Required for broker approval' : 'Requerido para aprobación del broker'} />
+                <SectionTitle icon="👤" title={t('auto_owner_information')} subtitle={t('auto_required_for_broker_approval')} />
 
                 {contactLocked && (
                   <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl flex items-start gap-2">
@@ -299,37 +304,37 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Owner Name *' : 'Nombre del Propietario *'}{contactLocked ? ' 🔒' : ''}</label>
+                    <label className={labelCls}>{t('auto_owner_name')}{contactLocked ? ' 🔒' : ''}</label>
                     <input value={form.owner_name} onChange={e => set('owner_name', e.target.value)} className={`${inputCls}${contactLocked ? ' opacity-60 cursor-not-allowed' : ''}`} placeholder="Juan Pérez" disabled={contactLocked} readOnly={contactLocked} />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Owner Phone' : 'Teléfono del Propietario'}{contactLocked ? ' 🔒' : ''}</label>
+                    <label className={labelCls}>{t('auto_owner_phone')}{contactLocked ? ' 🔒' : ''}</label>
                     <input value={form.owner_phones} onChange={e => set('owner_phones', e.target.value)} className={`${inputCls}${contactLocked ? ' opacity-60 cursor-not-allowed' : ''}`} placeholder="+506 8888 8888" disabled={contactLocked} readOnly={contactLocked} />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Owner Email' : 'Email del Propietario'}{contactLocked ? ' 🔒' : ''}</label>
+                    <label className={labelCls}>{t('auto_owner_email')}{contactLocked ? ' 🔒' : ''}</label>
                     <input type="email" value={form.owner_email} onChange={e => set('owner_email', e.target.value)} className={`${inputCls}${contactLocked ? ' opacity-60 cursor-not-allowed' : ''}`} placeholder="owner@email.com" disabled={contactLocked} readOnly={contactLocked} />
                   </div>
                   <div className="flex items-center gap-3 pt-6">
                     <button type="button" onClick={() => set('listing_agreement', !form.listing_agreement)} className={`w-10 h-6 rounded-full transition-colors relative ${form.listing_agreement ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
                       <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${form.listing_agreement ? 'left-[18px]' : 'left-0.5'}`} />
                     </button>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{lang === 'en' ? 'Listing Agreement Signed' : 'Contrato de Exclusiva Firmado'}</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('auto_listing_agreement_signed')}</span>
                   </div>
                 </div>
 
-                <SectionTitle icon="📍" title={lang === 'en' ? 'Location' : 'Ubicación'} />
+                <SectionTitle icon="📍" title={t('auto_location')} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label className={labelCls}>{lang === 'en' ? 'Address' : 'Dirección'}</label>
+                    <label className={labelCls}>{t('auto_address')}</label>
                     <input value={form.unparsed_address} onChange={e => set('unparsed_address', e.target.value)} className={inputCls} placeholder="San Isidro de El General, Pérez Zeledón..." />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Latitude' : 'Latitud'}</label>
+                    <label className={labelCls}>{t('auto_latitude')}</label>
                     <input type="number" step="any" value={form.latitude} onChange={e => set('latitude', e.target.value)} className={inputCls} placeholder="9.3780" />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Longitude' : 'Longitud'}</label>
+                    <label className={labelCls}>{t('auto_longitude')}</label>
                     <input type="number" step="any" value={form.longitude} onChange={e => set('longitude', e.target.value)} className={inputCls} placeholder="-83.7024" />
                   </div>
                 </div>
@@ -339,13 +344,13 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
             {/* ── STEP 1: Details & Amenities ── */}
             {step === 1 && (
               <>
-                <SectionTitle icon="📐" title={lang === 'en' ? 'Property Details' : 'Detalles de la Propiedad'} />
+                <SectionTitle icon="📐" title={t('auto_property_details')} />
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
-                    { key: 'bedrooms_total', label: lang === 'en' ? 'Bedrooms' : 'Habitaciones' },
-                    { key: 'bathrooms_full', label: lang === 'en' ? 'Full Baths' : 'Baños Completos' },
-                    { key: 'bathrooms_half', label: lang === 'en' ? 'Half Baths' : 'Medios Baños' },
-                    { key: 'stories', label: lang === 'en' ? 'Floors' : 'Pisos' },
+                    { key: 'bedrooms_total', label: t('auto_bedrooms') },
+                    { key: 'bathrooms_full', label: t('auto_full_baths') },
+                    { key: 'bathrooms_half', label: t('auto_half_baths') },
+                    { key: 'stories', label: t('auto_floors') },
                   ].map(f => (
                     <div key={f.key}>
                       <label className={labelCls}>{f.label}</label>
@@ -356,20 +361,20 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Lot Size (m²)' : 'Terreno (m²)'}</label>
+                    <label className={labelCls}>{t('auto_lot_size_m²')}</label>
                     <input type="number" value={form.lot_size_area} onChange={e => set('lot_size_area', e.target.value)} className={inputCls} placeholder="500" />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Construction (m²)' : 'Construcción (m²)'}</label>
+                    <label className={labelCls}>{t('auto_construction_m²')}</label>
                     <input type="number" value={form.construction_size} onChange={e => set('construction_size', e.target.value)} className={inputCls} placeholder="180" />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Year Built' : 'Año de Construcción'}</label>
+                    <label className={labelCls}>{t('auto_year_built')}</label>
                     <input type="number" value={form.year_built} onChange={e => set('year_built', e.target.value)} className={inputCls} placeholder="2020" />
                   </div>
                 </div>
 
-                <SectionTitle icon="✨" title={lang === 'en' ? 'Amenities' : 'Amenidades'} subtitle={lang === 'en' ? 'Select all that apply' : 'Selecciona las que apliquen'} />
+                <SectionTitle icon="✨" title={t('auto_amenities')} subtitle={t('auto_select_all_that_apply')} />
                 <div className="flex flex-wrap gap-3">
                   {AMENITY_FIELDS.map(a => (
                     <button key={a.key} type="button" onClick={() => set(a.key, !form[a.key])}
@@ -381,19 +386,19 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
 
                 {form.garage && (
                   <div className="mt-4 max-w-xs">
-                    <label className={labelCls}>{lang === 'en' ? 'Garage Spaces' : 'Espacios de Garaje'}</label>
+                    <label className={labelCls}>{t('auto_garage_spaces')}</label>
                     <input type="number" min="0" value={form.garage_spaces} onChange={e => setNum('garage_spaces', e.target.value)} className={inputCls} />
                   </div>
                 )}
 
-                <SectionTitle icon="📝" title={lang === 'en' ? 'Internal Notes' : 'Notas Internas'} subtitle={lang === 'en' ? 'Only visible to you and broker' : 'Solo visible para ti y el broker'} />
+                <SectionTitle icon="📝" title={t('auto_internal_notes')} subtitle={t('auto_only_visible_to_you')} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Private Notes (ES)' : 'Notas Privadas (ES)'}</label>
+                    <label className={labelCls}>{t('auto_private_notes_es')}</label>
                     <textarea rows={3} value={form.private_remarks_es} onChange={e => set('private_remarks_es', e.target.value)} className={inputCls + ' resize-none'} placeholder="Notas internas..." />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Private Notes (EN)' : 'Notas Privadas (EN)'}</label>
+                    <label className={labelCls}>{t('auto_private_notes_en')}</label>
                     <textarea rows={3} value={form.private_remarks_en} onChange={e => set('private_remarks_en', e.target.value)} className={inputCls + ' resize-none'} placeholder="Internal notes..." />
                   </div>
                 </div>
@@ -403,14 +408,14 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
             {/* ── STEP 2: Marketing & Pricing ── */}
             {step === 2 && (
               <>
-                <SectionTitle icon="💰" title={lang === 'en' ? 'Pricing & Commission' : 'Precio y Comisión'} />
+                <SectionTitle icon="💰" title={t('auto_pricing_commission')} />
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'List Price' : 'Precio de Lista'}</label>
+                    <label className={labelCls}>{t('auto_list_price')}</label>
                     <input type="number" value={form.list_price} onChange={e => set('list_price', e.target.value)} className={inputCls} placeholder="250000" />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Currency' : 'Moneda'}</label>
+                    <label className={labelCls}>{t('auto_currency')}</label>
                     <select value={form.list_price_currency_id} onChange={e => setNum('list_price_currency_id', e.target.value)} className={inputCls}>
                       <option value={2}>USD ($)</option>
                       <option value={1}>CRC (₡)</option>
@@ -418,50 +423,50 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
                   </div>
                   <div className="hidden md:block" />
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Listing Side Comm (%)' : 'Comisión Listing (%)'}</label>
+                    <label className={labelCls}>{t('auto_listing_side_comm')}</label>
                     <input type="number" step="0.5" value={form.listing_side_comm} onChange={e => setNum('listing_side_comm', e.target.value)} className={inputCls} />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Selling Side Comm (%)' : 'Comisión Selling (%)'}</label>
+                    <label className={labelCls}>{t('auto_selling_side_comm')}</label>
                     <input type="number" step="0.5" value={form.selling_side_comm} onChange={e => setNum('selling_side_comm', e.target.value)} className={inputCls} />
                   </div>
                 </div>
 
-                <SectionTitle icon="📢" title={lang === 'en' ? 'Public Description' : 'Descripción Pública'} subtitle={lang === 'en' ? 'Visible on RECONNECT and portals' : 'Visible en RECONNECT y portales'} />
+                <SectionTitle icon="📢" title={t('auto_public_description')} subtitle={t('auto_visible_on_reconnect_and')} />
                 <div className="mb-3 text-right">
                   <a href="https://gemini.google.com/gem/1AEmVQwvskiJS32T5KX9A4VoVZWqfhW-V?usp=sharing" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-500 bg-brand-50 dark:bg-brand-500/10 px-3 py-1.5 rounded-lg transition-colors">
-                    ✨ {lang === 'en' ? 'Write with Gemini AI' : 'Escribir con Gemini AI'}
+                    ✨ {t('auto_write_with_gemini_ai')}
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                   </a>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Description (Spanish)' : 'Descripción (Español)'}</label>
+                    <label className={labelCls}>{t('auto_description_spanish')}</label>
                     <textarea rows={5} value={form.public_remarks_es} onChange={e => set('public_remarks_es', e.target.value)} className={inputCls + ' resize-none'} placeholder="Describa la propiedad..." />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Description (English)' : 'Descripción (Inglés)'}</label>
+                    <label className={labelCls}>{t('auto_description_english')}</label>
                     <textarea rows={5} value={form.public_remarks_en} onChange={e => set('public_remarks_en', e.target.value)} className={inputCls + ' resize-none'} placeholder="Describe the property..." />
                   </div>
                 </div>
 
-                <SectionTitle icon="🎬" title={lang === 'en' ? 'Video & Media' : 'Video y Medios'} />
+                <SectionTitle icon="🎬" title={t('auto_video_media')} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Video Link (YouTube)' : 'Link de Video (YouTube)'}</label>
+                    <label className={labelCls}>{t('auto_video_link_youtube')}</label>
                     <input value={form.video_link} onChange={e => set('video_link', e.target.value)} className={inputCls} placeholder="https://youtube.com/watch?v=..." />
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'Google Drive Link (Photos)' : 'Link de Google Drive (Fotos)'}</label>
+                    <label className={labelCls}>{t('auto_google_drive_link_photos')}</label>
                     <input value={form.drive_photos_folder_url} onChange={e => set('drive_photos_folder_url', e.target.value)} className={inputCls} placeholder="https://drive.google.com/drive/folders/..." />
                   </div>
                 </div>
 
                 {/* Photo section placeholder */}
-                <SectionTitle icon="📸" title={lang === 'en' ? 'Photos' : 'Fotos'} subtitle={lang === 'en' ? 'Photos will be managed via Google Drive after saving' : 'Las fotos se gestionarán vía Google Drive después de guardar'} />
+                <SectionTitle icon="📸" title={t('auto_photos_1')} subtitle={t('auto_photos_will_be_managed')} />
                 <div className="border-2 border-dashed border-gray-300 dark:border-dark-border rounded-2xl p-8 text-center">
                   <svg className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{lang === 'en' ? 'Paste your Drive folder link above. Once submitted, the system can sync them.' : 'Pega el enlace de la carpeta de Drive arriba. Una vez enviada, el sistema podrá sincronizarlas.'}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{t('auto_paste_your_drive_folder')}</p>
                 </div>
               </>
             )}
@@ -471,30 +476,30 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
               <div>
                 {step > 0 && (
                   <button onClick={() => setStep(step - 1)} className="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-panel hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-sm font-medium text-gray-700 dark:text-white">
-                    ← {lang === 'en' ? 'Back' : 'Anterior'}
+                    ← {t('auto_back')}
                   </button>
                 )}
               </div>
               <div className="flex items-center gap-3">
                 {step < 2 ? (
                   <button onClick={() => setStep(step + 1)} className="px-6 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold shadow-md shadow-brand-500/20 transition-all">
-                    {lang === 'en' ? 'Next' : 'Siguiente'} →
+                    {t('auto_next')} →
                   </button>
                 ) : (
                   <>
                     <div className="flex gap-2">
                       <button onClick={() => handleSubmit('draft')} disabled={loading} className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-panel hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-sm font-medium text-gray-700 dark:text-white disabled:opacity-50">
-                        {loading ? '...' : (lang === 'en' ? 'Draft' : 'Borrador')}
+                        {loading ? '...' : (t('auto_draft'))}
                       </button>
                       <button onClick={() => handleSubmit('paused')} disabled={loading} className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-panel hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-sm font-medium text-amber-600 dark:text-amber-500 disabled:opacity-50">
-                        {loading ? '...' : (lang === 'en' ? 'Pause' : 'Pausar')}
+                        {loading ? '...' : (t('auto_pause'))}
                       </button>
                       <button onClick={() => handleSubmit('cancelled')} disabled={loading} className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-panel hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-sm font-medium text-red-600 dark:text-red-500 disabled:opacity-50">
-                        {loading ? '...' : (lang === 'en' ? 'Cancel' : 'Cancelar')}
+                        {loading ? '...' : (t('auto_cancel'))}
                       </button>
                     </div>
                     <button onClick={() => handleSubmit('pending_approval')} disabled={loading} className="px-6 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold shadow-md shadow-brand-500/20 transition-all disabled:opacity-50">
-                      {loading ? '...' : (lang === 'en' ? 'Submit for Approval' : 'Enviar para Aprobación')}
+                      {loading ? '...' : (t('auto_submit_for_approval'))}
                     </button>
                   </>
                 )}

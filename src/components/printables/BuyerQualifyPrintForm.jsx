@@ -10,8 +10,8 @@ import { useApp } from '@/lib/context';
  * Mirrors the PrelistingPrintForm pattern: inline styles for print fidelity.
  */
 export default function BuyerQualifyPrintForm() {
-  const { lang } = useApp();
-  const today = new Date().toLocaleDateString(lang === 'en' ? 'en-US' : 'es-CR', {
+  const { t, lang } = useApp();
+  const today = new Date().toLocaleDateString(t('auto_en_us'), {
     year: 'numeric', month: 'long', day: 'numeric',
   });
 

@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useApp } from '@/lib/context';
 
 export default function DevelopmentAnalytics({ developmentId }) {
-  const { lang } = useApp();
+  const { t, lang } = useApp();
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState([]);
   const [stats, setStats] = useState({
@@ -100,11 +100,11 @@ export default function DevelopmentAnalytics({ developmentId }) {
   const maxVal = Math.max(stats.views, 1); // Avoid div by zero
 
   const funnelStages = [
-    { label: lang === 'en' ? 'Views' : 'Vistas', value: stats.views, color: 'bg-blue-500', desc: lang === 'en' ? 'Total Landing Page Views' : 'Vistas totales de la página', width: '100%' },
-    { label: lang === 'en' ? 'Inquiries' : 'Consultas', value: funnelData.inquiries, color: 'bg-indigo-500', desc: lang === 'en' ? 'Total leads & inquiries' : 'Total de leads y consultas', width: `${Math.max((funnelData.inquiries / maxVal) * 100, 5)}%` },
-    { label: lang === 'en' ? 'Site Visits' : 'Visitas Sitio', value: funnelData.siteVisits, color: 'bg-purple-500', desc: lang === 'en' ? 'Inquiries marked as site visit' : 'Consultas marcadas como visita al sitio', width: `${Math.max((funnelData.siteVisits / maxVal) * 100, 5)}%` },
-    { label: lang === 'en' ? 'Reservations' : 'Reservas', value: funnelData.reservations, color: 'bg-amber-500', desc: lang === 'en' ? 'Active unit reservations' : 'Reservas de unidades activas', width: `${Math.max((funnelData.reservations / maxVal) * 100, 5)}%` },
-    { label: lang === 'en' ? 'Closings' : 'Cierres', value: funnelData.sales, color: 'bg-emerald-500', desc: lang === 'en' ? 'Successfully sold units' : 'Unidades vendidas exitosamente', width: `${Math.max((funnelData.sales / maxVal) * 100, 5)}%` },
+    { label: t('auto_views'), value: stats.views, color: 'bg-blue-500', desc: t('auto_total_landing_page_views'), width: '100%' },
+    { label: t('auto_inquiries'), value: funnelData.inquiries, color: 'bg-indigo-500', desc: t('auto_total_leads_inquiries'), width: `${Math.max((funnelData.inquiries / maxVal) * 100, 5)}%` },
+    { label: t('auto_site_visits'), value: funnelData.siteVisits, color: 'bg-purple-500', desc: t('auto_inquiries_marked_as_site'), width: `${Math.max((funnelData.siteVisits / maxVal) * 100, 5)}%` },
+    { label: t('auto_reservations'), value: funnelData.reservations, color: 'bg-amber-500', desc: t('auto_active_unit_reservations'), width: `${Math.max((funnelData.reservations / maxVal) * 100, 5)}%` },
+    { label: t('auto_closings_1'), value: funnelData.sales, color: 'bg-emerald-500', desc: t('auto_successfully_sold_units'), width: `${Math.max((funnelData.sales / maxVal) * 100, 5)}%` },
   ];
 
   return (
@@ -112,10 +112,10 @@ export default function DevelopmentAnalytics({ developmentId }) {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            {lang === 'en' ? 'Conversion Funnel' : 'Embudo de Conversión'}
+            {t('auto_conversion_funnel')}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {lang === 'en' ? 'Real-time tracking of visitor behavior on the landing page.' : 'Seguimiento en tiempo real del comportamiento de los visitantes.'}
+            {t('auto_real_time_tracking_of')}
           </p>
         </div>
         <button onClick={fetchAnalytics} className="p-2 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 transition-colors">
@@ -152,7 +152,7 @@ export default function DevelopmentAnalytics({ developmentId }) {
         {/* Detailed Metrics */}
         <div className="glass-panel rounded-2xl p-6 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800">
           <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">
-            {lang === 'en' ? 'Event Breakdown' : 'Desglose de Eventos'}
+            {t('auto_event_breakdown')}
           </h3>
           <div className="space-y-3">
             {[

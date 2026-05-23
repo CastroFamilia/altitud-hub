@@ -49,8 +49,8 @@ export default function NuevoDesarrolloClient() {
   };
 
   const handleSave = async (asDraft = true) => {
-    if (!form.name.trim()) return alert(lang === 'en' ? 'Name is required' : 'El nombre es requerido');
-    if (!form.slug.trim()) return alert(lang === 'en' ? 'Slug is required' : 'El slug es requerido');
+    if (!form.name.trim()) return alert(t('auto_name_is_required'));
+    if (!form.slug.trim()) return alert(t('auto_slug_is_required'));
 
     setSaving(true);
     try {
@@ -78,7 +78,7 @@ export default function NuevoDesarrolloClient() {
     } catch (err) {
       console.error('Save error:', err?.message || err);
       const msg = err?.message || JSON.stringify(err);
-      alert(msg?.includes('unique') ? (lang === 'en' ? 'This slug is already in use' : 'Este slug ya está en uso') : (msg || 'Error desconocido'));
+      alert(msg?.includes('unique') ? (t('auto_this_slug_is_already')) : (msg || 'Error desconocido'));
     } finally {
       setSaving(false);
     }
@@ -89,17 +89,17 @@ export default function NuevoDesarrolloClient() {
 
   return (
     <>
-      <TopNav title={lang === 'en' ? 'New Development' : 'Nuevo Desarrollo'} subtitle={lang === 'en' ? 'Create a marketing page for a real estate project' : 'Crea una página de marketing para un proyecto inmobiliario'} />
+      <TopNav title={t('auto_new_development')} subtitle={t('auto_create_a_marketing_page')} />
       <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-dark-bg p-4 md:p-8 overflow-y-auto w-full">
         <div className="max-w-3xl w-full mx-auto">
 
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
             <Link href="/propiedades/desarrollos" className="hover:text-emerald-500 transition-colors">
-              {lang === 'en' ? 'Developments' : 'Desarrollos'}
+              {t('auto_developments')}
             </Link>
             <span>/</span>
-            <span className="text-gray-600 dark:text-white">{lang === 'en' ? 'New' : 'Nuevo'}</span>
+            <span className="text-gray-600 dark:text-white">{t('auto_new')}</span>
           </div>
 
           {/* Form Card */}
@@ -109,12 +109,12 @@ export default function NuevoDesarrolloClient() {
             <div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                 <span className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 text-sm">1</span>
-                {lang === 'en' ? 'Project Information' : 'Información del Proyecto'}
+                {t('auto_project_information')}
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className={labelCls}>{lang === 'en' ? 'Development Name *' : 'Nombre del Desarrollo *'}</label>
+                  <label className={labelCls}>{t('auto_development_name')}</label>
                   <input type="text" value={form.name} onChange={e => update('name', e.target.value)} placeholder="Ej: Monte Verde Residences" className={inputCls} />
                 </div>
 
@@ -126,11 +126,11 @@ export default function NuevoDesarrolloClient() {
                       onChange={e => { setAutoSlug(false); update('slug', slugify(e.target.value)); }}
                       placeholder="monte-verde" className={inputCls} />
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-1">{lang === 'en' ? 'Public URL for the landing page' : 'URL pública para la página de aterrizaje'}</p>
+                  <p className="text-[10px] text-gray-400 mt-1">{t('auto_public_url_for_the')}</p>
                 </div>
 
                 <div>
-                  <label className={labelCls}>{lang === 'en' ? 'Unit Type Label' : 'Etiqueta de Unidades'}</label>
+                  <label className={labelCls}>{t('auto_unit_type_label')}</label>
                   <div className="flex flex-wrap gap-1.5">
                     {UNIT_LABELS.map(label => (
                       <button key={label} onClick={() => update('unit_label', label)}
@@ -140,21 +140,21 @@ export default function NuevoDesarrolloClient() {
                     ))}
                     <button onClick={() => update('unit_label', 'custom')}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${form.unit_label === 'custom' ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-dark-border text-gray-600 dark:text-gray-400 hover:bg-gray-200'}`}>
-                      {lang === 'en' ? 'Custom' : 'Personalizado'}
+                      {t('auto_custom')}
                     </button>
                   </div>
                   {form.unit_label === 'custom' && (
                     <input type="text" value={form.custom_unit_label} onChange={e => update('custom_unit_label', e.target.value)}
-                      placeholder={lang === 'en' ? 'Custom label...' : 'Etiqueta personalizada...'} className={`${inputCls} mt-2`} />
+                      placeholder={t('auto_custom_label')} className={`${inputCls} mt-2`} />
                   )}
                 </div>
 
                 <div>
-                  <label className={labelCls}>{lang === 'en' ? 'Total Units in Development' : 'Cantidad Total de Unidades'}</label>
+                  <label className={labelCls}>{t('auto_total_units_in_development')}</label>
                   <input type="number" min="0" value={form.total_units} onChange={e => update('total_units', e.target.value)}
-                    placeholder={lang === 'en' ? 'e.g. 24' : 'Ej: 24'} className={inputCls} />
+                    placeholder={t('auto_e_g_24')} className={inputCls} />
                   <p className="text-[10px] text-gray-400 mt-1">
-                    {lang === 'en' ? 'How many units does the development have in total? Not all need to be listed.' : '¿Cuántas unidades tiene el desarrollo en total? No todas necesitan estar publicadas.'}
+                    {t('auto_how_many_units_does')}
                   </p>
                 </div>
               </div>
@@ -164,7 +164,7 @@ export default function NuevoDesarrolloClient() {
             <div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                 <span className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 text-sm">2</span>
-                {lang === 'en' ? 'Marketing Copy' : 'Textos de Marketing'}
+                {t('auto_marketing_copy')}
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -183,16 +183,16 @@ export default function NuevoDesarrolloClient() {
             <div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                 <span className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 text-sm">3</span>
-                {lang === 'en' ? 'Developer Info' : 'Información del Desarrollador'}
+                {t('auto_developer_info')}
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>{lang === 'en' ? 'Developer Name' : 'Nombre del Desarrollador'}</label>
+                  <label className={labelCls}>{t('auto_developer_name')}</label>
                   <input type="text" value={form.developer_name} onChange={e => update('developer_name', e.target.value)} placeholder="Ej: Grupo Altitud" className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>{lang === 'en' ? 'Developer Contact' : 'Contacto del Desarrollador'}</label>
+                  <label className={labelCls}>{t('auto_developer_contact')}</label>
                   <input type="text" value={form.developer_contact} onChange={e => update('developer_contact', e.target.value)} placeholder="Email o teléfono" className={inputCls} />
                 </div>
               </div>
@@ -202,21 +202,21 @@ export default function NuevoDesarrolloClient() {
             <div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                 <span className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 text-sm">4</span>
-                {lang === 'en' ? 'Media & Branding' : 'Medios y Marca'}
+                {t('auto_media_branding')}
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>{lang === 'en' ? 'Project Logo URL' : 'URL del Logo del Proyecto'}</label>
+                  <label className={labelCls}>{t('auto_project_logo_url')}</label>
                   <input type="url" value={form.logo_url} onChange={e => update('logo_url', e.target.value)} placeholder="https://..." className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>{lang === 'en' ? 'Cover Image URL (Open Graph)' : 'URL de Imagen de Portada (Open Graph)'}</label>
+                  <label className={labelCls}>{t('auto_cover_image_url_open')}</label>
                   <input type="url" value={form.og_image_url} onChange={e => update('og_image_url', e.target.value)} placeholder="https://..." className={inputCls} />
                 </div>
               </div>
               <p className="text-[10px] text-gray-400 mt-2">
-                {lang === 'en' ? 'You can add more images and content blocks after creating the development.' : 'Podrás agregar más imágenes y bloques de contenido después de crear el desarrollo.'}
+                {t('auto_you_can_add_more')}
               </p>
             </div>
 
@@ -224,15 +224,15 @@ export default function NuevoDesarrolloClient() {
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-6 border-t border-gray-100 dark:border-dark-border">
               <button onClick={() => handleSave(true)} disabled={saving}
                 className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gray-200 dark:bg-dark-border hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-700 dark:text-white text-sm font-semibold transition-all disabled:opacity-50">
-                {saving ? (lang === 'en' ? 'Saving...' : 'Guardando...') : (lang === 'en' ? 'Save as Draft' : 'Guardar como Borrador')}
+                {saving ? (t('auto_saving')) : (t('auto_save_as_draft'))}
               </button>
               <button onClick={() => handleSave(false)} disabled={saving}
                 className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold shadow-md shadow-emerald-500/20 transition-all disabled:opacity-50">
-                {saving ? (lang === 'en' ? 'Saving...' : 'Guardando...') : (lang === 'en' ? 'Save & Submit for Approval' : 'Guardar y Enviar a Aprobación')}
+                {saving ? (t('auto_saving')) : (t('auto_save_submit_for_approval'))}
               </button>
               <Link href="/propiedades/desarrollos"
                 className="w-full sm:w-auto px-6 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:text-gray-700 dark:hover:text-white text-center transition-colors">
-                {lang === 'en' ? 'Cancel' : 'Cancelar'}
+                {t('auto_cancel')}
               </Link>
             </div>
 

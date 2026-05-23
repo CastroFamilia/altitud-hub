@@ -59,7 +59,7 @@ function InventarioTab({ dev, t, lang }) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-bold text-gray-900 dark:text-white">{t('dev_inv_title')}</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{properties.length} {lang === 'en' ? 'properties linked' : 'propiedades vinculadas'}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{properties.length} {t('auto_properties_linked')}</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowPicker(!showPicker)} className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold shadow-md shadow-emerald-500/20 transition-all flex items-center gap-2">
@@ -74,14 +74,14 @@ function InventarioTab({ dev, t, lang }) {
 
       {showPicker && (
         <div className="border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl p-4">
-          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{lang === 'en' ? 'Select a property to link:' : 'Seleccionar propiedad para vincular:'}</p>
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{t('auto_select_a_property_to')}</p>
           <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={t('dev_inv_search')} className="w-full mb-3 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
           {agentProps.filter(p => (p.title_es || p.title_en || '').toLowerCase().includes(search.toLowerCase())).length === 0
-            ? <p className="text-sm text-gray-500 text-center py-4">{lang === 'en' ? 'No unlinked properties found.' : 'No hay propiedades sin vincular.'}</p>
+            ? <p className="text-sm text-gray-500 text-center py-4">{t('auto_no_unlinked_properties_found')}</p>
             : agentProps.filter(p => (p.title_es || p.title_en || '').toLowerCase().includes(search.toLowerCase())).map(p => (
               <button key={p.id} onClick={() => linkProp(p.id)} disabled={linking} className="w-full flex items-center justify-between p-3 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-colors text-left mb-1 disabled:opacity-50">
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white text-sm">{p.title_es || p.title_en || lang === 'en' ? 'Untitled' : 'Sin título'}</p>
+                  <p className="font-medium text-gray-900 dark:text-white text-sm">{p.title_es || p.title_en || t('auto_untitled')}</p>
                   <p className="text-xs text-gray-500">{p.property_type}</p>
                 </div>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COLOR[p.status] || 'bg-gray-100 text-gray-600'}`}>{p.status}</span>
@@ -117,7 +117,7 @@ function InventarioTab({ dev, t, lang }) {
                 {prop.price && <p className="text-emerald-600 dark:text-emerald-400 font-bold text-sm mt-2">${prop.price.toLocaleString()}</p>}
                 <div className="flex gap-2 mt-3">
                   <Link href={`/propiedades/${prop.id}`} className="flex-1 text-center text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-gray-600 dark:text-gray-400">
-                    {lang === 'en' ? 'View' : 'Ver'}
+                    {t('auto_view')}
                   </Link>
                   <button onClick={() => unlinkProp(prop.id)} className="flex-1 text-center text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors">
                     {t('dev_inv_unlink')}
@@ -187,7 +187,7 @@ function AjustesTab({ dev, setDev, t, lang }) {
           </button>
           {dev.status === 'active' && (
             <a href={publicUrl} target="_blank" rel="noreferrer" className="px-4 py-3 rounded-xl text-sm font-semibold border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors whitespace-nowrap">
-              {lang === 'en' ? 'View Live ↗' : 'Ver Pública ↗'}
+              {t('auto_view_live')}
             </a>
           )}
         </div>
@@ -198,7 +198,7 @@ function AjustesTab({ dev, setDev, t, lang }) {
         <h2 className="font-bold text-gray-900 dark:text-white mb-4">{t('dev_settings_edit_meta')}</h2>
         <Link href={`/propiedades/desarrollos/${dev.id}/editar`} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-          {lang === 'en' ? 'Edit Name, Slug & Branding' : 'Editar Nombre, Slug y Branding'}
+          {t('auto_edit_name_slug_branding')}
         </Link>
       </div>
 
@@ -237,7 +237,7 @@ export default function DesarrolloDetailClient({ initialDevelopment }) {
     setActionLoading(true);
     try {
       await updateDevelopment(id, { sections: blocks });
-      alert(lang === 'en' ? 'Saved successfully' : 'Guardado exitosamente');
+      alert(t('auto_saved_successfully'));
     } catch (err) {
       alert('Error: ' + err.message);
     } finally {
@@ -275,7 +275,7 @@ export default function DesarrolloDetailClient({ initialDevelopment }) {
               <div>
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
                   <Link href="/propiedades/desarrollos" className="hover:text-emerald-500 transition-colors">
-                    {lang === 'en' ? 'Developments' : 'Desarrollos'}
+                    {t('auto_developments')}
                   </Link>
                   <span>/</span>
                   <span className="text-gray-600 dark:text-white truncate max-w-[200px] md:max-w-xs">{dev.name}</span>
@@ -288,7 +288,7 @@ export default function DesarrolloDetailClient({ initialDevelopment }) {
                   <span className="font-mono bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded text-xs">/d/{dev.slug}</span>
                   {dev.status === 'active' && (
                     <a href={`/d/${dev.slug}`} target="_blank" rel="noreferrer" className="text-emerald-500 hover:underline flex items-center gap-1 text-xs font-medium">
-                      {lang === 'en' ? 'View Live' : 'Ver Pública'}
+                      {t('auto_view_live_1')}
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                     </a>
                   )}
@@ -299,11 +299,11 @@ export default function DesarrolloDetailClient({ initialDevelopment }) {
                 <button onClick={() => setShowReport(true)}
                   className="px-4 py-2 rounded-xl bg-[#003DA5] hover:bg-[#002d7a] text-white text-sm font-semibold shadow-md shadow-blue-500/20 transition-all flex items-center gap-2">
                   <span>📊</span>
-                  {lang === 'en' ? 'Report' : 'Reporte'}
+                  {t('auto_report')}
                 </button>
                 <button className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 text-sm font-semibold transition-colors flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                  {lang === 'en' ? 'Settings' : 'Configuración'}
+                  {t('auto_settings')}
                 </button>
                 <button onClick={handleSave} disabled={actionLoading} className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold shadow-md shadow-emerald-500/20 transition-all flex items-center gap-2 disabled:opacity-50">
                   {actionLoading ? (
@@ -311,7 +311,7 @@ export default function DesarrolloDetailClient({ initialDevelopment }) {
                   ) : (
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                   )}
-                  {lang === 'en' ? 'Save Changes' : 'Guardar Cambios'}
+                  {t('auto_save_changes')}
                 </button>
               </div>
             </div>
@@ -336,7 +336,7 @@ export default function DesarrolloDetailClient({ initialDevelopment }) {
               <div className="lg:col-span-1 space-y-4">
                 <div className="glass-panel rounded-2xl p-4 sticky top-48">
                   <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">
-                    {lang === 'en' ? 'Page Blocks' : 'Bloques de Página'}
+                    {t('auto_page_blocks')}
                   </h3>
                   
                   <div className="space-y-2">
@@ -383,13 +383,13 @@ export default function DesarrolloDetailClient({ initialDevelopment }) {
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                       </div>
                       <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                        {lang === 'en' ? 'Your page is empty' : 'Tu página está vacía'}
+                        {t('auto_your_page_is_empty')}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                        {lang === 'en' ? 'Start building your marketing page by adding blocks from the panel on the left.' : 'Comienza a construir tu página de marketing agregando bloques desde el panel de la izquierda.'}
+                        {t('auto_start_building_your_marketing')}
                       </p>
                       <button onClick={() => addBlock('hero')} className="px-5 py-2.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-semibold hover:opacity-90 transition-opacity shadow-lg">
-                        {lang === 'en' ? 'Add Hero Block' : 'Agregar Bloque de Portada'}
+                        {t('auto_add_hero_block')}
                       </button>
                     </div>
                   )}
@@ -401,7 +401,7 @@ export default function DesarrolloDetailClient({ initialDevelopment }) {
                 <AjustesTab dev={dev} setDev={setDev} t={t} lang={lang} />
               ) : (
                 <div className="glass-panel rounded-2xl p-12 text-center text-gray-500 dark:text-gray-400">
-                  {lang === 'en' ? 'Tab content coming soon.' : 'Contenido de la pestaña próximamente.'}
+                  {t('auto_tab_content_coming_soon')}
                 </div>
               )}
             </div>

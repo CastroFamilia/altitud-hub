@@ -38,7 +38,7 @@ function StatCard({ value, label, accent }) {
 }
 
 export default function SyndicationPanel({ propertyId, propertyStatus, onPublish, agentId, agentName, propertyTitle, office }) {
-  const { lang } = useApp();
+  const { t, lang } = useApp();
   const [portalsWithSyn, setPortalsWithSyn] = useState([]);
   const [inquiryCounts, setInquiryCounts] = useState({});
   const [loading, setLoading] = useState(true);
@@ -209,28 +209,28 @@ export default function SyndicationPanel({ propertyId, propertyStatus, onPublish
         <div>
           <p className="text-[9px] text-slate-400 uppercase font-bold tracking-wider mb-2 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" />
-            RECONNECT {lang === 'en' ? 'Stats' : 'Estadísticas'}
+            RECONNECT {t('auto_stats')}
           </p>
           <div className="grid grid-cols-3 gap-2">
             <StatCard
               value={reconnectSyn.listing_views || 0}
-              label={lang === 'en' ? 'Views' : 'Vistas'}
+              label={t('auto_views')}
               accent="text-blue-600 dark:text-blue-400"
             />
             <StatCard
               value={reconnectSyn.interested_count || 0}
-              label={lang === 'en' ? 'Interested' : 'Interesados'}
+              label={t('auto_interested')}
               accent="text-emerald-600 dark:text-emerald-400"
             />
             <StatCard
               value={reconnectSyn.days_listed || 0}
-              label={lang === 'en' ? 'Days' : 'Días'}
+              label={t('auto_days_1')}
               accent="text-amber-600 dark:text-amber-400"
             />
           </div>
           {reconnectSyn.stats_updated_at && (
             <p className="text-[8px] text-slate-300 dark:text-slate-600 text-right mt-1">
-              {lang === 'en' ? 'Updated' : 'Actualizado'}: {new Date(reconnectSyn.stats_updated_at).toLocaleDateString()}
+              {t('auto_updated')}: {new Date(reconnectSyn.stats_updated_at).toLocaleDateString()}
             </p>
           )}
         </div>
@@ -248,7 +248,7 @@ export default function SyndicationPanel({ propertyId, propertyStatus, onPublish
           ) : (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
           )}
-          {lang === 'en' ? 'Publish to RECONNECT' : 'Publicar en RECONNECT'}
+          {t('auto_publish_to_reconnect')}
         </button>
       )}
 
@@ -256,7 +256,7 @@ export default function SyndicationPanel({ propertyId, propertyStatus, onPublish
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <p className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">
-            {lang === 'en' ? 'Published on' : 'Publicado en'}
+            {t('auto_published_on')}
           </p>
           <p className="text-xs font-black text-slate-700 dark:text-slate-300">
             {publishedCount}<span className="text-slate-300 dark:text-slate-600">/{totalPortals}</span>
@@ -285,7 +285,7 @@ export default function SyndicationPanel({ propertyId, propertyStatus, onPublish
                     <div className="flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
                       <span className="text-[10px] font-medium text-emerald-500">
-                        {lang === 'en' ? 'Published' : 'Publicado'}
+                        {t('auto_published_1')}
                       </span>
                       {syn?.published_at && (
                         <span className="text-[10px] text-slate-300 dark:text-slate-600">
@@ -334,7 +334,7 @@ export default function SyndicationPanel({ propertyId, propertyStatus, onPublish
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block" />
                     <span className="text-[10px] font-medium text-amber-500">
-                      {lang === 'en' ? 'Requested — pending admin' : 'Solicitado — pendiente admin'}
+                      {t('auto_requested_pending_admin')}
                     </span>
                   </div>
                 </div>
@@ -348,7 +348,7 @@ export default function SyndicationPanel({ propertyId, propertyStatus, onPublish
       {unpublished.length > 0 && (
         <div className="space-y-1">
           <p className="text-[9px] text-slate-300 dark:text-slate-600 uppercase font-bold tracking-wider mt-2 mb-1">
-            {lang === 'en' ? 'Not yet published' : 'Aún no publicado'}
+            {t('auto_not_yet_published')}
           </p>
           {unpublished.map(portal => (
             <div key={portal.slug} className="rounded-xl transition-all">
@@ -359,8 +359,8 @@ export default function SyndicationPanel({ propertyId, propertyStatus, onPublish
                     <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{portal.display_name}</p>
                     <p className="text-[10px] text-slate-300 dark:text-slate-600">
                       {portal.category === 'on_request'
-                        ? (lang === 'en' ? 'Available on request' : 'Disponible bajo solicitud')
-                        : (lang === 'en' ? 'Not published' : 'No publicado')}
+                        ? (t('auto_available_on_request'))
+                        : (t('auto_not_published'))}
                     </p>
                   </div>
                 </div>
@@ -370,7 +370,7 @@ export default function SyndicationPanel({ propertyId, propertyStatus, onPublish
                     className="px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 text-[10px] font-bold hover:bg-brand-100 dark:hover:bg-brand-900/30 transition-colors flex items-center gap-1"
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                    {lang === 'en' ? 'Add Link' : 'Agregar Link'}
+                    {t('auto_add_link')}
                   </button>
                   {portal.category === 'on_request' && (
                     <button
@@ -383,7 +383,7 @@ export default function SyndicationPanel({ propertyId, propertyStatus, onPublish
                       ) : (
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
                       )}
-                      {lang === 'en' ? 'Request' : 'Solicitar'}
+                      {t('auto_request')}
                     </button>
                   )}
                 </div>
@@ -394,7 +394,7 @@ export default function SyndicationPanel({ propertyId, propertyStatus, onPublish
                     type="url"
                     value={linkUrl}
                     onChange={(e) => setLinkUrl(e.target.value)}
-                    placeholder={lang === 'en' ? 'Paste portal link here...' : 'Pegar link del portal aquí...'}
+                    placeholder={t('auto_paste_portal_link_here')}
                     className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg text-sm focus:ring-2 focus:ring-brand-500 outline-none"
                     autoFocus
                     onKeyDown={(e) => e.key === 'Enter' && handleAddLink(portal.slug)}
@@ -404,7 +404,7 @@ export default function SyndicationPanel({ propertyId, propertyStatus, onPublish
                     disabled={savingLink || !linkUrl.trim()}
                     className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-colors disabled:opacity-50"
                   >
-                    {savingLink ? '...' : (lang === 'en' ? 'Save' : 'Guardar')}
+                    {savingLink ? '...' : (t('auto_save'))}
                   </button>
                   <button
                     onClick={() => { setAddingLink(null); setLinkUrl(''); }}

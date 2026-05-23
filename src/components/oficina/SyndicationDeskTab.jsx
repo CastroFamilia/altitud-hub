@@ -41,7 +41,7 @@ function ProgressRing({ value, max, size = 36 }) {
 }
 
 export default function SyndicationDeskTab({ properties: initialProperties = [], profiles = [] }) {
-  const { lang } = useApp();
+  const { t, lang } = useApp();
   const [portals, setPortals] = useState([]);
   const [syndications, setSyndications] = useState([]); // all syndication records
   const [loading, setLoading] = useState(true);
@@ -175,7 +175,7 @@ export default function SyndicationDeskTab({ properties: initialProperties = [],
 
   // Remove a portal link
   const handleRemoveLink = async (propertyId, portalSlug) => {
-    if (!confirm(lang === 'en' ? 'Remove this portal link?' : '¿Eliminar este enlace del portal?')) return;
+    if (!confirm(t('auto_remove_this_portal_link'))) return;
     try {
       await fetch(`/api/portals/syndication?property_id=${propertyId}&portal_name=${portalSlug}`, {
         method: 'DELETE',
@@ -240,7 +240,7 @@ export default function SyndicationDeskTab({ properties: initialProperties = [],
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-xs text-slate-400 uppercase tracking-wider font-bold">
-            {lang === 'en' ? 'Loading properties & portals...' : 'Cargando propiedades y portales...'}
+            {t('auto_loading_properties_portals')}
           </p>
         </div>
       </div>
@@ -254,7 +254,7 @@ export default function SyndicationDeskTab({ properties: initialProperties = [],
         <div>
           <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
             <span>📋</span>
-            {lang === 'en' ? 'Portal Syndication Desk' : 'Cargar Portales'}
+            {t('auto_portal_syndication_desk')}
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
             {lang === 'en'
@@ -268,19 +268,19 @@ export default function SyndicationDeskTab({ properties: initialProperties = [],
           <div className="text-center px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
             <p className="text-xl font-black tabular-nums text-blue-600 dark:text-blue-400">{globalStats.totalProperties}</p>
             <p className="text-[9px] text-blue-400 uppercase font-bold tracking-wider">
-              {lang === 'en' ? 'Properties' : 'Propiedades'}
+              {t('auto_properties_1')}
             </p>
           </div>
           <div className="text-center px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30">
             <p className="text-xl font-black tabular-nums text-amber-600 dark:text-amber-400">{globalStats.totalPending}</p>
             <p className="text-[9px] text-amber-400 uppercase font-bold tracking-wider">
-              {lang === 'en' ? 'Pending' : 'Pendientes'}
+              {t('auto_pending')}
             </p>
           </div>
           <div className="text-center px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">
             <p className="text-xl font-black tabular-nums text-emerald-600 dark:text-emerald-400">{globalStats.totalPublished}</p>
             <p className="text-[9px] text-emerald-400 uppercase font-bold tracking-wider">
-              {lang === 'en' ? 'Published' : 'Publicados'}
+              {t('auto_published_1')}
             </p>
           </div>
         </div>
@@ -299,7 +299,7 @@ export default function SyndicationDeskTab({ properties: initialProperties = [],
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder={lang === 'en' ? 'Search properties...' : 'Buscar propiedades...'}
+            placeholder={t('auto_search_properties')}
             className="w-full pl-10 pr-4 py-2.5 border border-slate-200 dark:border-dark-border rounded-xl text-sm bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
           />
         </div>
@@ -310,7 +310,7 @@ export default function SyndicationDeskTab({ properties: initialProperties = [],
           onChange={e => setFilterAgent(e.target.value)}
           className="px-4 py-2.5 border border-slate-200 dark:border-dark-border rounded-xl text-sm bg-white dark:bg-white/5 text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 min-w-[180px]"
         >
-          <option value="all">{lang === 'en' ? 'All Agents' : 'Todos los Agentes'}</option>
+          <option value="all">{t('auto_all_agents')}</option>
           {agents.map(a => (
             <option key={a.id} value={a.id}>{a.name}</option>
           ))}
@@ -319,9 +319,9 @@ export default function SyndicationDeskTab({ properties: initialProperties = [],
         {/* Status filter */}
         <div className="flex bg-slate-100 dark:bg-white/5 rounded-xl p-0.5 border border-slate-200 dark:border-dark-border">
           {[
-            { key: 'incomplete', label: lang === 'en' ? 'Pending' : 'Pendientes' },
-            { key: 'all', label: lang === 'en' ? 'All' : 'Todas' },
-            { key: 'complete', label: lang === 'en' ? 'Complete' : 'Completas' },
+            { key: 'incomplete', label: t('auto_pending') },
+            { key: 'all', label: t('auto_all') },
+            { key: 'complete', label: t('auto_complete') },
           ].map(f => (
             <button
               key={f.key}
@@ -344,8 +344,8 @@ export default function SyndicationDeskTab({ properties: initialProperties = [],
           <p className="text-4xl mb-3">🎉</p>
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
             {filterStatus === 'incomplete'
-              ? (lang === 'en' ? 'All portals are loaded! Great work.' : '¡Todos los portales están cargados! Gran trabajo.')
-              : (lang === 'en' ? 'No properties found.' : 'No se encontraron propiedades.')}
+              ? (t('auto_all_portals_are_loaded'))
+              : (t('auto_no_properties_found_1'))}
           </p>
         </div>
       ) : (
@@ -459,7 +459,7 @@ export default function SyndicationDeskTab({ properties: initialProperties = [],
                                   type="url"
                                   value={linkValue}
                                   onChange={e => setLinkValue(e.target.value)}
-                                  placeholder={lang === 'en' ? 'Paste portal link...' : 'Pegar enlace del portal...'}
+                                  placeholder={t('auto_paste_portal_link')}
                                   className="flex-1 px-3 py-1.5 rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-dark-bg text-xs focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                                   autoFocus
                                   onKeyDown={e => {
@@ -483,7 +483,7 @@ export default function SyndicationDeskTab({ properties: initialProperties = [],
                               </div>
                             ) : (
                               <span className="text-[10px] text-slate-300 dark:text-slate-600 italic">
-                                {lang === 'en' ? 'Not loaded' : 'No cargado'}
+                                {t('auto_not_loaded')}
                               </span>
                             )}
                           </div>
@@ -499,7 +499,7 @@ export default function SyndicationDeskTab({ properties: initialProperties = [],
                                     setLinkValue(syn.portal_listing_url || '');
                                   }}
                                   className="p-1.5 rounded-lg text-slate-300 hover:text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
-                                  title={lang === 'en' ? 'Edit link' : 'Editar enlace'}
+                                  title={t('auto_edit_link')}
                                 >
                                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                 </button>
@@ -507,7 +507,7 @@ export default function SyndicationDeskTab({ properties: initialProperties = [],
                                 <button
                                   onClick={() => handleRemoveLink(property.id, portal.slug)}
                                   className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                  title={lang === 'en' ? 'Remove' : 'Eliminar'}
+                                  title={t('auto_remove')}
                                 >
                                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                 </button>
@@ -521,7 +521,7 @@ export default function SyndicationDeskTab({ properties: initialProperties = [],
                                 className="px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 text-[10px] font-bold hover:bg-brand-100 dark:hover:bg-brand-900/30 transition-colors flex items-center gap-1"
                               >
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                                {lang === 'en' ? 'Add Link' : 'Cargar'}
+                                {t('auto_add_link')}
                               </button>
                             ) : null}
                           </div>

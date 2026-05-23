@@ -53,8 +53,8 @@ export default function EstadoCuentaClient({ initialTransactions = [] }) {
   // Removed initial loadTransactions in useEffect, keep function for refreshing
 
   // Calculations
-  const totalCharges = transactions.filter(t => t.type === 'office_charge').reduce((sum, t) => sum + Number(t.amount), 0);
-  const totalPayments = transactions.filter(t => t.type === 'agent_payment').reduce((sum, t) => sum + Number(t.amount), 0);
+  const totalCharges = transactions.filter(t => t.type === 'office_charge' && t.status !== 'pending').reduce((sum, t) => sum + Number(t.amount), 0);
+  const totalPayments = transactions.filter(t => t.type === 'agent_payment' && t.status !== 'pending').reduce((sum, t) => sum + Number(t.amount), 0);
   const debtToOffice = totalCharges - totalPayments;
 
   // Filter for display
@@ -211,9 +211,16 @@ export default function EstadoCuentaClient({ initialTransactions = [] }) {
                           </p>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded text-[10px] font-bold">
-                            {t.category}
-                          </span>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <span className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded text-[10px] font-bold self-start">
+                              {t.category}
+                            </span>
+                            {t.status === 'pending' && (
+                              <span className="bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider self-start animate-pulse">
+                                Pendiente Aprobación
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className={`px-6 py-4 text-right font-black italic text-base ${t.type === 'agent_payment' ? 'text-emerald-500' : t.type === 'office_charge' ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
                           {t.type === 'agent_payment' ? '+' : '-'}${Number(t.amount).toLocaleString('en-US', {minimumFractionDigits: 2})}

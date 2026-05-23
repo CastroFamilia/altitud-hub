@@ -169,7 +169,7 @@ export default function CommissionCalculator({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">
-            {lang === 'en' ? 'Sale Price (USD)' : 'Precio de Venta (USD)'}
+            {t('auto_sale_price_usd')}
           </label>
           <input
             type="number"
@@ -181,7 +181,7 @@ export default function CommissionCalculator({
         </div>
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">
-            {lang === 'en' ? 'Closing Date' : 'Fecha de Cierre'}
+            {t('auto_closing_date')}
           </label>
           <input
             type="date"
@@ -196,7 +196,7 @@ export default function CommissionCalculator({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">
-            {lang === 'en' ? 'Buyer Name' : 'Nombre Comprador'}
+            {t('auto_buyer_name')}
           </label>
           <input
             type="text"
@@ -207,7 +207,7 @@ export default function CommissionCalculator({
         </div>
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">
-            {lang === 'en' ? 'Buyer Agent' : 'Agente Comprador'}
+            {t('auto_buyer_agent')}
           </label>
           <input
             type="text"
@@ -218,7 +218,7 @@ export default function CommissionCalculator({
         </div>
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">
-            {lang === 'en' ? 'Buyer Office' : 'Oficina Comprador'}
+            {t('auto_buyer_office')}
           </label>
           <input
             type="text"
@@ -233,7 +233,7 @@ export default function CommissionCalculator({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">
-            {lang === 'en' ? 'Total Commission %' : 'Comisión Total %'}
+            {t('auto_total_commission')}
           </label>
           <input
             type="number"
@@ -244,13 +244,13 @@ export default function CommissionCalculator({
         </div>
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">
-            {lang === 'en' ? 'Agent Side' : 'Lado del Agente'}
+            {t('auto_agent_side')}
           </label>
           <div className="flex gap-1">
             {[
-              { key: 'listing', label: lang === 'en' ? 'Listing' : 'Captación' },
-              { key: 'selling', label: lang === 'en' ? 'Selling' : 'Venta' },
-              { key: 'both', label: lang === 'en' ? 'Both' : 'Ambos' },
+              { key: 'listing', label: t('auto_listing') },
+              { key: 'selling', label: t('auto_selling') },
+              { key: 'both', label: t('auto_both') },
             ].map(s => (
               <button
                 key={s.key}
@@ -268,7 +268,7 @@ export default function CommissionCalculator({
         </div>
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">
-            {lang === 'en' ? 'Side % of Gross' : '% del Bruto'}
+            {t('auto_side_of_gross')}
           </label>
           <input
             type="number"
@@ -282,7 +282,7 @@ export default function CommissionCalculator({
       {/* Agent Tier */}
       <div>
         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">
-          {lang === 'en' ? 'Agent Commission Tier' : 'Nivel de Comisión del Agente'}
+          {t('auto_agent_commission_tier')}
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {tiers.map(tier => (
@@ -307,7 +307,7 @@ export default function CommissionCalculator({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">
-            {lang === 'en' ? 'Referral % (optional)' : 'Referido % (opcional)'}
+            {t('auto_referral_optional')}
           </label>
           <input
             type="number"
@@ -319,7 +319,7 @@ export default function CommissionCalculator({
         </div>
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">
-            {lang === 'en' ? 'Referral Agent' : 'Agente Referidor'}
+            {t('auto_referral_agent')}
           </label>
           <input
             type="text"
@@ -334,36 +334,36 @@ export default function CommissionCalculator({
       <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white">
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-            {lang === 'en' ? 'Commission Breakdown' : 'Desglose de Comisión'}
+            {t('auto_commission_breakdown')}
           </h4>
           {isStarterTier && (
             <span className="text-[9px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-bold">
-              {lang === 'en' ? 'Flat split (45/6/49)' : 'Split directo (45/6/49)'}
+              {t('auto_flat_split_45_6')}
             </span>
           )}
         </div>
 
         <div className="space-y-3">
           <div className="flex justify-between items-baseline">
-            <span className="text-sm text-slate-400">{lang === 'en' ? 'Sale Price' : 'Precio de Venta'}</span>
+            <span className="text-sm text-slate-400">{t('auto_sale_price')}</span>
             <span className="text-lg font-bold">{fmt(price)}</span>
           </div>
 
           <div className="flex justify-between items-baseline">
-            <span className="text-sm text-slate-400">{lang === 'en' ? 'Gross Commission' : 'Comisión Bruta'} ({totalCommPct}%)</span>
+            <span className="text-sm text-slate-400">{t('auto_gross_commission')} ({totalCommPct}%)</span>
             <span className="text-lg font-bold">{fmt(grossCommission)}</span>
           </div>
 
           <div className="border-t border-slate-700 pt-3 flex justify-between items-baseline">
             <span className="text-sm text-slate-400">
-              {lang === 'en' ? 'Agent Side' : 'Lado Agente'} ({sidePct}%)
+              {t('auto_agent_side')} ({sidePct}%)
             </span>
             <span className="text-base font-bold">{fmt(sideAmount)}</span>
           </div>
 
           {referralPct > 0 && (
             <div className="flex justify-between items-baseline text-amber-400">
-              <span className="text-sm">− {lang === 'en' ? 'Referral' : 'Referido'} ({referralPct}%)</span>
+              <span className="text-sm">− {t('auto_referral')} ({referralPct}%)</span>
               <span className="text-base font-bold">-{fmt(referralAmount)}</span>
             </div>
           )}
@@ -372,11 +372,11 @@ export default function CommissionCalculator({
             /* 45% tier: flat split display */
             <div className="border-t border-slate-700 pt-3 space-y-2">
               <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-1">
-                {lang === 'en' ? 'Flat split from side amount' : 'Split directo del monto lado'}
+                {t('auto_flat_split_from_side')}
               </p>
               <div className="flex justify-between items-baseline">
                 <span className="text-sm text-emerald-400 font-bold">
-                  🏆 {lang === 'en' ? 'Agent' : 'Agente'} ({agentSplitPct}%)
+                  🏆 {t('auto_agent')} ({agentSplitPct}%)
                 </span>
                 <span className="text-2xl font-black text-emerald-400">{fmt(agentAmount)}</span>
               </div>
@@ -386,7 +386,7 @@ export default function CommissionCalculator({
               </div>
               <div className="flex justify-between items-baseline">
                 <span className="text-sm text-blue-400 font-bold">
-                  🏢 {lang === 'en' ? 'Office' : 'Oficina'} ({Math.round(100 - agentSplitPct - rccaFeePct)}%)
+                  🏢 {t('auto_office')} ({Math.round(100 - agentSplitPct - rccaFeePct)}%)
                 </span>
                 <span className="text-lg font-bold text-blue-400">{fmt(officeAmount)}</span>
               </div>
@@ -401,17 +401,17 @@ export default function CommissionCalculator({
 
               <div className="border-t border-slate-700 pt-3 space-y-2">
                 <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-1">
-                  {lang === 'en' ? 'Split after RCCA deduction' : 'Split después de RCCA'}
+                  {t('auto_split_after_rcca_deduction')}
                 </p>
                 <div className="flex justify-between items-baseline">
                   <span className="text-sm text-emerald-400 font-bold">
-                    🏆 {lang === 'en' ? 'Agent' : 'Agente'} ({agentSplitPct}%)
+                    🏆 {t('auto_agent')} ({agentSplitPct}%)
                   </span>
                   <span className="text-2xl font-black text-emerald-400">{fmt(agentAmount)}</span>
                 </div>
                 <div className="flex justify-between items-baseline">
                   <span className="text-sm text-blue-400 font-bold">
-                    🏢 {lang === 'en' ? 'Office' : 'Oficina'} ({100 - agentSplitPct}%)
+                    🏢 {t('auto_office')} ({100 - agentSplitPct}%)
                   </span>
                   <span className="text-lg font-bold text-blue-400">{fmt(officeAmount)}</span>
                 </div>
@@ -427,7 +427,7 @@ export default function CommissionCalculator({
           onClick={onCancel}
           className="flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-500 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
         >
-          {lang === 'en' ? 'Cancel' : 'Cancelar'}
+          {t('auto_cancel')}
         </button>
         <button
           onClick={handleConfirm}
@@ -435,8 +435,8 @@ export default function CommissionCalculator({
           className="flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest bg-emerald-500 text-white shadow-xl shadow-emerald-500/20 hover:bg-emerald-600 transition-all disabled:opacity-50"
         >
           {submitting
-            ? (lang === 'en' ? 'Processing...' : 'Procesando...')
-            : (lang === 'en' ? 'Confirm Sale' : 'Confirmar Venta')
+            ? (t('auto_processing'))
+            : (t('auto_confirm_sale'))
           }
         </button>
       </div>

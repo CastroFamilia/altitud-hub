@@ -64,9 +64,15 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
     email: '',
     role: 'agent',
     team_id: '',
+    team_name: '',
+    start_date: '',
+    birth_date: '',
+    fee_start_date: '',
+    monthly_fee: '',
   });
   const [inviting, setInviting] = useState(false);
   const [agentSearchQuery, setAgentSearchQuery] = useState('');
+  const [showDisabledSection, setShowDisabledSection] = useState(false);
 
   // Custom Sleek UI Notifications & Dialogs
   const [toast, setToast] = useState(null);
@@ -78,6 +84,27 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
       setToast(prev => prev && prev.message === message ? null : prev);
     }, 4500);
   };
+
+  // Sync state when initial props update on server-side re-render
+  useEffect(() => {
+    setProfiles(initialProfiles);
+  }, [initialProfiles]);
+
+  useEffect(() => {
+    setTeams(initialTeams);
+  }, [initialTeams]);
+
+  useEffect(() => {
+    setMilestones(initialMilestones);
+  }, [initialMilestones]);
+
+  useEffect(() => {
+    setEvents(initialEvents);
+  }, [initialEvents]);
+
+  useEffect(() => {
+    setAttendance(initialAttendance);
+  }, [initialAttendance]);
 
   // Redirect unauthorized users to dashboard
   useEffect(() => {
@@ -141,15 +168,23 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
   const handleSavePovertyLine = async () => {
     setSavingPovertyLine(true);
     try {
-      const { error } = await supabase
-        .from('office_config')
-        .upsert({
+      const response = await fetch('/api/office-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
           office: selectedOffice,
           config_key: 'poverty_line',
           config_value: { amount: Number(povertyLineVal), currency: 'USD', description: 'Minimum monthly earnings target' }
-        }, { onConflict: 'office,config_key' });
+        })
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+      if (!response.ok || result.error) {
+        throw new Error(result.error || 'Failed to save via API');
+      }
+
       triggerToast('Línea de pobreza guardada con éxito', 'success');
     } catch (err) {
       console.error(err);
@@ -162,15 +197,23 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
   const handleSaveSplits = async (newSplits) => {
     setSavingSplits(true);
     try {
-      const { error } = await supabase
-        .from('office_config')
-        .upsert({
+      const response = await fetch('/api/office-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
           office: selectedOffice,
           config_key: 'split_tiers',
           config_value: newSplits
-        }, { onConflict: 'office,config_key' });
+        })
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+      if (!response.ok || result.error) {
+        throw new Error(result.error || 'Failed to save via API');
+      }
+
       setSplitTiers(newSplits);
       triggerToast('Tiers de split comisional guardados con éxito', 'success');
     } catch (err) {
@@ -196,16 +239,25 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
     });
   }, [initialProperties, selectedOffice, profiles]);
 
-  const filteredOfficeProfiles = officeProfiles.filter(p => 
+  const activeAndInvitedProfiles = officeProfiles.filter(p => p.status !== 'disabled');
+  const disabledProfiles = officeProfiles.filter(p => p.status === 'disabled');
+
+  const filteredOfficeProfiles = activeAndInvitedProfiles.filter(p => 
+    !agentSearchQuery || 
+    p.full_name?.toLowerCase().includes(agentSearchQuery.toLowerCase()) || 
+    p.email?.toLowerCase().includes(agentSearchQuery.toLowerCase())
+  );
+
+  const filteredDisabledProfiles = disabledProfiles.filter(p => 
     !agentSearchQuery || 
     p.full_name?.toLowerCase().includes(agentSearchQuery.toLowerCase()) || 
     p.email?.toLowerCase().includes(agentSearchQuery.toLowerCase())
   );
 
   // Stats
-  const totalAgents = officeProfiles.length;
+  const totalAgents = activeAndInvitedProfiles.length;
   const activeCount = activeProfiles.length;
-  const teamLeaders = officeProfiles.filter(p => p.role === 'team_leader').length;
+  const teamLeaders = activeAndInvitedProfiles.filter(p => p.role === 'team_leader').length;
 
   // Handle Quick Approve / Save as Draft
   const handleApproveAgent = async (agent, status = 'invited') => {
@@ -269,19 +321,24 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
           email: inviteForm.email,
           full_name: inviteForm.full_name,
           role: inviteForm.role,
-          team_id: inviteForm.team_id || null,
+          team_id: inviteForm.role === 'team_leader' ? null : (inviteForm.team_id || null),
+          team_name: inviteForm.role === 'team_leader' ? inviteForm.team_name : null,
           remax_agent_id: null,
           remax_agent_name: null,
           office: selectedOffice,
           avatar_url: null,
           phone: null,
           status,
+          start_date: inviteForm.start_date || null,
+          birth_date: inviteForm.birth_date || null,
+          fee_start_date: inviteForm.fee_start_date || null,
+          monthly_fee: inviteForm.monthly_fee ? parseFloat(inviteForm.monthly_fee) : 0,
         }),
       });
       const data = await res.json();
       if (data.success) {
         setShowInviteModal(false);
-        setInviteForm({ apiAgent: null, full_name: '', email: '', role: 'agent', team_id: '' });
+        setInviteForm({ apiAgent: null, full_name: '', email: '', role: 'agent', team_id: '', team_name: '', start_date: '', birth_date: '', fee_start_date: '', monthly_fee: '' });
         triggerToast(status === 'draft' ? `Agente guardado como borrador` : `Invitación enviada exitosamente`, 'success');
         router.refresh();
       } else {
@@ -387,11 +444,17 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
       });
       const data = await res.json();
       if (data.success) {
+        triggerToast('Perfil actualizado con éxito', 'success');
+        setProfiles(prev => prev.map(p => p.id === profileId ? { ...p, ...data.profile } : p));
         router.refresh();
         setEditingProfile(null);
+      } else {
+        console.error('Update profile error:', data.error);
+        triggerToast(data.error || 'Error al actualizar el perfil', 'error');
       }
     } catch (err) {
       console.error('Update error:', err);
+      triggerToast('Error al actualizar el perfil: ' + err.message, 'error');
     }
   };
 
@@ -577,7 +640,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
               {/* Portfolio Intelligence — same view agents see but for all office properties */}
               <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
                 <h3 className="text-lg font-black italic text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                  <span>📊</span> {lang === 'en' ? 'Office Portfolio' : 'Cartera de la Oficina'}
+                  <span>📊</span> {t('auto_office_portfolio')}
                 </h3>
                 <OfficePortfolioSection properties={officeProperties} profiles={profiles} lang={lang} />
               </div>
@@ -850,6 +913,114 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
                 </div>
               </div>
 
+              {/* Collapsible Section: Agentes Dados de Baja */}
+              <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowDisabledSection(!showDisabledSection)}
+                  className="w-full px-6 py-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-left focus:outline-none"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">📁</span>
+                    <div>
+                      <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                        Agentes Dados de Baja
+                      </h3>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                        Agentes inactivos e historial guardado
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-black">
+                      {filteredDisabledProfiles.length}
+                    </span>
+                    <svg
+                      className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${
+                        showDisabledSection ? 'rotate-180' : ''
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </button>
+
+                {showDisabledSection && (
+                  <div className="divide-y divide-slate-100 dark:divide-slate-700/50 border-t border-slate-100 dark:border-slate-700 max-h-[400px] overflow-y-auto">
+                    {filteredDisabledProfiles.length === 0 ? (
+                      <div className="p-8 text-center text-slate-400 text-xs uppercase tracking-widest font-bold">
+                        No hay agentes dados de baja
+                      </div>
+                    ) : (
+                      filteredDisabledProfiles.map(p => (
+                        <div
+                          key={p.id}
+                          className="px-6 py-4 flex items-center gap-4 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors group opacity-75 hover:opacity-100"
+                        >
+                          <Image
+                            src={
+                              p.avatar_url ||
+                              `https://ui-avatars.com/api/?name=${encodeURIComponent(p.full_name)}&background=64748b&color=fff`
+                            }
+                            alt={p.full_name}
+                            className="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-600 object-cover grayscale"
+                            width={40}
+                            height={40}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-slate-500 dark:text-slate-300 truncate line-through">
+                              {p.full_name}
+                            </p>
+                            <p className="text-[10px] text-slate-400 truncate">{p.email}</p>
+                          </div>
+                          <span
+                            className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${
+                              p.role === 'broker'
+                                ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
+                                : p.role === 'team_leader'
+                                ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                                : p.role === 'agent'
+                                ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'
+                                : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+                            }`}
+                          >
+                            {p.role === 'broker'
+                              ? t('ofc_role_admin')
+                              : p.role === 'team_leader'
+                              ? t('ofc_role_leader')
+                              : p.role === 'agent'
+                              ? t('ofc_role_agent')
+                              : t('ofc_role_junior')}
+                          </span>
+                          <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-400">
+                            Baja
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium w-20 truncate text-right">
+                            {p.teams?.name || t('ofc_manual_no_team')}
+                          </span>
+                          <button
+                            onClick={() => setEditingProfile(p)}
+                            className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-nexus-blue transition-all p-1"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+
             </div>
 
             {/* ── Right Column: Teams & Settings ── */}
@@ -1054,7 +1225,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowInviteModal(false)}>
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
           <div
-            className="relative bg-white dark:bg-slate-800 rounded-[32px] shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-lg p-8 space-y-6"
+            className="relative bg-white dark:bg-slate-800 rounded-[32px] shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-lg p-8 space-y-6 max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             <div>
@@ -1111,19 +1282,78 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
 
             {inviteForm.role !== 'broker' && (
               <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">{t('ofc_manual_team')}</label>
-                <select
-                  value={inviteForm.team_id}
-                  onChange={e => setInviteForm(prev => ({ ...prev, team_id: e.target.value }))}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">{t('ofc_manual_no_team')}</option>
-                  {teams.filter(team => team.office === selectedOffice).map(team => (
-                    <option key={team.id} value={team.id}>{team.name}</option>
-                  ))}
-                </select>
+                {inviteForm.role === 'team_leader' ? (
+                  <div>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Nombre del Equipo que Lidera</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. Equipo Debra"
+                      value={inviteForm.team_name || ''}
+                      onChange={e => setInviteForm(prev => ({ ...prev, team_name: e.target.value }))}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+                      required
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">{t('ofc_manual_team')}</label>
+                    <select
+                      value={inviteForm.team_id}
+                      onChange={e => setInviteForm(prev => ({ ...prev, team_id: e.target.value }))}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">{t('ofc_manual_no_team')}</option>
+                      {teams.filter(team => team.office === selectedOffice).map(team => (
+                        <option key={team.id} value={team.id}>{team.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
             )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Fecha de Ingreso</label>
+                <input
+                  type="date"
+                  value={inviteForm.start_date}
+                  onChange={e => setInviteForm(prev => ({ ...prev, start_date: e.target.value }))}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Fecha de Cumpleaños</label>
+                <input
+                  type="date"
+                  value={inviteForm.birth_date}
+                  onChange={e => setInviteForm(prev => ({ ...prev, birth_date: e.target.value }))}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Inicio de Pago de Fee</label>
+                <input
+                  type="date"
+                  value={inviteForm.fee_start_date}
+                  onChange={e => setInviteForm(prev => ({ ...prev, fee_start_date: e.target.value }))}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Monto Fee Mensual ($)</label>
+                <input
+                  type="number"
+                  placeholder="Ej. 150"
+                  value={inviteForm.monthly_fee}
+                  onChange={e => setInviteForm(prev => ({ ...prev, monthly_fee: e.target.value }))}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button

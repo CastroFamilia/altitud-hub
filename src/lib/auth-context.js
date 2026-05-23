@@ -16,6 +16,7 @@ export function AuthProvider({ children }) {
   const [realProfile, setRealProfile] = useState(null); // real profile for broker
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isImpersonating, setIsImpersonating] = useState(false);
 
   const fetchProfile = useCallback(async (authUser, retryCount = 0) => {
     if (!authUser) {
@@ -107,11 +108,13 @@ export function AuthProvider({ children }) {
           const { data: impP } = await supabase.from('profiles').select('*, teams:teams!profiles_team_id_fkey(id, name)').eq('id', impId).single();
           if (impP) {
             setProfile(impP);
+            setIsImpersonating(true);
             return;
           }
         }
       }
       setProfile(realP);
+      setIsImpersonating(false);
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -125,6 +128,7 @@ export function AuthProvider({ children }) {
           } else {
             setRealProfile(null);
             setProfile(null);
+            setIsImpersonating(false);
           }
         } catch (e) {
           console.error('Error on auth state change:', e);
@@ -177,7 +181,7 @@ export function AuthProvider({ children }) {
   // Derived helpers
   const role = profile?.role || null;
   const realRole = realProfile?.role || null;
-  const isBroker = realRole === 'broker' || realRole === 'admin'; // broker OR admin (administrativa)
+  const isBroker = (realRole === 'broker' || realRole === 'admin') && !isImpersonating; // broker OR admin (administrativa), but false if impersonating
   const isTeamLeader = role === 'team_leader';
   const isAgent = role === 'agent' || role === 'junior';
   const isJunior = role === 'junior';
@@ -204,6 +208,7 @@ export function AuthProvider({ children }) {
       isOfficeAssistant,
       isAuthenticated,
       fetchProfile,
+      isImpersonating,
     }}>
       {children}
     </AuthContext.Provider>

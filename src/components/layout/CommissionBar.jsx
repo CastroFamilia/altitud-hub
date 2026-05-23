@@ -90,10 +90,10 @@ export default function CommissionBar() {
           <span className="text-base">💰</span>
           <div>
             <p className="text-[9px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">
-              {lang === 'en' ? 'YTD Commission' : 'Comisión YTD'}
+              {t('auto_ytd_commission')}
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500">
-              {stats.closings} {lang === 'en' ? 'closings' : 'cierres'}
+              {stats.closings} {t('auto_closings')}
             </p>
           </div>
         </div>
@@ -103,7 +103,7 @@ export default function CommissionBar() {
           </p>
           {stats.pending > 0 && (
             <p className="text-[10px] text-amber-500 font-medium">
-              +{fmt(stats.pending)} {lang === 'en' ? 'pending' : 'pendiente'}
+              +{fmt(stats.pending)} {t('auto_pending_1')}
             </p>
           )}
         </div>
@@ -131,7 +131,7 @@ export default function CommissionBar() {
       <div className="flex justify-between mt-1">
         <span className="text-[9px] text-gray-400 dark:text-gray-500 font-medium">{pct}%</span>
         <span className="text-[9px] text-gray-400 dark:text-gray-500 font-medium">
-          {lang === 'en' ? 'Target' : 'Meta'}: {fmt(target)}
+          {t('auto_target')}: {fmt(target)}
         </span>
       </div>
     </div>

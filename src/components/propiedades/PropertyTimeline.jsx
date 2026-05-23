@@ -27,7 +27,7 @@ function daysBetween(d1, d2) {
 function formatDate(d, lang) {
   if (!d) return null;
   const date = new Date(d);
-  return date.toLocaleDateString(lang === 'en' ? 'en-US' : 'es-CR', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString(t('auto_en_us'), { month: 'short', day: 'numeric' });
 }
 
 export default function PropertyTimeline({ milestones, t, lang }) {

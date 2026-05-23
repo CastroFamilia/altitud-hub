@@ -26,6 +26,7 @@ export default function AcmPrintForm({ report }) {
     client_phone = '—',
     client_email = '—',
     property_address = '—',
+    property_category = 'residential',
     property_type = 'casa',
     suggested_price = 0,
     price_range_low = 0,
@@ -72,7 +73,7 @@ export default function AcmPrintForm({ report }) {
   const compMax = Number(indicators.comp_max) || 0;
   const compSuggested = Number(indicators.comp_suggested) || 0;
 
-  const today = new Date(created_at || Date.now()).toLocaleDateString(lang === 'en' ? 'en-US' : 'es-CR', {
+  const today = new Date(created_at || Date.now()).toLocaleDateString(t('auto_en_us'), {
     year: 'numeric', month: 'long', day: 'numeric',
   });
 
@@ -187,7 +188,7 @@ export default function AcmPrintForm({ report }) {
             </div>
             <div style={{ textAlign: 'right' }}>
               <p style={{ fontSize: '8px', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {lang === 'en' ? 'Date' : 'Fecha'}
+                {t('auto_date')}
               </p>
               <p style={{ fontSize: '11px', fontWeight: 700, color: '#334155' }}>{today}</p>
             </div>
@@ -218,12 +219,12 @@ export default function AcmPrintForm({ report }) {
           </div>
 
           {/* Client & Property Information */}
-          {sectionTitleStyle(lang === 'en' ? 'General Information' : 'Información General')}
+          {sectionTitleStyle(t('auto_general_information'))}
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
             <div style={cardStyle}>
               <h4 style={{ fontSize: '10px', fontWeight: 800, color: '#003DA5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
-                {lang === 'en' ? 'CLIENT & SPONSOR' : 'CLIENTE Y PROPIETARIO'}
+                {t('auto_client_sponsor')}
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11px' }}>
                 <div><span style={{ fontWeight: 700, color: '#64748b' }}>Nombre:</span> <span style={{ fontWeight: 600 }}>{client_name}</span></div>
@@ -234,7 +235,7 @@ export default function AcmPrintForm({ report }) {
 
             <div style={cardStyle}>
               <h4 style={{ fontSize: '10px', fontWeight: 800, color: '#003DA5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
-                {lang === 'en' ? 'PROPERTY DETAILS' : 'DETALLES DEL INMUEBLE'}
+                {t('auto_property_details_1')}
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11px' }}>
                 <div><span style={{ fontWeight: 700, color: '#64748b' }}>Dirección:</span> <span style={{ fontWeight: 600 }}>{property_address}</span></div>
@@ -247,16 +248,16 @@ export default function AcmPrintForm({ report }) {
           {/* Active Methodologies Summary */}
           <div style={cardStyle}>
             <h4 style={{ fontSize: '10px', fontWeight: 800, color: '#003DA5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
-              {lang === 'en' ? 'Applied Appraisal Methodologies' : 'Metodologías de Valoración Aplicadas'}
+              {t('auto_applied_appraisal_methodologies')}
             </h4>
             <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '8px' }}>
               {activeMethods.map((m) => (
                 <div key={m} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 700 }}>
                   <div style={{ width: '8px', height: '8px', background: '#003DA5', borderRadius: '50%' }} />
                   <span>
-                    {m === 'comparables' && (lang === 'en' ? 'Comparable Market Study (CMA)' : 'Estudio de Mercado Comparativo')}
-                    {m === 'rentabilidad' && (lang === 'en' ? 'Rental Capitalization Method' : 'Capitalización por Rentabilidad')}
-                    {m === 'reposicion' && (lang === 'en' ? 'Replacement Cost Method' : 'Método de Costo / Reposición')}
+                    {m === 'comparables' && (t('auto_comparable_market_study_cma'))}
+                    {m === 'rentabilidad' && (t('auto_rental_capitalization_method'))}
+                    {m === 'reposicion' && (t('auto_replacement_cost_method'))}
                   </span>
                 </div>
               ))}
@@ -280,7 +281,7 @@ export default function AcmPrintForm({ report }) {
           <div>
             <div style={headerStyle}>
               <div>
-                <h2 style={titleStyle}>{lang === 'en' ? 'Comparable Market Analysis' : 'Estudio de Comparables'}</h2>
+                <h2 style={titleStyle}>{t('auto_comparable_market_analysis')}</h2>
                 <p style={{ fontSize: '8px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Metodología 1 — Comparación Directa de Oferta Activa y Cierres
                 </p>
@@ -293,26 +294,26 @@ export default function AcmPrintForm({ report }) {
 
             {/* Comparables stats */}
             <div style={valueDisplayGrid}>
-              {metricBox(lang === 'en' ? 'Min Comparable' : 'Precio Mínimo', fmt(compMin))}
-              {metricBox(lang === 'en' ? 'Average Price' : 'Precio Promedio', fmt(compAvg))}
-              {metricBox(lang === 'en' ? 'Max Comparable' : 'Precio Máximo', fmt(compMax))}
+              {metricBox(t('auto_min_comparable'), fmt(compMin))}
+              {metricBox(t('auto_average_price'), fmt(compAvg))}
+              {metricBox(t('auto_max_comparable'), fmt(compMax))}
             </div>
 
-            {metricBox(lang === 'en' ? 'Suggested Market Price (CMA)' : 'Precio Sugerido por Comparables', fmt(compSuggested || suggested_price), true)}
+            {metricBox(t('auto_suggested_market_price_cma'), fmt(compSuggested || suggested_price), true)}
 
             {/* Comparable details table */}
             {compProperties.length > 0 && (
               <div style={{ marginTop: '28px' }}>
                 <h4 style={{ fontSize: '10px', fontWeight: 800, color: '#003DA5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
-                  {lang === 'en' ? 'Comparable Sample Inventory' : 'Muestra de Inmuebles de Referencia'}
+                  {t('auto_comparable_sample_inventory')}
                 </h4>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', textAlign: 'left' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid #003DA5', background: '#f1f5f9' }}>
-                      <th style={{ padding: '10px', fontWeight: 700 }}>{lang === 'en' ? 'Property / Location' : 'Propiedad / Ubicación'}</th>
-                      <th style={{ padding: '10px', fontWeight: 700 }}>{lang === 'en' ? 'Size' : 'Tamaño'}</th>
-                      <th style={{ padding: '10px', fontWeight: 700 }}>{lang === 'en' ? 'Status' : 'Estado'}</th>
-                      <th style={{ padding: '10px', fontWeight: 700, textAlign: 'right' }}>{lang === 'en' ? 'Price' : 'Precio'}</th>
+                      <th style={{ padding: '10px', fontWeight: 700 }}>{t('auto_property_location')}</th>
+                      <th style={{ padding: '10px', fontWeight: 700 }}>{t('auto_size')}</th>
+                      <th style={{ padding: '10px', fontWeight: 700 }}>{t('auto_status')}</th>
+                      <th style={{ padding: '10px', fontWeight: 700, textAlign: 'right' }}>{t('auto_price')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -332,7 +333,7 @@ export default function AcmPrintForm({ report }) {
             {agent_notes && (
               <div style={{ marginTop: '28px' }}>
                 <h4 style={{ fontSize: '10px', fontWeight: 800, color: '#003DA5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
-                  {lang === 'en' ? 'Market Analyst Comments' : 'Comentarios del Analista de Mercado'}
+                  {t('auto_market_analyst_comments')}
                 </h4>
                 <div style={{ borderLeft: '3px solid #CC0000', paddingLeft: '12px', fontSize: '11px', color: '#475569', fontStyle: 'italic' }}>
                   {agent_notes}
@@ -357,7 +358,7 @@ export default function AcmPrintForm({ report }) {
           <div>
             <div style={headerStyle}>
               <div>
-                <h2 style={titleStyle}>{lang === 'en' ? 'Yield Valuation Report' : 'Valoración por Rentabilidad'}</h2>
+                <h2 style={titleStyle}>{t('auto_yield_valuation_report')}</h2>
                 <p style={{ fontSize: '8px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Metodología 2 — Capitalización de Ingresos (Cap Rate)
                 </p>
@@ -371,7 +372,7 @@ export default function AcmPrintForm({ report }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
               <div style={cardStyle}>
                 <h4 style={{ fontSize: '10px', fontWeight: 800, color: '#003DA5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
-                  {lang === 'en' ? 'ANNUAL INCOME PROJECTION' : 'PROYECCIÓN DE INGRESOS'}
+                  {t('auto_annual_income_projection')}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -391,7 +392,7 @@ export default function AcmPrintForm({ report }) {
 
               <div style={cardStyle}>
                 <h4 style={{ fontSize: '10px', fontWeight: 800, color: '#003DA5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
-                  {lang === 'en' ? 'OPERATING EXPENSES' : 'GASTOS OPERATIVOS'}
+                  {t('auto_operating_expenses')}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -441,7 +442,7 @@ export default function AcmPrintForm({ report }) {
               </div>
             </div>
 
-            {metricBox(lang === 'en' ? 'Yield-Based Property Value' : 'Valor Sugerido por Rentabilidad', fmt(rental_value), true)}
+            {metricBox(t('auto_yield_based_property_value'), fmt(rental_value), true)}
 
             {/* Cap Rate bracket guide */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', fontSize: '9px', fontWeight: 700, marginTop: '24px', textAlign: 'center' }}>
@@ -473,7 +474,7 @@ export default function AcmPrintForm({ report }) {
           <div>
             <div style={headerStyle}>
               <div>
-                <h2 style={titleStyle}>{lang === 'en' ? 'Cost Approach Valuation' : 'Valoración por Reposición'}</h2>
+                <h2 style={titleStyle}>{t('auto_cost_approach_valuation')}</h2>
                 <p style={{ fontSize: '8px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Metodología 3 — Valor Físico / Costo de Reposición Depreciado
                 </p>
@@ -487,7 +488,7 @@ export default function AcmPrintForm({ report }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
               <div style={cardStyle}>
                 <h4 style={{ fontSize: '10px', fontWeight: 800, color: '#003DA5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
-                  {lang === 'en' ? 'LAND ACQUISITION VALUE' : 'VALORACIÓN DEL TERRENO'}
+                  {t('auto_land_acquisition_value')}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11px' }}>
                   <div style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between' }}>
@@ -507,7 +508,7 @@ export default function AcmPrintForm({ report }) {
 
               <div style={cardStyle}>
                 <h4 style={{ fontSize: '10px', fontWeight: 800, color: '#003DA5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
-                  {lang === 'en' ? 'CONSTRUCTION COST' : 'COSTO DE CONSTRUCCIÓN'}
+                  {t('auto_construction_cost')}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11px' }}>
                   <div style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between' }}>
@@ -563,7 +564,7 @@ export default function AcmPrintForm({ report }) {
               </div>
             </div>
 
-            {metricBox(lang === 'en' ? 'Cost-Based Property Value' : 'Valor Sugerido por Reposición', fmt(replacementValueCalculated || replacementValueCalculated), true)}
+            {metricBox(t('auto_cost_based_property_value'), fmt(replacementValueCalculated || replacementValueCalculated), true)}
           </div>
 
           <div style={footerStyle}>
@@ -581,7 +582,7 @@ export default function AcmPrintForm({ report }) {
         <div>
           <div style={headerStyle}>
             <div>
-              <h2 style={titleStyle}>{lang === 'en' ? 'Consolidated Valuation Summary' : 'Resumen de Valoración Consolidada'}</h2>
+              <h2 style={titleStyle}>{t('auto_consolidated_valuation_summary')}</h2>
               <p style={{ fontSize: '8px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Conclusión Técnica de Análisis de Valor Cruzado
               </p>
@@ -597,29 +598,29 @@ export default function AcmPrintForm({ report }) {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', textAlign: 'left' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid #003DA5' }}>
-                  <th style={{ padding: '10px', fontWeight: 700 }}>{lang === 'en' ? 'Appraisal Methodology' : 'Metodología Aplicada'}</th>
-                  <th style={{ padding: '10px', fontWeight: 700, textAlign: 'center' }}>{lang === 'en' ? 'Assigned Weight' : 'Peso Asignado'}</th>
-                  <th style={{ padding: '10px', fontWeight: 700, textAlign: 'right' }}>{lang === 'en' ? 'Calculated Value' : 'Valor Resultante'}</th>
+                  <th style={{ padding: '10px', fontWeight: 700 }}>{t('auto_appraisal_methodology')}</th>
+                  <th style={{ padding: '10px', fontWeight: 700, textAlign: 'center' }}>{t('auto_assigned_weight')}</th>
+                  <th style={{ padding: '10px', fontWeight: 700, textAlign: 'right' }}>{t('auto_calculated_value')}</th>
                 </tr>
               </thead>
               <tbody>
                 {activeMethods.includes('comparables') && (
                   <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '10px', fontWeight: 600 }}>{lang === 'en' ? 'Comparable Market Analysis (CMA)' : 'Estudio de Comparables'}</td>
+                    <td style={{ padding: '10px', fontWeight: 600 }}>{t('auto_comparable_market_analysis_cma')}</td>
                     <td style={{ padding: '10px', fontWeight: 700, textAlign: 'center', color: '#64748b' }}>{weights.comparables || 0}%</td>
                     <td style={{ padding: '10px', fontWeight: 700, textAlign: 'right', color: '#003DA5' }}>{fmt(compSuggested || suggested_price)}</td>
                   </tr>
                 )}
                 {activeMethods.includes('rentabilidad') && (
                   <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '10px', fontWeight: 600 }}>{lang === 'en' ? 'Income Yield Capitalization (Cap Rate)' : 'Valor por Rentabilidad'}</td>
+                    <td style={{ padding: '10px', fontWeight: 600 }}>{t('auto_income_yield_capitalization_cap')}</td>
                     <td style={{ padding: '10px', fontWeight: 700, textAlign: 'center', color: '#64748b' }}>{weights.rentabilidad || 0}%</td>
                     <td style={{ padding: '10px', fontWeight: 700, textAlign: 'right', color: '#003DA5' }}>{fmt(rental_value)}</td>
                   </tr>
                 )}
                 {activeMethods.includes('reposicion') && (
                   <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '10px', fontWeight: 600 }}>{lang === 'en' ? 'Replacement Cost Method (Depreciated)' : 'Valor de Costo / Reposición'}</td>
+                    <td style={{ padding: '10px', fontWeight: 600 }}>{t('auto_replacement_cost_method_depreciated')}</td>
                     <td style={{ padding: '10px', fontWeight: 700, textAlign: 'center', color: '#64748b' }}>{weights.reposicion || 0}%</td>
                     <td style={{ padding: '10px', fontWeight: 700, textAlign: 'right', color: '#003DA5' }}>{fmt(replacementValueCalculated)}</td>
                   </tr>
@@ -639,15 +640,15 @@ export default function AcmPrintForm({ report }) {
             marginBottom: '28px',
           }}>
             <span style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255, 255, 255, 0.7)' }}>
-              {lang === 'en' ? 'Suggested Consolidated Listing Price' : 'Precio Sugerido Consolidado de Venta'}
+              {t('auto_suggested_consolidated_listing_price')}
             </span>
             <h1 style={{ fontSize: '36px', fontWeight: 900, fontStyle: 'italic', margin: '6px 0', letterSpacing: '-0.02em' }}>
               {fmt(suggested_price)}
             </h1>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', fontSize: '11px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)', marginTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.15)', paddingTop: '10px' }}>
-              <div>{lang === 'en' ? 'Conservative Range' : 'Rango Conservador'}: <span style={{ color: '#ffffff' }}>{fmt(price_range_low)}</span></div>
+              <div>{t('auto_conservative_range')}: <span style={{ color: '#ffffff' }}>{fmt(price_range_low)}</span></div>
               <div style={{ width: '1px', background: 'rgba(255, 255, 255, 0.2)' }} />
-              <div>{lang === 'en' ? 'Optimistic Range' : 'Rango Optimista'}: <span style={{ color: '#ffffff' }}>{fmt(price_range_high)}</span></div>
+              <div>{t('auto_optimistic_range')}: <span style={{ color: '#ffffff' }}>{fmt(price_range_high)}</span></div>
             </div>
           </div>
 
