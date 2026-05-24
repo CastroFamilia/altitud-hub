@@ -7,13 +7,16 @@ import { insertContact } from '@/lib/dal/contacts';
 import { useAuth } from '@/lib/auth-context';
 import TopNav from '@/components/layout/TopNav';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 export default function NuevoContactoClient() {
   const router = useRouter();
   const { user } = useAuth();
-  const { t } = useApp();
+  const { t, lang } = useApp();
   
   const [loading, setLoading] = useState(false);
+  const [securityWarning, setSecurityWarning] = useState(null);
+  
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -35,6 +38,48 @@ export default function NuevoContactoClient() {
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const checkSecurityAlert = async (field, value) => {
+    if (!value || value.trim() === '') return;
+    try {
+      let query = supabase
+        .from('contacts')
+        .select('id, first_name, last_name, email, phone, security_notes')
+        .eq('security_alert', true);
+      
+      if (field === 'email') {
+        query = query.ilike('email', value.trim());
+      } else if (field === 'phone') {
+        const cleanVal = value.replace(/[^0-9]/g, '');
+        if (cleanVal.length < 5) return;
+        query = query.or(`phone.ilike.%${value.trim()}%,phone.ilike.%${cleanVal}%`);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        const match = data[0];
+        setSecurityWarning({
+          name: `${match.first_name} ${match.last_name}`,
+          email: match.email,
+          phone: match.phone,
+          notes: match.security_notes
+        });
+      } else {
+        setSecurityWarning(null);
+      }
+    } catch (err) {
+      console.error('Error checking security alert:', err);
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    if (name === 'email' || name === 'phone') {
+      checkSecurityAlert(name, value);
+    }
   };
 
   const handleTypeChange = (typeOption) => {
@@ -102,6 +147,34 @@ export default function NuevoContactoClient() {
 
         <div className="glass-panel p-6 md:p-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{t('contact_new_title')}</h1>
+
+          {securityWarning && (
+            <div className="mb-6 p-4 rounded-xl border border-red-500 bg-red-500/10 backdrop-blur-md text-red-800 dark:text-red-200 flex gap-3 items-start animate-bounce">
+              <div className="flex-shrink-0 p-2 rounded-lg bg-red-500/20 text-red-500">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-sm tracking-wider uppercase text-red-600 dark:text-red-400">
+                  {lang === 'en' ? '🚨 SECURITY WARNING: HIGH RISK CLIENT MATCHED' : '🚨 ALERTA DE SEGURIDAD: COINCIDENCIA DE ALTO RIESGO'}
+                </h3>
+                <p className="text-sm mt-1 text-red-700 dark:text-red-300 font-medium">
+                  {lang === 'en' 
+                    ? `A blacklisted client has been detected matching these details. Name: ${securityWarning.name}.`
+                    : `Se ha detectado un cliente en la lista negra que coincide con estos datos. Nombre: ${securityWarning.name}.`}
+                </p>
+                {securityWarning.notes && (
+                  <p className="text-xs mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-600 dark:text-red-300 italic font-semibold">
+                    {lang === 'en' ? 'Security notes: ' : 'Notas de seguridad: '} {securityWarning.notes}
+                  </p>
+                )}
+                <p className="text-xs mt-2 text-red-500 dark:text-red-400 font-bold uppercase tracking-wider">
+                  {lang === 'en' ? '⚠️ DO NOT PROCEED WITHOUT BROKER AUTHORIZATION!' : '⚠️ ¡NO PROCEDER SIN AUTORIZACIÓN DEL BROKER!'}
+                </p>
+              </div>
+            </div>
+          )}
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -136,6 +209,7 @@ export default function NuevoContactoClient() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   className="w-full px-4 py-2 border border-gray-200 dark:border-dark-border rounded-xl bg-slate-50 dark:bg-dark-bg focus:ring-2 focus:ring-brand-500 outline-none transition-colors"
                   placeholder="juan@email.com"
                 />
@@ -147,6 +221,7 @@ export default function NuevoContactoClient() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   className="w-full px-4 py-2 border border-gray-200 dark:border-dark-border rounded-xl bg-slate-50 dark:bg-dark-bg focus:ring-2 focus:ring-brand-500 outline-none transition-colors"
                   placeholder="+506 8888 8888"
                 />

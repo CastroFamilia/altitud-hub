@@ -5,9 +5,10 @@ import { useApp } from '@/lib/context';
 import Link from 'next/link';
 
 export default function ContactosClient({ initialContacts = [] }) {
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const [contacts] = useState(initialContacts);
   const [search, setSearch] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
   const [activeFilter, setActiveFilter] = useState('Todos'); // 'Todos', 'Compradores', 'Vendedores', 'Top'
 
   // Derived Metrics
@@ -26,6 +27,11 @@ export default function ContactosClient({ initialContacts = [] }) {
   // Filter Logic
   const filteredContacts = useMemo(() => {
     return contacts.filter(c => {
+      // 0. Exclude archived unless showArchived is checked
+      if (!showArchived && c.no_followup) {
+        return false;
+      }
+
       // 1. Search text
       const matchesSearch = `${c.first_name} ${c.last_name || ''}`.toLowerCase().includes(search.toLowerCase()) ||
                             (c.email && c.email.toLowerCase().includes(search.toLowerCase())) ||
@@ -34,16 +40,16 @@ export default function ContactosClient({ initialContacts = [] }) {
       // 2. Tab Filter
       let matchesFilter = true;
       if (activeFilter === 'Compradores') {
-        matchesFilter = c.type === 'Comprador' || c.type === 'Inversionista';
+        matchesFilter = c.type === 'Comprador' || c.type === 'Inversionista' || (Array.isArray(c.type) && (c.type.includes('Comprador') || c.type.includes('Inversionista')));
       } else if (activeFilter === 'Vendedores') {
-        matchesFilter = c.type === 'Vendedor' || c.type === 'Desarrollador';
+        matchesFilter = c.type === 'Vendedor' || c.type === 'Desarrollador' || (Array.isArray(c.type) && (c.type.includes('Vendedor') || c.type.includes('Desarrollador')));
       } else if (activeFilter === 'Top') {
         matchesFilter = c.contact_classification === 'A+' || c.contact_classification === 'A';
       }
 
       return matchesSearch && matchesFilter;
     });
-  }, [contacts, search, activeFilter]);
+  }, [contacts, search, activeFilter, showArchived]);
 
   // Export Contacts as CSV
   const handleExportCSV = () => {
@@ -181,17 +187,30 @@ export default function ContactosClient({ initialContacts = [] }) {
             ))}
           </div>
           
-          <div className="relative w-full md:w-72 flex-shrink-0">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <div className="flex flex-col sm:flex-row gap-4 items-center w-full md:w-auto">
+            {/* Show Archived Checkbox Toggle */}
+            <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+              <input
+                type="checkbox"
+                checked={showArchived}
+                onChange={(e) => setShowArchived(e.target.checked)}
+                className="rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-gray-700 bg-white dark:bg-dark-bg h-4 w-4 transition-all cursor-pointer"
+              />
+              <span>{lang === 'en' ? 'Show Archived (Silenced)' : 'Ver Archivados (Silenciados)'}</span>
+            </label>
+
+            <div className="relative w-full md:w-72 flex-shrink-0">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </div>
+              <input
+                type="text"
+                className="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-panel text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors text-sm"
+                placeholder={t('contact_search')}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
-            <input
-              type="text"
-              className="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-panel text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors text-sm"
-              placeholder={t('contact_search')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
           </div>
         </div>
 
@@ -226,8 +245,18 @@ export default function ContactosClient({ initialContacts = [] }) {
                             {contact.first_name[0]}{contact.last_name ? contact.last_name[0] : ''}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-bold text-gray-900 dark:text-white">
-                              {contact.first_name} {contact.last_name}
+                            <div className="text-sm font-bold text-gray-900 dark:text-white flex flex-wrap items-center gap-2">
+                              <span>{contact.first_name} {contact.last_name}</span>
+                              {contact.security_alert && (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-red-500 text-white animate-pulse shadow-sm">
+                                  {lang === 'en' ? '⚠️ RISK' : '⚠️ RIESGO'}
+                                </span>
+                              )}
+                              {contact.no_followup && (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-amber-500 text-white shadow-sm">
+                                  {lang === 'en' ? '🔕 SILENCED' : '🔕 ARCHIVADO'}
+                                </span>
+                              )}
                             </div>
                             <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
                               {contact.phone && <span>{contact.phone}</span>}

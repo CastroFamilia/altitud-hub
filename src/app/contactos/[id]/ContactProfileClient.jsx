@@ -14,7 +14,7 @@ import { supabase } from '@/lib/supabase';
 export default function ContactProfileClient({ initialContact, initialProperties, initialAcms, initialInquiries, initialReservations = [] }) {
   const router = useRouter();
   const { profile } = useAuth();
-  const { t } = useApp();
+  const { t, lang } = useApp();
   
   const [contact, setContact] = useState(initialContact);
   const [properties, setProperties] = useState(initialProperties || []);
@@ -23,6 +23,8 @@ export default function ContactProfileClient({ initialContact, initialProperties
   const [reservations, setReservations] = useState(initialReservations || []);
   const [loading, setLoading] = useState(false);
   const [updatingNewsletter, setUpdatingNewsletter] = useState(false);
+  const [updatingFollowup, setUpdatingFollowup] = useState(false);
+  const [updatingSecurity, setUpdatingSecurity] = useState(false);
   const [updatingDdItemId, setUpdatingDdItemId] = useState(null);
 
   // Update Due Diligence document status inline
@@ -133,6 +135,56 @@ export default function ContactProfileClient({ initialContact, initialProperties
       alert('Error al actualizar preferencia de newsletter.');
     } finally {
       setUpdatingNewsletter(false);
+    }
+  };
+
+  const handleFollowupToggle = async () => {
+    if (updatingFollowup) return;
+    setUpdatingFollowup(true);
+    try {
+      if (contact.no_followup) {
+        const updated = await updateContact(contact.id, { no_followup: false, archive_reason: null });
+        setContact(updated);
+      } else {
+        const reason = prompt(
+          lang === 'en'
+            ? "Enter the reason for silencing (e.g., Uncooperative, Hostile, Out of Market):"
+            : "Ingresa el motivo del descarte/silencio (ej. No Cooperativo, Hostil, Fuera de Mercado):"
+        );
+        if (reason === null) return;
+        const updated = await updateContact(contact.id, { no_followup: true, archive_reason: reason || 'Manual' });
+        setContact(updated);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error: ' + err.message);
+    } finally {
+      setUpdatingFollowup(false);
+    }
+  };
+
+  const handleSecurityToggle = async () => {
+    if (updatingSecurity) return;
+    setUpdatingSecurity(true);
+    try {
+      if (contact.security_alert) {
+        const updated = await updateContact(contact.id, { security_alert: false, security_notes: null });
+        setContact(updated);
+      } else {
+        const notes = prompt(
+          lang === 'en'
+            ? "Describe the safety concern or incident notes (this will warn all agents!):"
+            : "Describe el motivo de la alerta de seguridad (¡esto advertirá a todos los asesores!):"
+        );
+        if (notes === null) return;
+        const updated = await updateContact(contact.id, { security_alert: true, security_notes: notes || 'Alerta General' });
+        setContact(updated);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error: ' + err.message);
+    } finally {
+      setUpdatingSecurity(false);
     }
   };
 
@@ -323,6 +375,45 @@ export default function ContactProfileClient({ initialContact, initialProperties
           <span className="text-gray-800 dark:text-white font-medium">{contact.first_name} {contact.last_name}</span>
         </div>
 
+        {/* 🚨 SECURITY ALERT BANNER */}
+        {contact.security_alert && (
+          <div className="mb-6 p-4 rounded-xl border border-red-500/30 bg-red-500/10 backdrop-blur-md text-red-800 dark:text-red-200 flex gap-3 items-start animate-pulse">
+            <div className="flex-shrink-0 p-2 rounded-lg bg-red-500/20 text-red-500">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-sm tracking-wider uppercase text-red-600 dark:text-red-400">
+                {lang === 'en' ? '⚠️ SECURITY ALERT: HIGH RISK CLIENT' : '⚠️ ALERTA DE SEGURIDAD: CLIENTE DE ALTO RIESGO'}
+              </h3>
+              <p className="text-sm mt-1 text-red-700 dark:text-red-300 font-medium">
+                {contact.security_notes || (lang === 'en' ? 'General safety warning for all office agents.' : 'Advertencia general de seguridad para todos los asesores.')}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* 🔕 SILENT FOLLOWUP BANNER */}
+        {contact.no_followup && (
+          <div className="mb-6 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 backdrop-blur-md text-amber-800 dark:text-amber-200 flex gap-3 items-start">
+            <div className="flex-shrink-0 p-2 rounded-lg bg-amber-500/20 text-amber-500">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-sm tracking-wider uppercase text-amber-600 dark:text-amber-400">
+                {lang === 'en' ? '🔕 SILENCED / ARCHIVED CONTACT' : '🔕 CONTACTO SILENCIADO / ARCHIVADO'}
+              </h3>
+              <p className="text-sm mt-1 text-amber-700 dark:text-amber-300 font-medium">
+                {lang === 'en' ? 'Reason: ' : 'Motivo: '} <span className="italic font-semibold">{contact.archive_reason || (lang === 'en' ? 'Not specified' : 'No especificado')}</span>
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Profile Card */}
         <div className="glass-panel p-6 md:p-8 mb-8 flex flex-col md:flex-row gap-6 items-start relative overflow-hidden">
           {/* Background decoration */}
@@ -419,6 +510,75 @@ export default function ContactProfileClient({ initialContact, initialProperties
                     {updatingNewsletter && contact.newsletter_opt_in ? (
                       <span className="flex items-center gap-1"><svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Sí</span>
                     ) : 'Sí'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Silent Follow-up Toggle Row */}
+              <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-dark-border">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                  </svg>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {lang === 'en' ? 'Silenced / Archived (No Olympia Follow-Up)' : 'Silenciar / Archivar (Sin seguimiento Olympia)'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    id={`followup-toggle-${contact.id}`}
+                    onClick={handleFollowupToggle}
+                    disabled={updatingFollowup}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                      contact.no_followup
+                        ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/20'
+                        : 'bg-white dark:bg-dark-bg border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:border-amber-300 hover:text-amber-500'
+                    } disabled:opacity-60 disabled:cursor-not-allowed`}
+                  >
+                    {updatingFollowup ? (
+                      <span className="flex items-center gap-1">
+                        <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        ...
+                      </span>
+                    ) : contact.no_followup ? (lang === 'en' ? 'Archived' : 'Archivado') : (lang === 'en' ? 'Active' : 'Activo')}
+                  </button>
+                </div>
+              </div>
+
+              {/* Security Alert Toggle Row */}
+              <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-dark-border">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {lang === 'en' ? 'Office Security Warning (Blacklist)' : 'Alerta de Seguridad Oficina (Lista Negra)'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    id={`security-toggle-${contact.id}`}
+                    onClick={handleSecurityToggle}
+                    disabled={updatingSecurity}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                      contact.security_alert
+                        ? 'bg-red-500 border-red-500 text-white shadow-md shadow-red-500/20'
+                        : 'bg-white dark:bg-dark-bg border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:border-red-300 hover:text-red-500'
+                    } disabled:opacity-60 disabled:cursor-not-allowed`}
+                  >
+                    {updatingSecurity ? (
+                      <span className="flex items-center gap-1">
+                        <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        ...
+                      </span>
+                    ) : contact.security_alert ? (lang === 'en' ? '⚠️ RISK FLAG' : '⚠️ ALERTA ACTIVA') : (lang === 'en' ? 'Safe' : 'Seguro')}
                   </button>
                 </div>
               </div>
