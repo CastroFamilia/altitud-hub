@@ -114,6 +114,45 @@ export async function insertDevelopment(developmentData, client = null) {
     .single();
 
   if (error) throw error;
+
+  if (data && data.status === 'pending_approval') {
+    try {
+      const title = data.name || 'Desarrollo sin título';
+      const officeId = data.office_code?.toLowerCase()?.includes('cero') ? 'cero' : 'altitud';
+      
+      const { data: brokers } = await supabaseClient
+        .from('profiles')
+        .select('auth_user_id')
+        .eq('role', 'broker')
+        .eq('office', officeId);
+      
+      if (brokers && brokers.length > 0) {
+        let agentName = 'Un agente';
+        if (data.agent_id) {
+          const { data: agentProfile } = await supabaseClient
+            .from('profiles')
+            .select('full_name')
+            .eq('auth_user_id', data.agent_id)
+            .single();
+          if (agentProfile?.full_name) agentName = agentProfile.full_name;
+        }
+
+        for (const broker of brokers) {
+          if (broker.auth_user_id) {
+            await supabaseClient.from('notifications').insert({
+              user_id: broker.auth_user_id,
+              title: '🏢 Desarrollo por aprobar',
+              message: `${agentName} ha enviado el desarrollo "${title}" para aprobación.`,
+              link: '/oficina?tab=propiedades',
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to notify brokers about new development approval:', e);
+    }
+  }
+
   return data;
 }
 
@@ -127,6 +166,46 @@ export async function updateDevelopment(id, updates, client = null) {
     .single();
 
   if (error) throw error;
+
+  // Notify brokers if status is pending_approval
+  if (updates && updates.status === 'pending_approval' && data) {
+    try {
+      const title = data.name || 'Desarrollo sin título';
+      const officeId = data.office_code?.toLowerCase()?.includes('cero') ? 'cero' : 'altitud';
+      
+      const { data: brokers } = await supabaseClient
+        .from('profiles')
+        .select('auth_user_id')
+        .eq('role', 'broker')
+        .eq('office', officeId);
+      
+      if (brokers && brokers.length > 0) {
+        let agentName = 'Un agente';
+        if (data.agent_id) {
+          const { data: agentProfile } = await supabaseClient
+            .from('profiles')
+            .select('full_name')
+            .eq('auth_user_id', data.agent_id)
+            .single();
+          if (agentProfile?.full_name) agentName = agentProfile.full_name;
+        }
+
+        for (const broker of brokers) {
+          if (broker.auth_user_id) {
+            await supabaseClient.from('notifications').insert({
+              user_id: broker.auth_user_id,
+              title: '🏢 Desarrollo por aprobar',
+              message: `${agentName} ha enviado el desarrollo "${title}" para aprobación.`,
+              link: '/oficina?tab=propiedades',
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to notify brokers about development approval:', e);
+    }
+  }
+
   return data;
 }
 

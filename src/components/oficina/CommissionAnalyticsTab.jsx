@@ -141,7 +141,7 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
   const leaderboard = useMemo(() => {
     const map = {};
     activeData.forEach(c => {
-      if (!map[c.agent_id]) map[c.agent_id] = { id: c.agent_id, name: c.profiles?.full_name || '—', avatar: c.profiles?.avatar_url, tierId: c.profiles?.commission_tier_id, earned: 0, closings: 0 };
+      if (!map[c.agent_id]) map[c.agent_id] = { id: c.agent_id, name: c.profiles?.full_name || '—', avatar: c.profiles?.avatar_url, tierId: c.profiles?.commission_tier_id, status: c.profiles?.status, earned: 0, closings: 0 };
       map[c.agent_id].earned += Number(c.side_amount || c.gross_commission) || 0;
       map[c.agent_id].closings += 1;
     });
@@ -285,7 +285,14 @@ export default function CommissionAnalyticsTab({ profiles = [] }) {
                     </span>
                     <Image src={a.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}&background=5a82bf&color=fff`} className="w-8 h-8 rounded-full object-cover" alt="" width={32} height={32} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
+                        {a.status === 'disabled' && (
+                          <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400">
+                            Inactivo
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] text-slate-400">{a.closings} {t('ofc_comm_closings')} · {tier?.name || '—'}</p>
                     </div>
                     <span className="text-base font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{fmt(a.earned)}</span>

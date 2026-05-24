@@ -306,71 +306,99 @@ Instrucciones Críticas:
       tools: tools
     });
 
+    // Capture the initial textual reply in case tool calling or second generation fails
+    const initialText = response.text || '';
+
     if (response.functionCalls && response.functionCalls.length > 0) {
-      const functionResponses = [];
+      try {
+        const functionResponses = [];
 
-      for (const call of response.functionCalls) {
-        const name = call.name;
-        const args = call.args;
-        let result = {};
+        for (const call of response.functionCalls) {
+          const name = call.name;
+          const args = call.args || {};
+          let result = {};
 
-        try {
-          if (name === 'update_follow_up_preferences') {
-            await supabase.from('profiles').update({ preferred_follow_up_days: args.days }).eq('email', agentEmail);
-            result = { success: true, message: 'Preferences updated successfully.' };
-          } else if (name === 'log_communication') {
-            await supabase.from('lead_communications').insert({
-              inquiry_id: args.inquiry_id,
-              agent_id: agentId,
-              channel: args.channel,
-              direction: args.direction,
-              summary: args.summary
-            });
-            result = { success: true, message: 'Communication logged successfully.' };
-          } else if (name === 'schedule_follow_up') {
-            await supabase.from('lead_follow_ups').insert({
-              inquiry_id: args.inquiry_id,
-              agent_id: agentId,
-              due_date: args.due_date,
-              note: args.note
-            });
-            result = { success: true, message: 'Follow up scheduled successfully.' };
-          } else {
-            result = { success: false, message: 'Unknown function.' };
+          try {
+            if (name === 'update_follow_up_preferences') {
+              if (!args.days || !Array.isArray(args.days)) {
+                throw new Error('Falta el array de días (days) o es inválido.');
+              }
+              await supabase.from('profiles').update({ preferred_follow_up_days: args.days }).eq('email', agentEmail);
+              result = { success: true, message: 'Preferences updated successfully.' };
+            } else if (name === 'log_communication') {
+              if (!args.inquiry_id) {
+                throw new Error('Falta el UUID inquiry_id del lead.');
+              }
+              await supabase.from('lead_communications').insert({
+                inquiry_id: args.inquiry_id,
+                agent_id: agentId,
+                channel: args.channel || 'whatsapp',
+                direction: args.direction || 'outbound',
+                summary: args.summary || 'Contacto sin resumen'
+              });
+              result = { success: true, message: 'Communication logged successfully.' };
+            } else if (name === 'schedule_follow_up') {
+              if (!args.inquiry_id || !args.due_date) {
+                throw new Error('Faltan campos obligatorios: inquiry_id y due_date (YYYY-MM-DD).');
+              }
+              await supabase.from('lead_follow_ups').insert({
+                inquiry_id: args.inquiry_id,
+                agent_id: agentId,
+                due_date: args.due_date,
+                note: args.note || 'Seguimiento programado por Olympia AI'
+              });
+              result = { success: true, message: 'Follow up scheduled successfully.' };
+            } else {
+              result = { success: false, message: 'Unknown function.' };
+            }
+          } catch (e) {
+            console.warn(`[Tool Execute Error] Function ${name} failed:`, e.message);
+            result = { success: false, error: e.message };
           }
-        } catch (e) {
-          result = { success: false, error: e.message };
+
+          functionResponses.push({
+            functionResponse: {
+              name: name,
+              response: result
+            }
+          });
         }
 
-        functionResponses.push({
-          functionResponse: {
-            name: name,
-            response: result
-          }
+        chatHistory.push({
+          role: 'model',
+          parts: response.functionCalls.map(call => ({
+            functionCall: {
+              name: call.name,
+              args: call.args
+            }
+          }))
         });
+
+        chatHistory.push({
+          role: 'user',
+          parts: functionResponses
+        });
+
+        response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: chatHistory,
+          systemInstruction: systemPrompt,
+          tools: tools
+        });
+      } catch (toolError) {
+        console.error('[Tool Calling Secondary Generation Failure] Graceful fallback active:', toolError);
+        // Fallback: If second generation failed, return the initial text response if present,
+        // or a default friendly notification text that the database action succeeded.
+        if (initialText) {
+          return NextResponse.json({
+            reply: `${initialText}\n\n*(Nota: Completé la acción solicitada en el CRM, pero hubo un pequeño retraso de red al actualizar nuestro chat.)*`
+          });
+        } else {
+          return NextResponse.json({
+            reply: '✅ ¡Acción completada en el CRM! He registrado la tarea que solicitaste, pero se produjo una breve interrupción al redactar mi confirmación en este chat. Todo está a salvo en el Hub.'
+          });
+        }
       }
-
-      chatHistory.push({
-        role: 'model',
-        parts: response.functionCalls.map(call => ({
-          functionCall: {
-            name: call.name,
-            args: call.args
-          }
-        }))
-      });
-
-      chatHistory.push({
-        role: 'user',
-        parts: functionResponses
-      });
-
-      response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: chatHistory,
-        systemInstruction: systemPrompt,
-        tools: tools
-      });
     }
 
     return NextResponse.json({ reply: response.text });

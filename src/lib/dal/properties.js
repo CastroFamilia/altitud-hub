@@ -34,6 +34,53 @@ export async function updateProperty(id, updates, client = null) {
   const supabaseClient = client || supabase;
   const { error } = await supabaseClient.from('properties').update(updates).eq('id', id);
   if (error) throw error;
+
+  // Notify brokers if status is pending_approval
+  if (updates && updates.status === 'pending_approval') {
+    try {
+      const { data: prop } = await supabaseClient
+        .from('properties')
+        .select('name, listing_title_es, listing_title_en, agent_id, office_code')
+        .eq('id', id)
+        .single();
+      
+      if (prop) {
+        const title = prop.listing_title_es || prop.listing_title_en || prop.name || 'Propiedad sin título';
+        const officeId = prop.office_code?.toLowerCase()?.includes('cero') || prop.office_code === 'R0700151' ? 'cero' : 'altitud';
+        
+        const { data: brokers } = await supabaseClient
+          .from('profiles')
+          .select('auth_user_id')
+          .eq('role', 'broker')
+          .eq('office', officeId);
+        
+        if (brokers && brokers.length > 0) {
+          let agentName = 'Un agente';
+          if (prop.agent_id) {
+            const { data: agentProfile } = await supabaseClient
+              .from('profiles')
+              .select('full_name')
+              .eq('auth_user_id', prop.agent_id)
+              .single();
+            if (agentProfile?.full_name) agentName = agentProfile.full_name;
+          }
+
+          for (const broker of brokers) {
+            if (broker.auth_user_id) {
+              await supabaseClient.from('notifications').insert({
+                user_id: broker.auth_user_id,
+                title: '🏠 Propiedad por aprobar',
+                message: `${agentName} ha enviado la propiedad "${title}" para aprobación.`,
+                link: '/oficina?tab=propiedades',
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to notify brokers about property approval:', e);
+    }
+  }
 }
 
 export async function getPropertiesForApproval(client = null) {
@@ -171,5 +218,44 @@ export async function upsertListingMilestone(milestoneUpdate) {
 export async function insertProperty(payload) {
   const { data, error } = await supabase.from('properties').insert([payload]).select().single();
   if (error) throw error;
+
+  if (data && data.status === 'pending_approval') {
+    try {
+      const title = data.listing_title_es || data.listing_title_en || data.name || 'Propiedad sin título';
+      const officeId = data.office_code?.toLowerCase()?.includes('cero') || data.office_code === 'R0700151' ? 'cero' : 'altitud';
+      
+      const { data: brokers } = await supabase
+        .from('profiles')
+        .select('auth_user_id')
+        .eq('role', 'broker')
+        .eq('office', officeId);
+      
+      if (brokers && brokers.length > 0) {
+        let agentName = 'Un agente';
+        if (data.agent_id) {
+          const { data: agentProfile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('auth_user_id', data.agent_id)
+            .single();
+          if (agentProfile?.full_name) agentName = agentProfile.full_name;
+        }
+
+        for (const broker of brokers) {
+          if (broker.auth_user_id) {
+            await supabase.from('notifications').insert({
+              user_id: broker.auth_user_id,
+              title: '🏠 Propiedad por aprobar',
+              message: `${agentName} ha enviado la propiedad "${title}" para aprobación.`,
+              link: '/oficina?tab=propiedades',
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to notify brokers about new property approval:', e);
+    }
+  }
+
   return data;
 }

@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
 import { fetchOfficeProperties } from '@/lib/reconnect-api';
-import { getSearchById, getPropertiesForMatch, getAcmsForMatch, getPipelineForSearch } from '@/lib/dal/searches';
+import { getSearchById, getPropertiesForMatch, getAcmsForMatch, getPipelineForSearch, getVotesForPipelines } from '@/lib/dal/searches';
 import { RECONNECT_TYPE_MAP } from '@/lib/constants/property-constants';
 
 export async function GET(request) {
@@ -139,9 +139,8 @@ export async function GET(request) {
         ...(ceroRes.properties || []),
       ];
 
-      const tolerance = searchData.price_tolerance ? Number(searchData.price_tolerance) / 100 : 0;
-      const rPriceMin = searchData.price_min ? searchData.price_min * (1 - tolerance) : 0;
-      const rPriceMax = searchData.price_max ? searchData.price_max * (1 + tolerance) : 999_999_999;
+      const rPriceMin = rPriceMin || (searchData.price_min ? searchData.price_min * (1 - tolerance) : 0);
+      const rPriceMax = rPriceMax || (searchData.price_max ? searchData.price_max * (1 + tolerance) : 999_999_999);
 
       for (const rp of reconnectListings) {
         const hubType = RECONNECT_TYPE_MAP[rp.PropertyTypeId || rp.propertyTypeId];
@@ -211,7 +210,27 @@ export async function GET(request) {
       throw pipelineError;
     }
 
-    return NextResponse.json({ matches, pipeline: pipeline || [] });
+    // Fetch all votes for this pipeline to enrich the agent statistics tab
+    let enrichedPipeline = [];
+    if (pipeline && pipeline.length > 0) {
+      const pipelineIds = pipeline.map(p => p.id);
+      let votes = [];
+      try {
+        votes = await getVotesForPipelines(pipelineIds, supabase);
+      } catch (votesError) {
+        console.error('Error fetching votes for pipeline:', votesError);
+      }
+      
+      enrichedPipeline = pipeline.map(pItem => {
+        const itemVotes = votes.filter(v => v.pipeline_id === pItem.id);
+        return {
+          ...pItem,
+          votes: itemVotes
+        };
+      });
+    }
+
+    return NextResponse.json({ matches, pipeline: enrichedPipeline });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

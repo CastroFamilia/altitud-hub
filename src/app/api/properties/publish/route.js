@@ -46,13 +46,13 @@ export async function POST(req) {
         { error: 'Property must be approved before publishing' },
         { status: 400 }
       );
-    }
-
     // 2. Attempt RECONNECT publish (if credentials available)
     let reconnectResult = null;
     const officeCode = property.office_code || 'altitud';
+    let failedCount = 0;
+    let failedDetails = [];
 
-    if (false && isWriteConfigured(officeCode)) { // FUTURE EPIC 13: Push disabled for now
+    if (isWriteConfigured(officeCode)) {
       reconnectResult = await createProperty(property, officeCode);
 
       if (!reconnectResult.success) {
@@ -60,6 +60,7 @@ export async function POST(req) {
           property_id: propertyId,
           portal_name: 'reconnect',
           status: 'error',
+          error_message: reconnectResult.error || 'Unknown publish error',
           last_synced_at: new Date().toISOString(),
         }, { onConflict: 'property_id,portal_name' });
 
@@ -80,17 +81,25 @@ export async function POST(req) {
         if (images && images.length > 0) {
           for (const img of images) {
             if (!img.reconnect_photo_id) {
-              const imgRes = await createPropertyImage(
-                reconnectResult.listingKey,
-                img.image_url,
-                img.priority || 0,
-                officeCode
-              );
-              if (imgRes.success && imgRes.photoId) {
-                await supabaseAdmin
-                  .from('property_images')
-                  .update({ reconnect_photo_id: imgRes.photoId })
-                  .eq('id', img.id);
+              try {
+                const imgRes = await createPropertyImage(
+                  reconnectResult.listingKey,
+                  img.image_url,
+                  img.priority || 0,
+                  officeCode
+                );
+                if (imgRes.success && imgRes.photoId) {
+                  await supabaseAdmin
+                    .from('property_images')
+                    .update({ reconnect_photo_id: imgRes.photoId })
+                    .eq('id', img.id);
+                } else {
+                  failedCount++;
+                  failedDetails.push(`${img.alt_text || img.id}: ${imgRes.error || 'API error'}`);
+                }
+              } catch (e) {
+                failedCount++;
+                failedDetails.push(`${img.alt_text || img.id}: ${e.message}`);
               }
             }
           }
@@ -120,11 +129,16 @@ export async function POST(req) {
 
     // 4. Create syndication record
     if (reconnectResult?.listingId) {
+      const errorMsg = failedCount > 0
+        ? `Sincronizado parcial: ${failedCount} imágenes fallaron (${failedDetails.slice(0, 3).join(', ')})`
+        : null;
+
       await supabaseAdmin.from('property_syndication').upsert({
         property_id: propertyId,
         portal_name: 'reconnect',
         portal_listing_id: String(reconnectResult.listingId),
         status: 'synced',
+        error_message: errorMsg,
         last_synced_at: new Date().toISOString(),
       }, { onConflict: 'property_id,portal_name' });
     }

@@ -160,9 +160,10 @@ The project has recently seen massive capability expansions. Key architectural n
    - A dynamic PDF presentation generator built directly into the Hub. Agents can compile property attributes, valuation data, and custom marketing pages into a polished PDF folder to win listings. 
    - State is managed via a step-by-step wizard capturing property details, seller info, pricing strategies, and final template selection.
 
-3. **Photographer Workflow Integration**
-   - Integrated directly into the property listing pipeline to track the `photos_requested_at` milestone. This supports the "Listing Speed" KPI.
-   - Agents schedule shoots via an integrated scheduling link directly from the property management interface, ensuring media fulfillment is tightly coupled to the property's lifecycle.
+3. **Photographer Workflow & Google Drive Integration**
+   - **Unified Base Folder (Pre-Listing):** To ensure a single source of truth and prevent folder duplication, the Google Drive base folder is now automatically created at the **Pre-Listing** phase (stored in the `acm_reports` table). It is linked dynamically in the table view and wizard, introducing a first-time explainability alert for agent uploads to assist Olympia AI document extraction.
+   - **Dynamic Photographer Calendar:** Rather than hardcoding calendar booking links, brokers configure the photographer's schedule URL per-office (`altitud` / `cero`) in the office panel settings (`/oficina`). This is persisted in `office_settings.photographer_calendar_url`.
+   - **WhatsApp Coordination & Tracking:** The property detail view features a **WhatsApp Dispatcher** button next to Google Calendar booking. It generates a prefilled dynamic redirect to `wa.me/` carrying the property name, Drive folder link, and dynamic calendar URL. Coordination actions automatically record `photos_requested_at` in `listing_milestones`, keeping listing velocity KPIs up to date.
 
 4. **Olympia AI Mentor & Proactive Alerts (`/api/olympia`)**
    - **Proactive Follow-Ups:** Olympia runs automated checks against client lifecycle events (birthdays, move-in anniversaries) stored in the database.

@@ -44,7 +44,9 @@ export async function POST(req) {
       );
     }
 
-    if (true || !isWriteConfigured()) { // FUTURE EPIC 13: Push disabled for now
+    const officeCode = property.office_code || 'altitud';
+
+    if (!isWriteConfigured(officeCode)) {
       return NextResponse.json({
         success: false,
         scaffolded: true,
@@ -52,7 +54,6 @@ export async function POST(req) {
       });
     }
 
-    const officeCode = property.office_code || 'altitud';
     const result = await updateProperty(property.reconnect_listing_key, property, officeCode);
 
     if (!result.success) {

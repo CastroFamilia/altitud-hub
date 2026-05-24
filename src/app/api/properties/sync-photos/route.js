@@ -116,18 +116,24 @@ export async function POST(req) {
         
         // Sync to RECONNECT if published
         const officeCode = property.office_code || 'altitud';
-        if (false && property.reconnect_listing_key && isWriteConfigured(officeCode)) { // FUTURE EPIC 13: Push disabled for now
-          const imgRes = await createPropertyImage(
-            property.reconnect_listing_key,
-            imageUrl,
-            i,
-            officeCode
-          );
-          if (imgRes.success && imgRes.photoId) {
-            await supabaseAdmin
-              .from('property_images')
-              .update({ reconnect_photo_id: imgRes.photoId })
-              .eq('id', insertedImage.id);
+        if (property.reconnect_listing_key && isWriteConfigured(officeCode)) {
+          try {
+            const imgRes = await createPropertyImage(
+              property.reconnect_listing_key,
+              imageUrl,
+              i,
+              officeCode
+            );
+            if (imgRes.success && imgRes.photoId) {
+              await supabaseAdmin
+                .from('property_images')
+                .update({ reconnect_photo_id: imgRes.photoId })
+                .eq('id', insertedImage.id);
+            } else {
+              console.error(`RECONNECT photo upload failed for image ${imageUrl}:`, imgRes.error);
+            }
+          } catch (e) {
+            console.error(`RECONNECT photo upload exception for image ${imageUrl}:`, e.message);
           }
         }
       }

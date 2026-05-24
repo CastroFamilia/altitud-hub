@@ -39,8 +39,9 @@ export async function POST(req) {
 
     // Attempt RECONNECT cancellation if configured and listing exists
     let syncStatus = 'removed';
-    if (false && isWriteConfigured() && property.reconnect_listing_key) { // FUTURE EPIC 13: Push disabled for now
-      const officeCode = property.office_code || 'altitud';
+    const officeCode = property.office_code || 'altitud';
+
+    if (isWriteConfigured(officeCode) && property.reconnect_listing_key) {
       const result = await reconnectCancel(property.reconnect_listing_key, officeCode);
       if (!result.success) {
         console.error('RECONNECT cancel error:', result.error);
@@ -67,7 +68,7 @@ export async function POST(req) {
     return NextResponse.json({
       success: true,
       message: 'Property cancelled',
-      reconnect_configured: isWriteConfigured(),
+      reconnect_configured: isWriteConfigured(officeCode),
     });
 
   } catch (err) {

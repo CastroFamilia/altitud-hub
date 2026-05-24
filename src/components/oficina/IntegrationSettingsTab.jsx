@@ -12,7 +12,8 @@ export default function IntegrationSettingsTab({ officeId = 'altitud' }) {
     reconnect_read_api_key: '',
     reconnect_write_api_key: '',
     agents_api_key: '',
-    okr_sheet_url: ''
+    okr_sheet_url: '',
+    photographer_calendar_url: ''
   });
 
   useEffect(() => {
@@ -25,7 +26,8 @@ export default function IntegrationSettingsTab({ officeId = 'altitud' }) {
             reconnect_read_api_key: data.reconnect_read_api_key || '',
             reconnect_write_api_key: data.reconnect_write_api_key || '',
             agents_api_key: data.agents_api_key || '',
-            okr_sheet_url: data.okr_sheet_url || ''
+            okr_sheet_url: data.okr_sheet_url || '',
+            photographer_calendar_url: data.photographer_calendar_url || ''
           });
         }
       } catch(err) {
@@ -44,7 +46,8 @@ export default function IntegrationSettingsTab({ officeId = 'altitud' }) {
         reconnect_read_api_key: settings.reconnect_read_api_key,
         reconnect_write_api_key: settings.reconnect_write_api_key,
         agents_api_key: settings.agents_api_key,
-        okr_sheet_url: settings.okr_sheet_url
+        okr_sheet_url: settings.okr_sheet_url,
+        photographer_calendar_url: settings.photographer_calendar_url
       });
       alert(t('auto_settings_saved_successfully'));
     } catch (err) {
@@ -160,6 +163,24 @@ export default function IntegrationSettingsTab({ officeId = 'altitud' }) {
             value={settings.okr_sheet_url}
             onChange={handleChange}
             placeholder={t('auto_paste_the_published_csv')}
+            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-nexus-blue dark:text-white"
+          />
+        </div>
+
+        {/* photographer calendar config */}
+        <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2">
+            📸 {t('auto_photographer_calendar')}
+          </h3>
+          <p className="text-[10px] text-slate-500 mb-3">
+            {t('auto_photographer_calendar_desc')}
+          </p>
+          <input
+            type="text"
+            name="photographer_calendar_url"
+            value={settings.photographer_calendar_url}
+            onChange={handleChange}
+            placeholder={t('auto_photographer_calendar_placeholder')}
             className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-nexus-blue dark:text-white"
           />
         </div>

@@ -98,15 +98,26 @@ export async function POST(req) {
 
     const sentTypes = new Set((recentNotifs || []).map(n => n.type));
 
-    // ── Week date range ────────────────────────────────────────
-    const today = new Date();
-    const todayISO = today.toISOString().split('T')[0];
+    // ── Week date range (Costa Rica Timezone Correction) ────────
+    const today = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Costa_Rica" }));
+    
+    // Format YYYY-MM-DD for Costa Rica local date to avoid back-to-UTC conversion in toISOString()
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayISO = `${yyyy}-${mm}-${dd}`;
+
     const dayOfWeek = today.getDay(); // 0=Sun 1=Mon … 6=Sat
     const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
     const weekStart = new Date(today);
     weekStart.setDate(diff);
     weekStart.setHours(0, 0, 0, 0);
-    const weekStartISO = weekStart.toISOString().split('T')[0];
+
+    // Format week start date in Costa Rica timezone
+    const wYyyy = weekStart.getFullYear();
+    const wMm = String(weekStart.getMonth() + 1).padStart(2, '0');
+    const wDd = String(weekStart.getDate()).padStart(2, '0');
+    const weekStartISO = `${wYyyy}-${wMm}-${wDd}`;
 
     // ── Fetch this week's OKR entries ──────────────────────────
     const { data: entries } = await supabase

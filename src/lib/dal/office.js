@@ -316,7 +316,7 @@ export async function getAgentCommissions(client = null) {
   const supabaseClient = getClient(client);
   const { data, error } = await supabaseClient
     .from('agent_commissions')
-    .select('*, properties(name, listing_title_es, unparsed_address), profiles!agent_commissions_agent_id_fkey(full_name, avatar_url, commission_tier_id)')
+    .select('*, properties(name, listing_title_es, unparsed_address), profiles!agent_commissions_agent_id_fkey(full_name, avatar_url, commission_tier_id, status)')
     .order('closing_date', { ascending: false });
   if (error) throw error;
   return data;

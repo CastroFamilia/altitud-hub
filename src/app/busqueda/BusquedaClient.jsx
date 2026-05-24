@@ -211,7 +211,9 @@ export default function BusquedaClient({ initialSearches = [], initialAllSearche
   const [loadingMatches, setLoadingMatches] = useState(false);
 
   const [showExternalModal, setShowExternalModal] = useState(false);
-        const handleSelectSearch = async (search) => {
+  const [detailsTab, setDetailsTab] = useState('matchmaking'); // 'matchmaking' | 'reinder'
+
+  const handleSelectSearch = async (search) => {
     setSelectedSearch(search);
     setLoadingMatches(true);
     try {
@@ -253,6 +255,14 @@ export default function BusquedaClient({ initialSearches = [], initialAllSearche
     const url = `${window.location.origin}/portal/busqueda/${selectedSearch.id}`;
     navigator.clipboard.writeText(url);
     alert(l.copied_alert);
+  };
+
+  const shareViaWhatsApp = () => {
+    if (!selectedSearch) return;
+    const url = `${window.location.origin}/portal/busqueda/${selectedSearch.id}`;
+    const text = `¡Hola ${selectedSearch.client_name}! He preparado una selección exclusiva de propiedades para ti en nuestro portal interactivo REINDER. Puedes calificar, comentar y deslizar (swipe) las propiedades que te gustan desde tu celular o computadora aquí: ${url}`;
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const handleRenewSearch = async (searchId) => {
@@ -403,124 +413,337 @@ export default function BusquedaClient({ initialSearches = [], initialAllSearche
                 </div>
               ) : (
                 <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col min-h-[600px]">
-                  <div className="p-6 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-                    <h3 className="text-lg font-black italic text-slate-900 dark:text-white flex items-center gap-2">
-                      <span>✨</span> {l.matches_for} {selectedSearch.client_name}
-                    </h3>
-                  </div>
-
-                  <div className="p-6 flex-1 overflow-y-auto">
-                    {loadingMatches ? (
-                      <div className="flex justify-center p-12"><div className="animate-spin w-8 h-8 border-2 border-nexus-blue border-t-transparent rounded-full"></div></div>
-                    ) : matches.length === 0 ? (
-                      <p className="text-xs text-slate-500 italic p-4 text-center">{l.no_matches}</p>
-                    ) : (
-                      matches.map(m => {
-                        const matchKey = m.id || m.match_id;
-                        const pipe = (pipelineMap[selectedSearch.id] || []).find(p => p.match_id === m.id);
-                        const isReconnect = m.type === 'reconnect';
-                        return (
-                          <div key={matchKey} className={`p-4 rounded-2xl border flex flex-col md:flex-row gap-4 items-start shadow-sm mb-4 transition-all ${isReconnect ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/40' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700'}`}>
-                            {/* Thumbnail — RECONNECT listings only */}
-                            {isReconnect && m.main_image_url && (
-                              <div className="w-full md:w-24 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100">
-                                <img src={m.main_image_url} alt={m.name} className="w-full h-full object-cover" />
-                              </div>
-                            )}
-                            <div className="flex-1">
-                              <div className="flex justify-between items-start mb-1">
-                                <div>
-                                  {isReconnect ? (
-                                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                                      <span className="text-[10px] font-black text-white bg-emerald-500 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                        🔗 RECONNECT
-                                      </span>
-                                      {m.office_key && (
-                                        <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded uppercase tracking-widest">
-                                          {m.office_key === 'altitud' ? 'Altitud' : 'Cero'}
-                                        </span>
-                                      )}
-                                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">· Live</span>
-                                    </div>
-                                  ) : (
-                                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded uppercase tracking-wider">
-                                      {m.type.toUpperCase()}
-                                    </span>
-                                  )}
-                                  {m.match_score !== undefined && (
-                                    <span className="ml-2 text-[10px] font-bold text-white bg-nexus-blue px-2 py-0.5 rounded uppercase tracking-wider">
-                                      Match {m.match_score}%
-                                    </span>
-                                  )}
-                                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mt-1 leading-tight">{m.name}</h4>
-                                  {isReconnect && m.location && (
-                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
-                                      <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
-                                      {m.location}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="text-right">
-                                  <p className={`font-black text-sm ${isReconnect ? 'text-emerald-700 dark:text-emerald-400' : 'text-nexus-blue'}`}>${Number(m.price).toLocaleString()}</p>
-                                </div>
-                              </div>
-                              <div className="mt-3 flex gap-2 flex-wrap">
-                                {isReconnect ? (
-                                  <Link
-                                    href="/propiedades"
-                                    className="text-[10px] px-3 py-1.5 rounded-lg font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 transition-colors"
-                                  >
-                                    🏠 Ver en Mis Propiedades
-                                  </Link>
-                                ) : (
-                                  !pipe || pipe.status === 'enviada' ? (
-                                    <button onClick={() => updateStatus(m.id, m.type, 'enviada')} className={`text-[10px] px-3 py-1.5 rounded-lg font-bold transition-colors ${pipe?.status === 'enviada' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600 hover:bg-blue-50'}`}>
-                                      {pipe?.status === 'enviada' ? l.status_sent : l.mark_sent}
-                                    </button>
-                                  ) : (
-                                    <span className={`text-[10px] px-3 py-1.5 rounded-lg font-bold ${pipe.status === 'interesado' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                      {pipe.status === 'interesado' ? l.status_int : l.status_rej}
-                                    </span>
-                                  )
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                  
-                  <div className="mt-8 border-t border-slate-200 dark:border-slate-700 pt-6 p-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">{l.pipe_title}</h3>
-                      <div className="flex space-x-2">
-                        <button onClick={() => setShowExternalModal(true)} className="text-xs font-bold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors">
-                          {l.btn_ext}
-                        </button>
-                        <button onClick={copyPortalLink} className="text-xs font-bold px-3 py-1.5 bg-nexus-blue hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm flex items-center">
-                          <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                          {l.btn_copy}
-                        </button>
+                  {/* Header containing the tab options */}
+                  <div className="border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex flex-col md:flex-row md:items-center justify-between p-6 gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">✨</span>
+                      <div>
+                        <h3 className="text-base font-black italic text-slate-900 dark:text-white leading-tight">
+                          {l.matches_for} {selectedSearch.client_name}
+                        </h3>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">Requerimiento de cliente</p>
                       </div>
                     </div>
                     
-                    <div className="space-y-3">
-                      {(pipelineMap[selectedSearch.id] || []).map(p => (
-                        <div key={p.id} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                          <div className="flex items-center space-x-3">
-                            <span className={`w-2 h-2 rounded-full ${p.status === 'enviada' ? 'bg-blue-400' : p.status === 'interesado' ? 'bg-green-400' : 'bg-red-400'}`}></span>
-                            <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                              {p.match_type === 'external' ? (p.external_data?.name || l.prop_ext) : l.prop}
-                            </span>
-                          </div>
-                          <span className="text-[10px] font-bold uppercase text-slate-500">
-                            {p.status === 'interesado' ? l.status_int : p.status === 'rechazada' ? l.status_rej : l.status_sent}
-                          </span>
-                        </div>
-                      ))}
+                    {/* Tab Navigation with Premium Look */}
+                    <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl border border-slate-300 dark:border-slate-700 self-start md:self-auto shadow-inner">
+                      <button
+                        onClick={() => setDetailsTab('matchmaking')}
+                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${detailsTab === 'matchmaking' ? 'bg-white dark:bg-slate-700 text-nexus-blue shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                      >
+                        🔍 Matches ({matches.length})
+                      </button>
+                      <button
+                        onClick={() => setDetailsTab('reinder')}
+                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${detailsTab === 'reinder' ? 'bg-white dark:bg-slate-700 text-nexus-blue shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                      >
+                        <span>🦌</span> Portal / REINDER
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                      </button>
                     </div>
                   </div>
+
+                  {detailsTab === 'matchmaking' ? (
+                    <>
+                      <div className="p-6 flex-1 overflow-y-auto">
+                        {loadingMatches ? (
+                          <div className="flex justify-center p-12"><div className="animate-spin w-8 h-8 border-2 border-nexus-blue border-t-transparent rounded-full"></div></div>
+                        ) : matches.length === 0 ? (
+                          <p className="text-xs text-slate-500 italic p-4 text-center">{l.no_matches}</p>
+                        ) : (
+                          matches.map(m => {
+                            const matchKey = m.id || m.match_id;
+                            const pipe = (pipelineMap[selectedSearch.id] || []).find(p => p.match_id === m.id);
+                            const isReconnect = m.type === 'reconnect';
+                            return (
+                              <div key={matchKey} className={`p-4 rounded-2xl border flex flex-col md:flex-row gap-4 items-start shadow-sm mb-4 transition-all ${isReconnect ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/40' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700'}`}>
+                                {/* Thumbnail — RECONNECT listings only */}
+                                {isReconnect && m.main_image_url && (
+                                  <div className="w-full md:w-24 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100">
+                                    <img src={m.main_image_url} alt={m.name} className="w-full h-full object-cover" />
+                                  </div>
+                                )}
+                                <div className="flex-1">
+                                  <div className="flex justify-between items-start mb-1">
+                                    <div>
+                                      {isReconnect ? (
+                                        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                          <span className="text-[10px] font-black text-white bg-emerald-500 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                            🔗 RECONNECT
+                                          </span>
+                                          {m.office_key && (
+                                            <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded uppercase tracking-widest">
+                                              {m.office_key === 'altitud' ? 'Altitud' : 'Cero'}
+                                            </span>
+                                          )}
+                                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">· Live</span>
+                                        </div>
+                                      ) : (
+                                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded uppercase tracking-wider">
+                                          {m.type.toUpperCase()}
+                                        </span>
+                                      )}
+                                      {m.match_score !== undefined && (
+                                        <span className="ml-2 text-[10px] font-bold text-white bg-nexus-blue px-2 py-0.5 rounded uppercase tracking-wider">
+                                          Match {m.match_score}%
+                                        </span>
+                                      )}
+                                      <h4 className="text-sm font-bold text-slate-900 dark:text-white mt-1 leading-tight">{m.name}</h4>
+                                      {isReconnect && m.location && (
+                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
+                                          <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                                          {m.location}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <div className="text-right">
+                                      <p className={`font-black text-sm ${isReconnect ? 'text-emerald-700 dark:text-emerald-400' : 'text-nexus-blue'}`}>${Number(m.price).toLocaleString()}</p>
+                                    </div>
+                                  </div>
+                                  <div className="mt-3 flex gap-2 flex-wrap">
+                                    {isReconnect ? (
+                                      <Link
+                                        href="/propiedades"
+                                        className="text-[10px] px-3 py-1.5 rounded-lg font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 transition-colors"
+                                      >
+                                        🏠 Ver en Mis Propiedades
+                                      </Link>
+                                    ) : (
+                                      !pipe || pipe.status === 'enviada' ? (
+                                        <button onClick={() => updateStatus(m.id, m.type, 'enviada')} className={`text-[10px] px-3 py-1.5 rounded-lg font-bold transition-colors ${pipe?.status === 'enviada' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600 hover:bg-blue-50'}`}>
+                                          {pipe?.status === 'enviada' ? l.status_sent : l.mark_sent}
+                                        </button>
+                                      ) : (
+                                        <span className={`text-[10px] px-3 py-1.5 rounded-lg font-bold ${pipe.status === 'interesado' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                          {pipe.status === 'interesado' ? l.status_int : l.status_rej}
+                                        </span>
+                                      )
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                      
+                      <div className="mt-8 border-t border-slate-200 dark:border-slate-700 pt-6 p-6">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-sm font-bold text-slate-900 dark:text-white">{l.pipe_title}</h3>
+                          <div className="flex space-x-2">
+                            <button onClick={() => setShowExternalModal(true)} className="text-xs font-bold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors">
+                              {l.btn_ext}
+                            </button>
+                            <button onClick={copyPortalLink} className="text-xs font-bold px-3 py-1.5 bg-nexus-blue hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm flex items-center">
+                              <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                              {l.btn_copy}
+                            </button>
+                            <button onClick={shareViaWhatsApp} className="text-xs font-bold px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+                              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.73-1.45L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.625 1.451 5.403.002 9.794-4.382 9.797-9.782.002-2.618-1.01-5.079-2.852-6.924C16.375 2.053 13.92 1.037 11.997 1.037c-5.41 0-9.802 4.386-9.805 9.79-.001 1.52.399 3.01 1.157 4.316l.186.32L2.524 21.03l4.6-.967.333.19z"></path></svg>
+                              Invitar
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {(pipelineMap[selectedSearch.id] || []).map(p => (
+                            <div key={p.id} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                              <div className="flex items-center space-x-3">
+                                <span className={`w-2 h-2 rounded-full ${p.status === 'enviada' ? 'bg-blue-400' : p.status === 'interesado' ? 'bg-green-400' : 'bg-red-400'}`}></span>
+                                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                  {p.match_type === 'external' ? (p.external_data?.name || l.prop_ext) : l.prop}
+                                </span>
+                              </div>
+                              <span className="text-[10px] font-bold uppercase text-slate-500">
+                                {p.status === 'interesado' ? l.status_int : p.status === 'rechazada' ? l.status_rej : l.status_sent}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    /* REINDER PREMIUM ANALYTICS TAB */
+                    <div className="p-6 flex-1 overflow-y-auto space-y-6">
+                      {/* Connection bar */}
+                      <div className="p-4 bg-gradient-to-r from-blue-900/10 via-indigo-900/5 to-slate-900/10 border border-blue-500/10 rounded-2xl flex items-center justify-between shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-nexus-blue/10 flex items-center justify-center text-lg shadow-sm">🦌</div>
+                          <div>
+                            <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Reinder Integration Activa</h4>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400">Swipes y valoraciones sincronizados en tiempo real</p>
+                          </div>
+                        </div>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                          Conectado
+                        </span>
+                      </div>
+
+                      {/* Calculations & Metrics Cards */}
+                      {(() => {
+                        const pipelineItems = pipelineMap[selectedSearch.id] || [];
+                        
+                        // Extract all votes
+                        const allVotes = [];
+                        pipelineItems.forEach(p => {
+                          if (p.votes) {
+                            p.votes.forEach(v => {
+                              allVotes.push({ ...v, propName: p.match_type === 'external' ? (p.external_data?.name || l.prop_ext) : 'Propiedad en Inventario', pipelineItem: p });
+                            });
+                          }
+                        });
+
+                        // Calculate KPIs
+                        const totalSwipes = allVotes.length;
+                        const favorites = pipelineItems.filter(p => p.votes?.some(v => v.decision === 'visita' || v.rating >= 4)).length;
+                        const rejections = pipelineItems.filter(p => p.votes?.some(v => v.decision === 'descartar')).length;
+
+                        // Family agreement rate
+                        let votedPropsCount = 0;
+                        let agreementPropsCount = 0;
+                        pipelineItems.forEach(p => {
+                          if (p.votes && p.votes.length > 1) {
+                            votedPropsCount++;
+                            const uniqueDecisions = [...new Set(p.votes.map(v => v.decision).filter(Boolean))];
+                            if (uniqueDecisions.length === 1) {
+                              agreementPropsCount++;
+                            }
+                          }
+                        });
+                        const consensusRate = votedPropsCount > 0 ? Math.round((agreementPropsCount / votedPropsCount) * 100) : null;
+
+                        return (
+                          <>
+                            {/* KPI Metrics Grid */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
+                                <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1">Swipes Totales</p>
+                                <p className="text-2xl font-black italic text-slate-900 dark:text-white">{totalSwipes}</p>
+                              </div>
+                              <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
+                                <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1">Consenso Familiar</p>
+                                <p className="text-2xl font-black italic text-emerald-500">{consensusRate !== null ? `${consensusRate}%` : '100%'}</p>
+                              </div>
+                              <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
+                                <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1">Favoritas (⭐4+)</p>
+                                <p className="text-2xl font-black italic text-nexus-blue">{favorites}</p>
+                              </div>
+                              <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
+                                <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1">Descartadas</p>
+                                <p className="text-2xl font-black italic text-red-500">{rejections}</p>
+                              </div>
+                            </div>
+
+                            {totalSwipes === 0 ? (
+                              <div className="p-12 text-center bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700/60">
+                                <svg className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                                <h4 className="text-xs font-black uppercase text-slate-800 dark:text-slate-300 mb-1">Esperando swipes de los clientes</h4>
+                                <p className="text-[10px] text-slate-400 max-w-sm mx-auto mb-4">Envía el enlace del portal a tu cliente. Cada miembro de la pareja podrá votar de forma independiente en su celular.</p>
+                                <div className="flex gap-2 justify-center">
+                                  <button onClick={copyPortalLink} className="bg-nexus-blue hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md transition-all">
+                                    {l.btn_copy}
+                                  </button>
+                                  <button onClick={shareViaWhatsApp} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md transition-all flex items-center gap-1.5">
+                                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.73-1.45L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.625 1.451 5.403.002 9.794-4.382 9.797-9.782.002-2.618-1.01-5.079-2.852-6.924C16.375 2.053 13.92 1.037 11.997 1.037c-5.41 0-9.802 4.386-9.805 9.79-.001 1.52.399 3.01 1.157 4.316l.186.32L2.524 21.03l4.6-.967.333.19z"></path></svg>
+                                    Invitar por WhatsApp
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                {/* Table and Activity columns */}
+                                <div className="space-y-6">
+                                  {/* Table Comparison */}
+                                  <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/60 overflow-hidden">
+                                    <div className="p-4 border-b border-slate-150 dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
+                                      <h4 className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">Cuadrícula de Votos</h4>
+                                    </div>
+                                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                      {pipelineItems.filter(p => p.votes && p.votes.length > 0).map(p => {
+                                        const pName = p.match_type === 'external' ? (p.external_data?.name || l.prop_ext) : `Propiedad #${p.match_id.substring(0, 5)}`;
+                                        return (
+                                          <div key={p.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div>
+                                              <p className="text-xs font-black text-slate-800 dark:text-white leading-tight">{pName}</p>
+                                              <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wider">{p.match_type}</p>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                              {p.votes.map(v => (
+                                                <div key={v.id} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[9px] font-bold shadow-sm ${
+                                                  v.decision === 'descartar' ? 'bg-red-50 text-red-600 border-red-100 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30' :
+                                                  v.decision === 'visita' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30' :
+                                                  'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30'
+                                                }`}>
+                                                  <span className="font-black uppercase tracking-wider">{v.voter_name}:</span>
+                                                  <span>
+                                                    {v.decision === 'visita' ? '❤️ Visitar' : v.decision === 'descartar' ? '❌ Descartado' : '⚡ Guardado'}
+                                                  </span>
+                                                  {v.rating && <span className="opacity-80">· {v.rating}⭐</span>}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+
+                                  {/* Activity Log */}
+                                  <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/60 p-4">
+                                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-4 border-b border-slate-200 dark:border-slate-800 pb-2">Feed de Actividad REINDER</h4>
+                                    <div className="space-y-4">
+                                      {allVotes.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 8).map(v => {
+                                        const eventTime = new Date(v.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                        return (
+                                          <div key={v.id} className="flex gap-3 items-start text-xs">
+                                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-xs shadow-sm font-black ${
+                                              v.decision === 'descartar' ? 'bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400' :
+                                              v.decision === 'visita' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' :
+                                              'bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
+                                            }`}>
+                                              {v.voter_name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div className="flex-1 space-y-1">
+                                              <p className="text-slate-700 dark:text-slate-300">
+                                                <strong className="font-bold text-slate-950 dark:text-white">{v.voter_name}</strong>
+                                                {' '}votó{' '}
+                                                <span className={`font-black uppercase tracking-wide px-1.5 py-0.5 rounded text-[8px] ${
+                                                  v.decision === 'descartar' ? 'bg-red-50 text-red-500 dark:bg-red-950/30' :
+                                                  v.decision === 'visita' ? 'bg-emerald-50 text-emerald-500 dark:bg-emerald-950/30' :
+                                                  'bg-amber-50 text-amber-500 dark:bg-amber-950/30'
+                                                }`}>
+                                                  {v.decision === 'visita' ? 'Me Gusta' : v.decision === 'descartar' ? 'Descartar' : 'Tal Vez'}
+                                                </span>
+                                                {' '}en{' '}
+                                                <span className="italic font-bold text-slate-800 dark:text-slate-200">{v.propName}</span>.
+                                              </p>
+                                              {v.notes && (
+                                                <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50 italic text-[11px] text-slate-500 dark:text-slate-400">
+                                                  &ldquo;{v.notes}&rdquo;
+                                                </div>
+                                              )}
+                                              <p className="text-[9px] text-slate-400 flex items-center gap-1">
+                                                <span>🕒 {eventTime}</span>
+                                                {v.rating && <span>· {v.rating} estrellas ⭐</span>}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

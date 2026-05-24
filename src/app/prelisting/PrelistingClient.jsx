@@ -9,6 +9,7 @@ import Step3Tech from '@/components/prelisting/Step3Tech';
 import { insertAcmReport, updateAcmReport } from '@/lib/dal/prelisting';
 import { useApp } from '@/lib/context';
 import { trackOkrActivity } from '@/lib/okr-tracker';
+import { useAuth } from '@/lib/auth-context';
 
 const STATUS_STYLES = {
   followup: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
@@ -30,12 +31,18 @@ const TABS = [
 
 export default function PrelistingClient({ initialProperties = [], initialInterviews = [] }) {
   const router = useRouter();
-  const { t } = useApp();
+  const { t, lang } = useApp();
+  const { user, profile } = useAuth();
   const [showWizard, setShowWizard] = useState(false);
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [interviews, setInterviews] = useState(initialInterviews);
+
+  const [showDriveAlertModal, setShowDriveAlertModal] = useState(false);
+  const [createdFolderUrl, setCreatedFolderUrl] = useState('');
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
   const [formData, setFormData] = useState({
     property_type: 'house',
     status: 'draft',
@@ -71,12 +78,84 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
     setFormData({ property_type: 'house', status: 'draft' });
   };
 
+  const handleCloseDriveAlert = () => {
+    if (dontShowAgain) {
+      typeof window !== 'undefined' && localStorage.setItem('hide_drive_prelisting_alert', 'true');
+    }
+    setShowDriveAlertModal(false);
+  };
+
+  const handleCreateFolderForExisting = async (item) => {
+    try {
+      const agentName = profile?.full_name || user?.user_metadata?.full_name || 'Agent';
+      const agentEmail = user?.email || null;
+      const propertyName = item.property_address || 'Nueva Propiedad';
+
+      const driveRes = await fetch('/api/drive/create-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentName, agentEmail, propertyName }),
+      });
+      const driveData = await driveRes.json();
+      if (driveData.success) {
+        await updateAcmReport(item.id, {
+          drive_folder_id: driveData.folderId,
+          drive_folder_url: driveData.folderUrl
+        });
+        
+        setInterviews(prev => prev.map(i => {
+          if (i.id === item.id) {
+            return { ...i, drive_folder_id: driveData.folderId, drive_folder_url: driveData.folderUrl };
+          }
+          return i;
+        }));
+
+        const hideAlert = typeof window !== 'undefined' ? localStorage.getItem('hide_drive_prelisting_alert') === 'true' : false;
+        if (!hideAlert) {
+          setCreatedFolderUrl(driveData.folderUrl);
+          setShowDriveAlertModal(true);
+        } else {
+          alert('Carpeta de Google Drive creada y conectada exitosamente.');
+        }
+      } else {
+        alert('Error: ' + (driveData.error || 'No se pudo crear la carpeta.'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error al crear la carpeta: ' + err.message);
+    }
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
+
+    let folderId = null;
+    let folderUrl = null;
+
+    try {
+      const agentName = profile?.full_name || user?.user_metadata?.full_name || 'Agent';
+      const agentEmail = user?.email || null;
+      const propertyName = formData.property_name || 'Nueva Propiedad';
+
+      const driveRes = await fetch('/api/drive/create-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentName, agentEmail, propertyName }),
+      });
+      const driveData = await driveRes.json();
+      if (driveData.success) {
+        folderId = driveData.folderId;
+        folderUrl = driveData.folderUrl;
+      }
+    } catch (driveErr) {
+      console.error("Failed to create Drive folder during prelisting:", driveErr);
+    }
+
     try {
       const dbPayload = {
-        agent_name: 'Agente de Prueba', 
-        office: 'altitud',
+        agent_name: profile?.full_name || 'Agente de Prueba', 
+        office: profile?.office || 'altitud',
+        user_id: user?.id || null,
         property_category: ['commercial','farm','land'].includes(formData.property_type) ? 'commercial' : 'residential',
         property_type: formData.property_type || 'house',
         property_address: formData.property_name || 'Sin Título',
@@ -86,6 +165,8 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
         property_finca: formData.finca,
         property_plano: formData.plano,
         status: formData.status || 'draft',
+        drive_folder_id: folderId,
+        drive_folder_url: folderUrl,
         indicators: {
           psychology: {
             occupation: formData.occupation,
@@ -117,6 +198,14 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
       if (data) {
         setInterviews([data, ...interviews]);
         await trackOkrActivity('prelistings');
+
+        if (folderUrl) {
+          const hideAlert = typeof window !== 'undefined' ? localStorage.getItem('hide_drive_prelisting_alert') === 'true' : false;
+          if (!hideAlert) {
+            setCreatedFolderUrl(folderUrl);
+            setShowDriveAlertModal(true);
+          }
+        }
       }
       resetWizard();
     } catch (e) {
@@ -361,10 +450,31 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
                       </div>
                     </td>
                     {/* Acción */}
-                    <td className="py-4 px-5 text-center">
-                      <button className="text-gray-400 dark:text-gray-500 hover:text-brand-500 dark:hover:text-brand-400 transition-colors p-1">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
-                      </button>
+                    <td className="py-4 px-5">
+                      <div className="flex items-center justify-center gap-2">
+                        {item.drive_folder_url ? (
+                          <a 
+                            href={item.drive_folder_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors"
+                            title="Abrir Carpeta Base en Google Drive"
+                          >
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l4.58 7.5h13.54l4.58-7.5L17.29 3.5H7.71z" /></svg>
+                          </a>
+                        ) : (
+                          <button
+                            onClick={() => handleCreateFolderForExisting(item)}
+                            className="p-1.5 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-white/5 dark:hover:bg-white/10 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
+                            title="Crear Carpeta de Google Drive"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+                          </button>
+                        )}
+                        <button className="text-gray-400 dark:text-gray-500 hover:text-brand-500 dark:hover:text-brand-400 transition-colors p-1" title="Más opciones">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -379,6 +489,88 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
 
         </div>
       </div>
+      {/* ═══ GOOGLE DRIVE & OLYMPIA INTEGRATION ALERT MODAL ═══ */}
+      {showDriveAlertModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={handleCloseDriveAlert}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div
+            className="relative bg-white dark:bg-slate-900 rounded-[32px] shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg p-6 md:p-8"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-md shadow-blue-600/30">
+                  <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l4.58 7.5h13.54l4.58-7.5L17.29 3.5H7.71z" /></svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-black italic text-slate-900 dark:text-white leading-tight">
+                    {lang === 'en' ? 'Property Folder Created!' : '¡Carpeta de Propiedad Creada!'}
+                  </h3>
+                  <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-widest">
+                    {lang === 'en' ? 'Smart Hub Integration' : 'Integración Inteligente del Hub'}
+                  </p>
+                </div>
+              </div>
+              <button onClick={handleCloseDriveAlert} className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                {lang === 'en' 
+                  ? "We have automatically created the base Google Drive folder for this property. This folder serves as the single source of truth for the entire lifecycle (Pre-Listing, ACM, Listing, and Photos) to avoid duplicates."
+                  : "Hemos creado automáticamente la carpeta base de Google Drive para esta propiedad. Esta carpeta servirá como fuente única de verdad durante todo el ciclo (Pre-Listing, ACM, Captación y Fotos) para evitar duplicados."}
+              </p>
+              
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-brand-50 to-purple-50 dark:from-brand-950/20 dark:to-purple-950/20 border border-brand-100/50 dark:border-brand-900/30 flex items-start gap-3">
+                <span className="text-xl shrink-0">💡</span>
+                <div>
+                  <h4 className="text-xs font-bold text-brand-700 dark:text-brand-400 uppercase tracking-wider">Tip de Olympia AI</h4>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                    {lang === 'en'
+                      ? "Any document you upload here (National Registry document, Cadastral map, photos) will be read and indexed in real-time. Olympia will analyze it to assist you in CMAs and technical details!"
+                      : "Cualquier documento que subas aquí (Folio real, Plano Catastrado, fotos) será leído e indexado en tiempo real. ¡Olympia los analizará para ayudarte con el ACM y los datos técnicos!"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="dont-show-again-checkbox"
+                  checked={dontShowAgain}
+                  onChange={(e) => setDontShowAgain(e.target.checked)}
+                  className="rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-slate-700 bg-white dark:bg-slate-800 animate-none shrink-0"
+                />
+                <label htmlFor="dont-show-again-checkbox" className="text-[11px] text-gray-500 dark:text-gray-400 cursor-pointer">
+                  {lang === 'en' ? "Don't show this explanation again" : "No volver a mostrar esta explicación"}
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCloseDriveAlert}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 text-xs font-bold transition-colors"
+              >
+                {lang === 'en' ? 'Close' : 'Cerrar'}
+              </button>
+
+              <a
+                href={createdFolderUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={handleCloseDriveAlert}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/20"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l4.58 7.5h13.54l4.58-7.5L17.29 3.5H7.71z" /></svg>
+                {lang === 'en' ? 'Open Drive Folder' : 'Abrir Carpeta'}
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

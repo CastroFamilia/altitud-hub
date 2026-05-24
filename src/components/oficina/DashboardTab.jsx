@@ -637,8 +637,8 @@ export default function DashboardTab({
       const isSelling = c.side === 'selling' || c.side === 'both';
       const amt = Number(c.side_amount || c.gross_commission) || 0;
 
-      if (!agentMapYear[aid]) agentMapYear[aid] = { id: aid, name: c.profiles?.full_name, avatar: c.profiles?.avatar_url, listAmt: 0, sellAmt: 0 };
-      if (!agentMapMonth[aid]) agentMapMonth[aid] = { id: aid, name: c.profiles?.full_name, avatar: c.profiles?.avatar_url, listAmt: 0, sellAmt: 0 };
+      if (!agentMapYear[aid]) agentMapYear[aid] = { id: aid, name: c.profiles?.full_name, avatar: c.profiles?.avatar_url, status: c.profiles?.status, listAmt: 0, sellAmt: 0 };
+      if (!agentMapMonth[aid]) agentMapMonth[aid] = { id: aid, name: c.profiles?.full_name, avatar: c.profiles?.avatar_url, status: c.profiles?.status, listAmt: 0, sellAmt: 0 };
 
       if (d.getFullYear() === selectedYear) {
         if (isListing) agentMapYear[aid].listAmt += amt;
@@ -1459,7 +1459,14 @@ export default function DashboardTab({
                     <span className="text-[10px] font-black text-slate-400 w-3">{i+1}.</span>
                     <Image src={a.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}`} className="w-6 h-6 rounded-full" alt="" width={24} height={24} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="text-[10px] font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
+                        {a.status === 'disabled' && (
+                          <span className="px-1 py-0.2 rounded text-[7px] font-black bg-red-150 text-red-600 dark:bg-red-950/40 dark:text-red-400 flex-shrink-0">
+                            Inactivo
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[9px] text-slate-505 font-bold">${a.listAmt.toLocaleString()}</p>
                     </div>
                   </div>
@@ -1480,7 +1487,14 @@ export default function DashboardTab({
                     <span className="text-[10px] font-black text-slate-400 w-3">{i+1}.</span>
                     <Image src={a.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}`} className="w-6 h-6 rounded-full" alt="" width={24} height={24} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="text-[10px] font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
+                        {a.status === 'disabled' && (
+                          <span className="px-1 py-0.2 rounded text-[7px] font-black bg-red-150 text-red-600 dark:bg-red-950/40 dark:text-red-400 flex-shrink-0">
+                            Inactivo
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[9px] text-slate-550 font-bold">${a.sellAmt.toLocaleString()}</p>
                     </div>
                   </div>
@@ -1490,7 +1504,7 @@ export default function DashboardTab({
               )}
             </div>
           </div>
-
+ 
           {/* Top Año Captadores */}
           <div>
             <h5 className="text-[10px] font-bold text-purple-600 uppercase mb-3 text-center bg-purple-50 dark:bg-purple-900/20 py-1.5 rounded-lg">
@@ -1503,7 +1517,14 @@ export default function DashboardTab({
                     <span className="text-[10px] font-black text-slate-400 w-3">{i+1}.</span>
                     <Image src={a.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}`} className="w-6 h-6 rounded-full" alt="" width={24} height={24} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="text-[10px] font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
+                        {a.status === 'disabled' && (
+                          <span className="px-1 py-0.2 rounded text-[7px] font-black bg-red-150 text-red-600 dark:bg-red-950/40 dark:text-red-400 flex-shrink-0">
+                            Inactivo
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[9px] text-slate-550 font-bold">${a.listAmt.toLocaleString()}</p>
                     </div>
                   </div>
@@ -1513,7 +1534,7 @@ export default function DashboardTab({
               )}
             </div>
           </div>
-
+ 
           {/* Top Año Cierres */}
           <div>
             <h5 className="text-[10px] font-bold text-amber-600 uppercase mb-3 text-center bg-amber-50 dark:bg-amber-900/20 py-1.5 rounded-lg">
@@ -1526,7 +1547,14 @@ export default function DashboardTab({
                     <span className="text-[10px] font-black text-slate-400 w-3">{i+1}.</span>
                     <Image src={a.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}`} className="w-6 h-6 rounded-full" alt="" width={24} height={24} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="text-[10px] font-bold text-slate-900 dark:text-white truncate">{a.name}</p>
+                        {a.status === 'disabled' && (
+                          <span className="px-1 py-0.2 rounded text-[7px] font-black bg-red-150 text-red-600 dark:bg-red-950/40 dark:text-red-400 flex-shrink-0">
+                            Inactivo
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[9px] text-slate-550 font-bold">${a.sellAmt.toLocaleString()}</p>
                     </div>
                   </div>

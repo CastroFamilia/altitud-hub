@@ -202,13 +202,10 @@ export async function POST(request) {
       if (!count) return;
 
       const isSelected = selectedCategories.includes(key);
-      if (!isSelected) {
-        // If not selected, do not reassign (it stays with the departing agent)
-        placeholderCounts[key] = count;
-        return;
-      }
+      const targetId = isSelected
+        ? (isUserId ? receivingUserId : receivingProfileId)
+        : (isUserId ? placeholderUserId : placeholderProfile.id); // Reassign to Otros placeholder if not selected
 
-      const targetId = isUserId ? receivingUserId : receivingProfileId;
       const lookupId = isUserId ? departingUserId : departingProfileId;
       if (!lookupId) return;
 
@@ -218,7 +215,11 @@ export async function POST(request) {
         .eq(column, lookupId);
 
       if (!error) {
-        reassignedCounts[key] = count;
+        if (isSelected) {
+          reassignedCounts[key] = count;
+        } else {
+          placeholderCounts[key] = count;
+        }
       }
     }
 
@@ -235,19 +236,19 @@ export async function POST(request) {
     // Handle referrals (two columns)
     if (counts.agent_referrals > 0) {
       const isSelected = selectedCategories.includes('agent_referrals');
+      const targetProfileId = isSelected ? receivingProfileId : placeholderProfile.id; // Reassign to Otros if not selected
+
+      await db
+        .from('agent_referrals')
+        .update({ referring_agent_id: targetProfileId })
+        .eq('referring_agent_id', departingProfileId);
+
+      await db
+        .from('agent_referrals')
+        .update({ receiving_agent_id: targetProfileId })
+        .eq('receiving_agent_id', departingProfileId);
+
       if (isSelected) {
-        const targetProfileId = receivingProfileId;
-
-        await db
-          .from('agent_referrals')
-          .update({ referring_agent_id: targetProfileId })
-          .eq('referring_agent_id', departingProfileId);
-
-        await db
-          .from('agent_referrals')
-          .update({ receiving_agent_id: targetProfileId })
-          .eq('receiving_agent_id', departingProfileId);
-
         reassignedCounts.agent_referrals = counts.agent_referrals;
       } else {
         placeholderCounts.agent_referrals = counts.agent_referrals;

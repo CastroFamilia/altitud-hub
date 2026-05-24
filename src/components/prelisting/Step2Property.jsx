@@ -1,7 +1,7 @@
 import { useApp } from '@/lib/context';
 
 export default function Step2Property({ formData, updateForm, onNext, onPrev }) {
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const handleChange = (e) => {
     const { name, value } = e.target;
     updateForm(name, value);
@@ -25,6 +25,11 @@ export default function Step2Property({ formData, updateForm, onNext, onPrev }) 
             <div className="col-span-1 md:col-span-2">
                 <label className="form-label">{t('pre_s2_prop_name')}</label>
                 <input type="text" name="property_name" value={formData.property_name || ''} onChange={handleChange} className="form-input text-lg font-semibold" placeholder={t('pre_s2_prop_placeholder')} />
+                <p className="text-[10px] text-brand-600 dark:text-brand-400 font-bold bg-brand-50/50 dark:bg-brand-950/20 px-3 py-2 rounded-lg border border-brand-100/30 dark:border-brand-900/20 flex items-center gap-1.5 mt-2">
+                  <span>💡</span> {lang === 'en' 
+                    ? "This property name will be used to create the single base Google Drive folder. Avoid duplicates!" 
+                    : "Este nombre se usará para crear la carpeta única de Google Drive en Pre-Listing. ¡Evita duplicados!"}
+                </p>
             </div>
             <div>
                 <label className="form-label">{t('pre_s2_finca')}</label>
