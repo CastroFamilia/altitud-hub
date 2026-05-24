@@ -11,6 +11,20 @@ import { useApp } from '@/lib/context';
 import { trackOkrActivity } from '@/lib/okr-tracker';
 import { useAuth } from '@/lib/auth-context';
 
+// Extract Google Drive Folder ID from any valid Google Drive URL
+export function extractDriveFolderId(url) {
+  if (!url) return null;
+  const match = url.match(/\/folders\/([a-zA-Z0-9-_]+)/);
+  if (match && match[1]) {
+    return match[1];
+  }
+  const idMatch = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+  if (idMatch && idMatch[1]) {
+    return idMatch[1];
+  }
+  return null;
+}
+
 const STATUS_STYLES = {
   followup: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
   pendientes: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
@@ -46,6 +60,7 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
   const [formData, setFormData] = useState({
     property_type: 'house',
     status: 'draft',
+    drive_folder_url: '',
   });
   const availableProperties = initialProperties;
 
@@ -63,7 +78,8 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
         emails: prop.contacts?.email || '',
         finca: prop.finca_number || '',
         plano: prop.plano_number || '',
-        m2_lot: prop.size_sqm || ''
+        m2_lot: prop.size_sqm || '',
+        drive_folder_url: prop.drive_photos_folder_url || '',
       }));
     }
   };
@@ -75,7 +91,7 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
   const resetWizard = () => {
     setShowWizard(false);
     setStep(1);
-    setFormData({ property_type: 'house', status: 'draft' });
+    setFormData({ property_type: 'house', status: 'draft', drive_folder_url: '' });
   };
 
   const handleCloseDriveAlert = () => {
@@ -126,29 +142,81 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
     }
   };
 
+  const handleLinkExistingFolderForExisting = async (item) => {
+    const urlPrompt = prompt(
+      lang === 'en' 
+        ? "Please paste the Google Drive folder URL for this property:" 
+        : "Por favor, pega el enlace (URL) de la carpeta de Google Drive para esta propiedad:"
+    );
+    if (!urlPrompt) return;
+
+    const parsedId = extractDriveFolderId(urlPrompt);
+    if (!parsedId) {
+      alert(
+        lang === 'en'
+          ? "Invalid Google Drive folder link. Please ensure it contains '/folders/ID' or '?id=ID'."
+          : "Enlace de carpeta de Google Drive inválido. Por favor asegúrate de que contenga '/folders/ID' o '?id=ID'."
+      );
+      return;
+    }
+
+    try {
+      await updateAcmReport(item.id, {
+        drive_folder_id: parsedId,
+        drive_folder_url: urlPrompt
+      });
+
+      setInterviews(prev => prev.map(i => {
+        if (i.id === item.id) {
+          return { ...i, drive_folder_id: parsedId, drive_folder_url: urlPrompt };
+        }
+        return i;
+      }));
+
+      alert(
+        lang === 'en'
+          ? "Google Drive folder successfully associated with this property!"
+          : "¡Carpeta de Google Drive vinculada exitosamente con esta propiedad!"
+      );
+    } catch (err) {
+      console.error("Error linking existing Drive folder:", err);
+      alert("Error: " + err.message);
+    }
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
     let folderId = null;
     let folderUrl = null;
 
-    try {
-      const agentName = profile?.full_name || user?.user_metadata?.full_name || 'Agent';
-      const agentEmail = user?.email || null;
-      const propertyName = formData.property_name || 'Nueva Propiedad';
-
-      const driveRes = await fetch('/api/drive/create-folder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentName, agentEmail, propertyName }),
-      });
-      const driveData = await driveRes.json();
-      if (driveData.success) {
-        folderId = driveData.folderId;
-        folderUrl = driveData.folderUrl;
+    if (formData.drive_folder_url) {
+      const parsedId = extractDriveFolderId(formData.drive_folder_url);
+      if (parsedId) {
+        folderId = parsedId;
+        folderUrl = formData.drive_folder_url;
       }
-    } catch (driveErr) {
-      console.error("Failed to create Drive folder during prelisting:", driveErr);
+    }
+
+    if (!folderUrl) {
+      try {
+        const agentName = profile?.full_name || user?.user_metadata?.full_name || 'Agent';
+        const agentEmail = user?.email || null;
+        const propertyName = formData.property_name || 'Nueva Propiedad';
+
+        const driveRes = await fetch('/api/drive/create-folder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agentName, agentEmail, propertyName }),
+        });
+        const driveData = await driveRes.json();
+        if (driveData.success) {
+          folderId = driveData.folderId;
+          folderUrl = driveData.folderUrl;
+        }
+      } catch (driveErr) {
+        console.error("Failed to create Drive folder during prelisting:", driveErr);
+      }
     }
 
     try {
@@ -199,7 +267,7 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
         setInterviews([data, ...interviews]);
         await trackOkrActivity('prelistings');
 
-        if (folderUrl) {
+        if (folderUrl && !formData.drive_folder_url) {
           const hideAlert = typeof window !== 'undefined' ? localStorage.getItem('hide_drive_prelisting_alert') === 'true' : false;
           if (!hideAlert) {
             setCreatedFolderUrl(folderUrl);
@@ -458,18 +526,27 @@ export default function PrelistingClient({ initialProperties = [], initialInterv
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors"
-                            title="Abrir Carpeta Base en Google Drive"
+                            title={lang === 'en' ? "Open Google Drive Base Folder" : "Abrir Carpeta Base en Google Drive"}
                           >
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l4.58 7.5h13.54l4.58-7.5L17.29 3.5H7.71z" /></svg>
                           </a>
                         ) : (
-                          <button
-                            onClick={() => handleCreateFolderForExisting(item)}
-                            className="p-1.5 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-white/5 dark:hover:bg-white/10 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
-                            title="Crear Carpeta de Google Drive"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleCreateFolderForExisting(item)}
+                              className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 transition-colors"
+                              title={lang === 'en' ? "Auto-Create Google Drive Folder" : "Auto-Crear Carpeta de Google Drive"}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+                            </button>
+                            <button
+                              onClick={() => handleLinkExistingFolderForExisting(item)}
+                              className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors"
+                              title={lang === 'en' ? "Link Existing Google Drive Folder" : "Vincular Carpeta de Google Drive Existente"}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                            </button>
+                          </div>
                         )}
                         <button className="text-gray-400 dark:text-gray-500 hover:text-brand-500 dark:hover:text-brand-400 transition-colors p-1" title="Más opciones">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>

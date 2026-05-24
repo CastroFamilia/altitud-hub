@@ -39,6 +39,24 @@ export default function Step2Property({ formData, updateForm, onNext, onPrev }) 
                 <label className="form-label">{t('pre_s2_plano')}</label>
                 <input type="text" name="plano" value={formData.plano || ''} onChange={handleChange} className="form-input font-mono text-sm" placeholder={t('pre_s2_plano_placeholder')} />
             </div>
+            <div className="col-span-1 md:col-span-2 mt-2">
+                <label className="form-label font-bold text-gray-700 dark:text-gray-300">
+                  {lang === 'en' ? 'Link Existing Google Drive Folder (Optional)' : 'Vincular Carpeta de Google Drive Existente (Opcional)'}
+                </label>
+                <input 
+                  type="url" 
+                  name="drive_folder_url" 
+                  value={formData.drive_folder_url || ''} 
+                  onChange={handleChange} 
+                  className="form-input font-sans text-sm" 
+                  placeholder="https://drive.google.com/drive/folders/..." 
+                />
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                  {lang === 'en' 
+                    ? "If you already have a folder created for this property (e.g. from the photographer or a past record), paste the link here. We will link it and skip automatic creation."
+                    : "Si ya tienes una carpeta de fotos o documentos para esta propiedad, pega el enlace aquí. La vincularemos directamente y no crearemos una duplicada."}
+                </p>
+            </div>
         </div>
       </div>
 

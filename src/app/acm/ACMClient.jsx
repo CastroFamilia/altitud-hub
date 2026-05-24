@@ -6,6 +6,22 @@ import { useApp } from '@/lib/context';
 import { trackOkrActivity } from '@/lib/okr-tracker';
 import AcmPrintForm from '@/components/printables/AcmPrintForm';
 
+import { useAuth } from '@/lib/auth-context';
+
+// Extract Google Drive Folder ID from any valid Google Drive URL
+export function extractDriveFolderId(url) {
+  if (!url) return null;
+  const match = url.match(/\/folders\/([a-zA-Z0-9-_]+)/);
+  if (match && match[1]) {
+    return match[1];
+  }
+  const idMatch = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+  if (idMatch && idMatch[1]) {
+    return idMatch[1];
+  }
+  return null;
+}
+
 // Premium color helper for Cap Rate
 function getCapRateClass(rate) {
   const n = Number(rate);
@@ -17,11 +33,178 @@ function getCapRateClass(rate) {
 
 export default function ACMClient({ initialProperties = [] }) {
   const { t, lang } = useApp();
+  const { user, profile } = useAuth();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('general'); // general | comparables | rentabilidad | reposicion | consolidado
   const [filterTab, setFilterTab] = useState('all'); // all | draft | completed
+
+  // Google Drive Integration States
+  const [showDriveAlertModal, setShowDriveAlertModal] = useState(false);
+  const [createdFolderUrl, setCreatedFolderUrl] = useState('');
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+
+  const handleCloseDriveAlert = () => {
+    if (dontShowAgain) {
+      typeof window !== 'undefined' && localStorage.setItem('hide_drive_prelisting_alert', 'true');
+    }
+    setShowDriveAlertModal(false);
+  };
+
+  const handlePasteDriveUrl = (url) => {
+    if (!url) {
+      setAcmForm(prev => ({ ...prev, drive_folder_id: '', drive_folder_url: '' }));
+      return;
+    }
+    const parsedId = extractDriveFolderId(url);
+    if (parsedId) {
+      setAcmForm(prev => ({ ...prev, drive_folder_id: parsedId, drive_folder_url: url }));
+    } else {
+      setAcmForm(prev => ({ ...prev, drive_folder_url: url }));
+    }
+  };
+
+  const handleAutoCreateFolder = async () => {
+    const propAddress = acmForm.property_address;
+    if (!propAddress) {
+      alert(lang === 'en' ? 'Please enter a property address first to name the folder.' : 'Por favor ingresa una dirección de propiedad primero para nombrar la carpeta.');
+      return;
+    }
+
+    setIsCreatingFolder(true);
+    try {
+      const agentName = profile?.full_name || user?.user_metadata?.full_name || 'Agent';
+      const agentEmail = user?.email || null;
+      
+      const driveRes = await fetch('/api/drive/create-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentName, agentEmail, propertyName: propAddress }),
+      });
+      const driveData = await driveRes.json();
+      if (driveData.success) {
+        setAcmForm(prev => ({
+          ...prev,
+          drive_folder_id: driveData.folderId,
+          drive_folder_url: driveData.folderUrl
+        }));
+
+        const hideAlert = typeof window !== 'undefined' ? localStorage.getItem('hide_drive_prelisting_alert') === 'true' : false;
+        if (!hideAlert) {
+          setCreatedFolderUrl(driveData.folderUrl);
+          setShowDriveAlertModal(true);
+        } else {
+          alert(lang === 'en' ? 'Google Drive folder successfully created and connected.' : 'Carpeta de Google Drive creada y conectada exitosamente.');
+        }
+      } else {
+        alert('Error: ' + (driveData.error || 'No se pudo crear la carpeta.'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error al crear la carpeta: ' + err.message);
+    } finally {
+      setIsCreatingFolder(false);
+    }
+  };
+
+  const handleCreateFolderForExistingRow = async (report) => {
+    const propAddress = report.property_address || 'Nueva Propiedad';
+    try {
+      const agentName = profile?.full_name || user?.user_metadata?.full_name || 'Agent';
+      const agentEmail = user?.email || null;
+
+      const driveRes = await fetch('/api/drive/create-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentName, agentEmail, propertyName: propAddress }),
+      });
+      const driveData = await driveRes.json();
+      if (driveData.success) {
+        const payload = {
+          ...report,
+          drive_folder_id: driveData.folderId,
+          drive_folder_url: driveData.folderUrl
+        };
+        const saveRes = await fetch('/api/acm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (saveRes.ok) {
+          setReports(prev => prev.map(r => {
+            if (r.id === report.id) {
+              return { ...r, drive_folder_id: driveData.folderId, drive_folder_url: driveData.folderUrl };
+            }
+            return r;
+          }));
+
+          const hideAlert = typeof window !== 'undefined' ? localStorage.getItem('hide_drive_prelisting_alert') === 'true' : false;
+          if (!hideAlert) {
+            setCreatedFolderUrl(driveData.folderUrl);
+            setShowDriveAlertModal(true);
+          } else {
+            alert(lang === 'en' ? 'Google Drive folder successfully created and connected.' : 'Carpeta de Google Drive creada y conectada exitosamente.');
+          }
+        }
+      } else {
+        alert('Error: ' + (driveData.error || 'No se pudo crear la carpeta.'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error al crear la carpeta: ' + err.message);
+    }
+  };
+
+  const handleLinkExistingFolderForExistingRow = async (report) => {
+    const urlPrompt = prompt(
+      lang === 'en' 
+        ? "Please paste the Google Drive folder URL for this property:" 
+        : "Por favor, pega el enlace (URL) de la carpeta de Google Drive para esta propiedad:"
+    );
+    if (!urlPrompt) return;
+
+    const parsedId = extractDriveFolderId(urlPrompt);
+    if (!parsedId) {
+      alert(
+        lang === 'en'
+          ? "Invalid Google Drive folder link. Please ensure it contains '/folders/ID' or '?id=ID'."
+          : "Enlace de carpeta de Google Drive inválido. Por favor asegúrate de que contenga '/folders/ID' o '?id=ID'."
+      );
+      return;
+    }
+
+    try {
+      const payload = {
+        ...report,
+        drive_folder_id: parsedId,
+        drive_folder_url: urlPrompt
+      };
+      const saveRes = await fetch('/api/acm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (saveRes.ok) {
+        setReports(prev => prev.map(r => {
+          if (r.id === report.id) {
+            return { ...r, drive_folder_id: parsedId, drive_folder_url: urlPrompt };
+          }
+          return r;
+        }));
+
+        alert(
+          lang === 'en'
+            ? "Google Drive folder successfully associated with this report!"
+            : "¡Carpeta de Google Drive vinculada exitosamente con este reporte!"
+        );
+      }
+    } catch (err) {
+      console.error("Error linking Drive folder:", err);
+      alert("Error: " + err.message);
+    }
+  };
 
   // Main ACM report state
   const [acmForm, setAcmForm] = useState({
@@ -38,6 +221,8 @@ export default function ACMClient({ initialProperties = [] }) {
     price_range_high: '',
     agent_notes: '',
     status: 'draft',
+    drive_folder_id: '',
+    drive_folder_url: '',
     
     // Rentabilidad fields
     rental_units: '',
@@ -87,6 +272,7 @@ export default function ACMClient({ initialProperties = [] }) {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadReports();
   }, []);
 
@@ -125,6 +311,8 @@ export default function ACMClient({ initialProperties = [] }) {
       price_range_high: report.price_range_high || '',
       agent_notes: report.agent_notes || '',
       status: report.status || 'draft',
+      drive_folder_id: report.drive_folder_id || '',
+      drive_folder_url: report.drive_folder_url || '',
       
       rental_units: report.rental_units || '',
       rental_price: report.rental_price || '',
@@ -157,6 +345,8 @@ export default function ACMClient({ initialProperties = [] }) {
       price_range_high: '',
       agent_notes: '',
       status: 'draft',
+      drive_folder_id: '',
+      drive_folder_url: '',
       
       rental_units: '',
       rental_price: '',
@@ -554,6 +744,7 @@ export default function ACMClient({ initialProperties = [] }) {
                           <th className="p-4">{t('acm_client')}</th>
                           <th className="p-4">{t('acm_date')}</th>
                           <th className="p-4">{t('auto_active_methods')}</th>
+                          <th className="p-4 text-center">Drive</th>
                           <th className="p-4 text-right">{t('acm_suggested_short')}</th>
                           <th className="p-4 text-center">{t('acm_actions')}</th>
                         </tr>
@@ -578,6 +769,38 @@ export default function ACMClient({ initialProperties = [] }) {
                                     {method}
                                   </span>
                                 ))}
+                              </td>
+                              <td className="p-4 text-center">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  {report.drive_folder_url ? (
+                                    <a 
+                                      href={report.drive_folder_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors"
+                                      title={lang === 'en' ? "Open Google Drive Base Folder" : "Abrir Carpeta Base en Google Drive"}
+                                    >
+                                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l4.58 7.5h13.54l4.58-7.5L17.29 3.5H7.71z" /></svg>
+                                    </a>
+                                  ) : (
+                                    <div className="flex items-center gap-1.5">
+                                      <button
+                                        onClick={() => handleCreateFolderForExistingRow(report)}
+                                        className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 transition-colors"
+                                        title={lang === 'en' ? "Auto-Create Google Drive Folder" : "Auto-Crear Carpeta de Google Drive"}
+                                      >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+                                      </button>
+                                      <button
+                                        onClick={() => handleLinkExistingFolderForExistingRow(report)}
+                                        className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors"
+                                        title={lang === 'en' ? "Link Existing Google Drive Folder" : "Vincular Carpeta de Google Drive Existente"}
+                                      >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               </td>
                               <td className="p-4 text-right font-black italic text-sm text-blue-600 dark:text-blue-400">
                                 {fmt(report.suggested_price)}
@@ -848,6 +1071,92 @@ export default function ACMClient({ initialProperties = [] }) {
                                 <option value="finca">{t('acm_type_farm')}</option>
                               </select>
                             </label>
+                          </div>
+
+                          {/* ═══ GOOGLE DRIVE INTEGRATION PANEL ═══ */}
+                          <div className="mt-8 border-t border-gray-150 dark:border-dark-border/50 pt-6">
+                            <h5 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                              <span>📂</span> {lang === 'en' ? 'Google Drive & Photos Folder Integration' : 'Integración de Carpeta de Google Drive y Fotos'}
+                            </h5>
+                            
+                            {acmForm.drive_folder_url ? (
+                              <div className="glass-panel p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.02] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                <div className="space-y-1 text-left">
+                                  <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    {lang === 'en' ? 'Centralized base folder connected!' : '¡Carpeta base centralizada conectada!'}
+                                  </p>
+                                  <p className="text-[10px] text-gray-500 dark:text-gray-400 max-w-xl">
+                                    {lang === 'en'
+                                      ? "This folder acts as the single source of truth for the entire property lifecycle (Photos, Pre-Listing, ACM, and active Listings) so Olympia AI can index the documents correctly."
+                                      : "Esta carpeta es la fuente de verdad única para todo el ciclo de la propiedad (Fotos, Pre-Listing, ACM, y Captaciones) para que Olympia AI pueda indexar los documentos."}
+                                  </p>
+                                  <a href={acmForm.drive_folder_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline block break-all font-mono">
+                                    {acmForm.drive_folder_url}
+                                  </a>
+                                </div>
+                                <div className="flex gap-2 w-full sm:w-auto self-stretch sm:self-auto shrink-0">
+                                  <a 
+                                    href={acmForm.drive_folder_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-center text-xs font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap"
+                                  >
+                                    {lang === 'en' ? 'Open Drive' : 'Abrir Carpeta'}
+                                  </a>
+                                  <button
+                                    onClick={() => setAcmForm(prev => ({ ...prev, drive_folder_id: '', drive_folder_url: '' }))}
+                                    className="px-3 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap"
+                                    title={lang === 'en' ? 'Unlink Folder' : 'Desvincular Carpeta'}
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="glass-panel p-5 rounded-xl border border-gray-200 dark:border-dark-border bg-slate-50/50 dark:bg-dark-panel/40 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="flex flex-col gap-1.5 text-left">
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                      {lang === 'en' ? 'Vincular Carpeta de Drive Existente' : 'Vincular Carpeta de Drive Existente'}
+                                    </span>
+                                    <input 
+                                      type="url" 
+                                      value={acmForm.drive_folder_url || ''} 
+                                      onChange={e => handlePasteDriveUrl(e.target.value)} 
+                                      placeholder="https://drive.google.com/drive/folders/..." 
+                                      className="px-4 py-3 bg-white dark:bg-dark-input border border-slate-200 dark:border-dark-border rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500 w-full animate-pulse-subtle"
+                                    />
+                                    <p className="text-[9px] text-gray-400">
+                                      {lang === 'en' 
+                                        ? "Paste the link to an existing folder to link it directly and avoid duplication."
+                                        : "Pega el enlace de una carpeta de Drive que ya tengas para vincularla directamente."}
+                                    </p>
+                                  </div>
+                                  <div className="flex flex-col justify-end items-stretch md:items-start pb-1">
+                                    <div className="hidden md:block text-[9px] font-bold text-gray-400 uppercase tracking-widest text-center w-full mb-3">— {lang === 'en' ? 'OR' : 'O'} —</div>
+                                    <button
+                                      type="button"
+                                      disabled={isCreatingFolder}
+                                      onClick={handleAutoCreateFolder}
+                                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md shadow-emerald-500/10 flex items-center justify-center gap-2 w-full md:w-auto"
+                                    >
+                                      {isCreatingFolder ? (
+                                        <>
+                                          <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                          <span>{lang === 'en' ? 'Creating...' : 'Creando...'}</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <span>✨</span>
+                                          <span>{lang === 'en' ? 'Auto-Create Base Folder' : 'Auto-Crear Carpeta Base'}</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
@@ -1352,6 +1661,88 @@ export default function ACMClient({ initialProperties = [] }) {
 
         </div>
       </div>
+      {/* ═══ GOOGLE DRIVE & OLYMPIA INTEGRATION ALERT MODAL ═══ */}
+      {showDriveAlertModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 text-left" onClick={handleCloseDriveAlert}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div
+            className="relative bg-white dark:bg-slate-900 rounded-[32px] shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg p-6 md:p-8"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-md shadow-blue-600/30">
+                  <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l4.58 7.5h13.54l4.58-7.5L17.29 3.5H7.71z" /></svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-black italic text-slate-900 dark:text-white leading-tight">
+                    {lang === 'en' ? 'Property Folder Created!' : '¡Carpeta de Propiedad Creada!'}
+                  </h3>
+                  <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-widest">
+                    {lang === 'en' ? 'Smart Hub Integration' : 'Integración Inteligente del Hub'}
+                  </p>
+                </div>
+              </div>
+              <button onClick={handleCloseDriveAlert} className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                {lang === 'en' 
+                  ? "We have automatically created the base Google Drive folder for this property. This folder serves as the single source of truth for the entire lifecycle (Pre-Listing, ACM, Listing, and Photos) to avoid duplicates."
+                  : "Hemos creado automáticamente la carpeta base de Google Drive para esta propiedad. Esta carpeta servirá como fuente única de verdad durante todo el ciclo (Pre-Listing, ACM, Captación y Fotos) para evitar duplicados."}
+              </p>
+              
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-brand-50 to-purple-50 dark:from-brand-950/20 dark:to-purple-950/20 border border-brand-100/50 dark:border-brand-900/30 flex items-start gap-3">
+                <span className="text-xl shrink-0">💡</span>
+                <div>
+                  <h4 className="text-xs font-bold text-brand-700 dark:text-brand-400 uppercase tracking-wider">Tip de Olympia AI</h4>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                    {lang === 'en'
+                      ? "Any document you upload here (National Registry document, Cadastral map, photos) will be read and indexed in real-time. Olympia will analyze it to assist you in CMAs and technical details!"
+                      : "Cualquier documento que subas aquí (Folio real, Plano Catastrado, fotos) será leído e indexado en tiempo real. ¡Olympia los analizará para ayudarte con el ACM y los datos técnicos!"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="dont-show-again-checkbox-acm"
+                  checked={dontShowAgain}
+                  onChange={(e) => setDontShowAgain(e.target.checked)}
+                  className="rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-slate-700 bg-white dark:bg-slate-800 animate-none shrink-0"
+                />
+                <label htmlFor="dont-show-again-checkbox-acm" className="text-[11px] text-gray-500 dark:text-gray-400 cursor-pointer">
+                  {lang === 'en' ? "Don't show this explanation again" : "No volver a mostrar esta explicación"}
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCloseDriveAlert}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 text-xs font-bold transition-colors"
+              >
+                {lang === 'en' ? 'Close' : 'Cerrar'}
+              </button>
+
+              <a
+                href={createdFolderUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={handleCloseDriveAlert}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/20"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l4.58 7.5h13.54l4.58-7.5L17.29 3.5H7.71z" /></svg>
+                {lang === 'en' ? 'Open Drive Folder' : 'Abrir Carpeta'}
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -66,6 +66,8 @@ export async function POST(request) {
       price_range_low,
       price_range_high,
       agent_notes,
+      drive_folder_id,
+      drive_folder_url,
       
       // Rentabilidad fields
       rental_units,
@@ -112,6 +114,8 @@ export async function POST(request) {
       price_range_low: price_range_low ? Number(price_range_low) : null,
       price_range_high: price_range_high ? Number(price_range_high) : null,
       agent_notes: agent_notes || null,
+      drive_folder_id: drive_folder_id || null,
+      drive_folder_url: drive_folder_url || null,
 
       // Rentabilidad fields
       analysis_type: 'consolidado', // mark as consolidado
