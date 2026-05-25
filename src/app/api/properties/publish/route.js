@@ -46,6 +46,7 @@ export async function POST(req) {
         { error: 'Property must be approved before publishing' },
         { status: 400 }
       );
+    }
     // 2. Attempt RECONNECT publish (if credentials available)
     let reconnectResult = null;
     const officeCode = property.office_code || 'altitud';
