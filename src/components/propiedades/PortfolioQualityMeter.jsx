@@ -1,5 +1,7 @@
 "use client";
 
+import { useApp } from '@/lib/context';
+
 /* ═══════════════════════════════════════════════════════════════
    PortfolioQualityMeter — Professional RE Copywriting Standards
    Based on the "Real Estate Copywriter Pro" quality matrix:
@@ -10,86 +12,115 @@
    - Video: Presence
    ═══════════════════════════════════════════════════════════════ */
 
+const makeSafeT = (t) => {
+  if (typeof t === 'function') return t;
+  return (key) => {
+    const dict = {
+      auto_missing: 'Pendiente',
+      auto_too_short: 'Muy corto',
+      auto_way_too_short_25: 'Muy corto (mínimo 25)',
+      auto_add_property_type: 'Agregar tipo de propiedad',
+      auto_add_location: 'Agregar ubicación',
+      auto_add_differentiator_views_nature: 'Agregar diferenciador (vista, naturaleza)',
+      auto_excellent: 'Excelente',
+      auto_good: 'Aceptable',
+      auto_basic: 'Básico',
+      auto_poor: 'Pobre',
+      auto_professional: 'Profesional',
+      auto_decent: 'Aceptable',
+      auto_needs_work: 'Necesita mejora',
+      auto_words_aim_100: 'palabras (apuntar a 100)',
+      auto_words_too_short: 'palabras (muy corto)',
+      auto_words_needs_more: 'palabras (necesita más)',
+      'auto_add_technical_specs_m²': 'Agregar ficha técnica (m², hab, baños)',
+      auto_mention_benefits_value: 'Mencionar beneficios/valor',
+      auto_add_emotional_cta: 'Agregar cierre emocional',
+      auto_add_nearby_amenities: 'Agregar cercanías (escuelas, hospital...)',
+    };
+    return dict[key] || key;
+  };
+};
+
 // ── Title Quality (follows RE matrix: Subtype + Location + Differentiator) ──
-function scoreTitle(text, lang = 'es') {
+function scoreTitle(text, lang = 'es', safeT) {
   if (!text || text.trim().length === 0) {
-    return { score: 0, label: t('auto_missing'), color: 'red', tips: [] };
+    return { score: 0, label: safeT('auto_missing'), color: 'red', tips: [] };
   }
-  const t = text.trim();
+  const textStr = text.trim();
   const tips = [];
   let score = 0;
 
   // Length check (good titles: 40-80 chars)
-  if (t.length >= 40) score += 20;
-  else if (t.length >= 25) { score += 10; tips.push(t('auto_too_short')); }
-  else { tips.push(t('auto_way_too_short_25')); }
+  if (textStr.length >= 40) score += 20;
+  else if (textStr.length >= 25) { score += 10; tips.push(safeT('auto_too_short')); }
+  else { tips.push(safeT('auto_way_too_short_25')); }
 
   // Has property subtype keyword (Casa, Lote, Finca, Apartamento, Local, Villa...)
   const subtypeRegex = /(casa|lote|finca|apartamento|villa|terreno|local|bodega|edificio|condominio|penthouse|town\s?house|house|lot|farm|land|condo|commercial)/i;
-  if (subtypeRegex.test(t)) score += 25;
-  else tips.push(t('auto_add_property_type'));
+  if (subtypeRegex.test(textStr)) score += 25;
+  else tips.push(safeT('auto_add_property_type'));
 
   // Has location reference
   const locationRegex = /[A-Z][a-záéíóúñ]{2,}/; // Capitalized place name
   const locationKeywords = /(playa|montaña|centro|ciudad|beach|mountain|downtown|near|cerca|en\s|in\s)/i;
-  if (locationRegex.test(t) || locationKeywords.test(t)) score += 25;
-  else tips.push(t('auto_add_location'));
+  if (locationRegex.test(textStr) || locationKeywords.test(textStr)) score += 25;
+  else tips.push(safeT('auto_add_location'));
 
   // Has differentiator / USP (views, nature, investment, oceanfront, etc.)
   const uspRegex = /(vista|view|ocean|mar|naturaleza|nature|inversión|investment|oportunidad|opportunity|lujo|luxury|exclusiv|premium|privad|gated|piscina|pool|condominio|seguridad|security|río|river|bosque|forest|montaña|mountain|playa|beach|panorám|sunset|amanecer|ha\b|hectárea)/i;
-  if (uspRegex.test(t)) score += 30;
-  else tips.push(t('auto_add_differentiator_views_nature'));
+  if (uspRegex.test(textStr)) score += 30;
+  else tips.push(safeT('auto_add_differentiator_views_nature'));
 
   // Score label
-  const label = score >= 80 ? (t('auto_excellent'))
-    : score >= 50 ? (t('auto_good'))
-    : score >= 25 ? (t('auto_basic'))
-    : (t('auto_poor'));
+  const label = score >= 80 ? (safeT('auto_excellent'))
+    : score >= 50 ? (safeT('auto_good'))
+    : score >= 25 ? (safeT('auto_basic'))
+    : (safeT('auto_poor'));
   const color = score >= 70 ? 'emerald' : score >= 40 ? 'amber' : 'red';
 
   return { score, label, color, tips };
 }
 
 // ── Description Quality (Hook + Body + Ficha + Benefits + CTA) ──
-function scoreDescription(text, lang = 'es') {
+function scoreDescription(text, lang = 'es', safeT) {
   if (!text || text.trim().length === 0) {
-    return { score: 0, label: t('auto_missing'), color: 'red', tips: [] };
+    return { score: 0, label: safeT('auto_missing'), color: 'red', tips: [] };
   }
-  const t = text.trim();
-  const wordCount = t.split(/\s+/).length;
+  const textStr = text.trim();
+  const wordCount = textStr.split(/\s+/).length;
   const tips = [];
   let score = 0;
 
   // Word count (target: 80-200 words)
   if (wordCount >= 100) score += 20;
-  else if (wordCount >= 60) { score += 12; tips.push(`${wordCount} ${t('auto_words_aim_100')}`); }
-  else if (wordCount >= 30) { score += 6; tips.push(`${wordCount} ${t('auto_words_too_short')}`); }
-  else { tips.push(`${wordCount} ${t('auto_words_needs_more')}`); }
+  else if (wordCount >= 60) { score += 12; tips.push(`${wordCount} ${safeT('auto_words_aim_100')}`); }
+  else if (wordCount >= 30) { score += 6; tips.push(`${wordCount} ${safeT('auto_words_too_short')}`); }
+  else { tips.push(`${wordCount} ${safeT('auto_words_needs_more')}`); }
 
   // Has technical bullets (📍📐🏠🛏️🛁🚗 or m², ha, habitaciones, etc.)
   const techRegex = /(m²|m2|hectárea|ha\b|habitacion|bedroom|baño|bathroom|parqueo|parking|📍|📐|🏠|🛏|🛁|🚗|\d+\s*(hab|bed|bath|baño|park))/i;
-  if (techRegex.test(t)) score += 20;
-  else tips.push(t('auto_add_technical_specs_m²'));
+  if (techRegex.test(textStr)) score += 20;
+  else tips.push(safeT('auto_add_technical_specs_m²'));
 
   // Has benefits / value props
   const benefitRegex = /(financiamiento|financing|diseño|design|gratis|free|inversión|investment|rentabilidad|return|plusvalía|appreciation|valor agregado|value|exclusiv|premium|oportunidad|opportunity)/i;
-  if (benefitRegex.test(t)) score += 20;
-  else tips.push(t('auto_mention_benefits_value'));
+  if (benefitRegex.test(textStr)) score += 20;
+  else tips.push(safeT('auto_mention_benefits_value'));
 
   // Has emotional/CTA language (not generic)
   const ctaRegex = /(despierte|imagine|visualice|wake up|imagine|picture|discover|descubr|capitalice|capitalize|brind|provide|asegur|secure|no dej|don't miss|contact|llam|agenda|schedule|visite)/i;
-  if (ctaRegex.test(t)) score += 20;
-  else tips.push(t('auto_add_emotional_cta'));
+  if (ctaRegex.test(textStr)) score += 20;
+  else tips.push(safeT('auto_add_emotional_cta'));
 
   // Has location context (nearby amenities: school, hospital, airport, beach)
   const contextRegex = /(escuela|school|hospital|aeropuerto|airport|playa|beach|centro|downtown|supermercado|mall|universidad|university|km|minutos|minutes|cerca|near|distancia|distance)/i;
-  if (contextRegex.test(t)) score += 20;
-  else tips.push(t('auto_add_nearby_amenities'));
+  if (contextRegex.test(textStr)) score += 20;
+  else tips.push(safeT('auto_add_nearby_amenities'));
 
-  const label = score >= 80 ? (t('auto_professional'))
-    : score >= 50 ? (t('auto_decent'))
-    : score >= 25 ? (t('auto_needs_work'))
-    : (t('auto_poor'));
+  const label = score >= 80 ? (safeT('auto_professional'))
+    : score >= 50 ? (safeT('auto_decent'))
+    : score >= 25 ? (safeT('auto_needs_work'))
+    : (safeT('auto_poor'));
   const color = score >= 70 ? 'emerald' : score >= 40 ? 'amber' : 'red';
 
   return { score, label, color, tips };
@@ -111,11 +142,12 @@ function scoreVideo(hasVideo) {
     : { score: 0, label: 'Sin video', color: 'red', tips: ['Agregar video tour o drone'] };
 }
 
-export function calculateQuality(property) {
-  const titleEs = scoreTitle(property.listing_title_es, 'es');
-  const titleEn = scoreTitle(property.listing_title_en, 'en');
-  const descEs = scoreDescription(property.public_remarks_es, 'es');
-  const descEn = scoreDescription(property.public_remarks_en, 'en');
+export function calculateQuality(property, t) {
+  const safeT = makeSafeT(t);
+  const titleEs = scoreTitle(property.listing_title_es, 'es', safeT);
+  const titleEn = scoreTitle(property.listing_title_en, 'en', safeT);
+  const descEs = scoreDescription(property.public_remarks_es, 'es', safeT);
+  const descEn = scoreDescription(property.public_remarks_en, 'en', safeT);
   const photos = scorePhotos(property.image_count);
   const video = scoreVideo(!!property.video_link);
 
@@ -137,7 +169,8 @@ export function calculateQuality(property) {
 }
 
 export default function PortfolioQualityMeter({ property, compact = false }) {
-  const { total, factors } = calculateQuality(property);
+  const { t } = useApp();
+  const { total, factors } = calculateQuality(property, t);
 
   const getBarColor = (t) => {
     if (t >= 70) return 'from-emerald-400 to-emerald-500';

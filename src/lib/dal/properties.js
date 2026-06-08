@@ -1,8 +1,63 @@
 import { supabase } from '@/lib/supabase';
 
-// --- Properties ---
+const MOCK_PROPERTIES = [
+  {
+    id: 'property-1',
+    name: 'Casa Bella',
+    listing_title_es: 'Casa Bella en Escazú',
+    listing_title_en: 'Beautiful House Bella in Escazu',
+    property_type: 'house',
+    property_type_id: 1,
+    listing_contract_type: 1,
+    standard_status_id: 1,
+    size_m2: 350,
+    price: 450000,
+    list_price: 450000,
+    list_price_currency_id: 2,
+    status: 'published',
+    unparsed_address: 'Escazú, San José, Costa Rica',
+    owner_name: 'John Doe',
+    agent_id: 'b2ebf531-50e5-4a67-85b4-d53b5161cebc',
+    drive_photos_folder_id: 'drive-folder-1',
+    drive_photos_folder_url: 'https://drive.google.com/drive/folders/1',
+    photos_ready: true,
+    created_at: '2026-05-01T10:00:00Z',
+    property_images: [
+      { id: 'img-1', image_url: 'https://placeholder.supabase.co/img1.jpg', thumbnail_url: 'https://placeholder.supabase.co/img1_thumb.jpg', priority: 0 }
+    ]
+  },
+  {
+    id: 'property-2',
+    name: 'Apartamento Altitud',
+    listing_title_es: 'Apartamento de Lujo en Sabana',
+    listing_title_en: 'Luxury Apartment in Sabana',
+    property_type: 'apartment',
+    property_type_id: 2,
+    listing_contract_type: 1,
+    standard_status_id: 1,
+    size_m2: 120,
+    price: 220000,
+    list_price: 220000,
+    list_price_currency_id: 2,
+    status: 'pending_approval',
+    unparsed_address: 'La Sabana, San José, Costa Rica',
+    owner_name: 'Jane Smith',
+    agent_id: 'b2ebf531-50e5-4a67-85b4-d53b5161cebc',
+    drive_photos_folder_id: 'drive-folder-2',
+    drive_photos_folder_url: 'https://drive.google.com/drive/folders/2',
+    photos_ready: false,
+    created_at: '2026-05-15T12:00:00Z',
+    submitted_at: '2026-05-15T12:30:00Z',
+    property_images: [
+      { id: 'img-2', image_url: 'https://placeholder.supabase.co/img2.jpg', thumbnail_url: 'https://placeholder.supabase.co/img2_thumb.jpg', priority: 0 }
+    ]
+  }
+];
 
 export async function getPropertyDetails(id) {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    return MOCK_PROPERTIES.find(p => p.id === id) || MOCK_PROPERTIES[0];
+  }
   const { data, error } = await supabase
     .from('properties')
     .select('*, property_images(id, image_url, thumbnail_url, priority, drive_file_id)')
@@ -13,6 +68,9 @@ export async function getPropertyDetails(id) {
 }
 
 export async function getPropertiesWithDriveFolders() {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    return MOCK_PROPERTIES.filter(p => p.drive_photos_folder_id);
+  }
   const { data, error } = await supabase
     .from('properties')
     .select(`
@@ -31,6 +89,9 @@ export async function getPropertiesWithDriveFolders() {
 
 
 export async function updateProperty(id, updates, client = null) {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    return;
+  }
   const supabaseClient = client || supabase;
   const { error } = await supabaseClient.from('properties').update(updates).eq('id', id);
   if (error) throw error;
@@ -84,6 +145,9 @@ export async function updateProperty(id, updates, client = null) {
 }
 
 export async function getPropertiesForApproval(client = null) {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    return MOCK_PROPERTIES;
+  }
   const supabaseClient = client || supabase;
   const { data, error } = await supabaseClient
     .from('properties')
@@ -94,6 +158,18 @@ export async function getPropertiesForApproval(client = null) {
 }
 
 export async function getPropertiesByDevelopmentId(devId, client = null) {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    return MOCK_PROPERTIES.map(p => ({
+      id: p.id,
+      title_es: p.listing_title_es,
+      title_en: p.listing_title_en,
+      property_type: p.property_type,
+      size_m2: p.size_m2,
+      price: p.price,
+      status: p.status,
+      main_image_url: p.property_images[0]?.image_url
+    }));
+  }
   const supabaseClient = client || supabase;
   const { data, error } = await supabaseClient
     .from('properties')
@@ -104,6 +180,15 @@ export async function getPropertiesByDevelopmentId(devId, client = null) {
 }
 
 export async function getUnlinkedProperties(client = null) {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    return MOCK_PROPERTIES.map(p => ({
+      id: p.id,
+      title_es: p.listing_title_es,
+      title_en: p.listing_title_en,
+      property_type: p.property_type,
+      status: p.status
+    }));
+  }
   const supabaseClient = client || supabase;
   const { data, error } = await supabaseClient
     .from('properties')
