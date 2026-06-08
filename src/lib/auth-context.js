@@ -101,6 +101,28 @@ export function AuthProvider({ children }) {
   // It fires with INITIAL_SESSION on mount, making a separate
   // initAuth() call redundant AND dangerous (they race for the auth lock).
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+      const mockUser = {
+        id: 'b2ebf531-50e5-4a67-85b4-d53b5161cebc',
+        email: 'agente@remax-altitud.cr',
+        user_metadata: { full_name: 'Mock Agent', avatar_url: '' }
+      };
+      const mockProfile = {
+        id: 'b2ebf531-50e5-4a67-85b4-d53b5161cebc',
+        email: 'agente@remax-altitud.cr',
+        full_name: 'Mock Agent',
+        role: 'broker',
+        office: 'altitud',
+        status: 'active',
+        auth_user_id: 'b2ebf531-50e5-4a67-85b4-d53b5161cebc'
+      };
+      setUser(mockUser);
+      setProfile(mockProfile);
+      setRealProfile(mockProfile);
+      setLoading(false);
+      return;
+    }
+
     const applyImpersonation = async (realP) => {
       if (realP?.role === 'broker') {
         const impId = localStorage.getItem('impersonated_id');
@@ -149,6 +171,27 @@ export function AuthProvider({ children }) {
 
   // Sign in with Google OAuth — restricted to @remax-altitud.cr
   const signIn = useCallback(async () => {
+    if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+      setUser({
+        id: 'b2ebf531-50e5-4a67-85b4-d53b5161cebc',
+        email: 'agente@remax-altitud.cr',
+        user_metadata: { full_name: 'Mock Agent', avatar_url: '' }
+      });
+      const mockProfile = {
+        id: 'b2ebf531-50e5-4a67-85b4-d53b5161cebc',
+        email: 'agente@remax-altitud.cr',
+        full_name: 'Mock Agent',
+        role: 'broker',
+        office: 'altitud',
+        status: 'active',
+        auth_user_id: 'b2ebf531-50e5-4a67-85b4-d53b5161cebc'
+      };
+      setProfile(mockProfile);
+      setRealProfile(mockProfile);
+      setLoading(false);
+      return;
+    }
+
     try {
       setError(null);
       const { error: err } = await supabase.auth.signInWithOAuth({
@@ -172,6 +215,13 @@ export function AuthProvider({ children }) {
 
   // Sign out
   const signOut = useCallback(async () => {
+    if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+      setUser(null);
+      setProfile(null);
+      setRealProfile(null);
+      return;
+    }
+
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);

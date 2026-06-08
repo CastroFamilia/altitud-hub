@@ -6,6 +6,7 @@ import PropertyStatusBadge from './PropertyStatusBadge';
 import Image from 'next/image';
 import PortfolioQualityMeter, { calculateQuality } from './PortfolioQualityMeter';
 import { PROPERTY_TYPES } from '@/lib/constants/property-constants';
+import { useApp } from '@/lib/context';
 
 /* ═══════════════════════════════════════════════════════════════
    PropertyCard — Row layout with expandable details
@@ -26,6 +27,7 @@ function formatPrice(price, currencyId) {
 }
 
 export default function PropertyCard({ property, lang = 'es', zonePriceMap = {} }) {
+  const { t } = useApp();
   const [expanded, setExpanded] = useState(false);
 
   const title = lang === 'en'
@@ -49,7 +51,7 @@ export default function PropertyCard({ property, lang = 'es', zonePriceMap = {} 
     : null;
 
   // Quality
-  const quality = calculateQuality(property);
+  const quality = calculateQuality(property, t);
 
   // Zone price comparison
   const zoneKey = property.property_type_id

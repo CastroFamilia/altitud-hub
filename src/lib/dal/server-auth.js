@@ -1,6 +1,29 @@
 import { createClient } from '@/lib/supabase-server';
 
 export async function getServerAuth() {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    const profile = {
+      id: 'b2ebf531-50e5-4a67-85b4-d53b5161cebc',
+      email: 'agente@remax-altitud.cr',
+      full_name: 'Mock Agent',
+      role: 'broker',
+      office: 'altitud',
+      status: 'active',
+      auth_user_id: 'b2ebf531-50e5-4a67-85b4-d53b5161cebc'
+    };
+    return {
+      id: 'b2ebf531-50e5-4a67-85b4-d53b5161cebc',
+      email: 'agente@remax-altitud.cr',
+      user_metadata: { full_name: 'Mock Agent', avatar_url: '' },
+      profile,
+      isBroker: true,
+      isTeamLeader: false,
+      isAgent: false,
+      isJunior: false,
+      isOfficeAssistant: false,
+    };
+  }
+
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) return null;

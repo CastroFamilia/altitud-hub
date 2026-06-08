@@ -4,7 +4,26 @@ function getClient(client) {
   return client || defaultClient;
 }
 
+const MOCK_DEVELOPMENTS = [
+  {
+    id: 'dev-1',
+    name: 'Towers of Escazu',
+    slug: 'demo-development',
+    status: 'active',
+    agent_id: 'b2ebf531-50e5-4a67-85b4-d53b5161cebc',
+    tagline_es: 'El mejor lugar para vivir',
+    tagline_en: 'The best place to live',
+    og_image_url: 'https://placeholder.supabase.co/dev1.jpg',
+    developer_name: 'Developer XYZ',
+    created_at: '2026-05-01T10:00:00Z',
+    updated_at: '2026-05-01T10:00:00Z',
+  }
+];
+
 export async function getDevelopments(client = null) {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    return MOCK_DEVELOPMENTS;
+  }
   const supabaseClient = getClient(client);
   const { data, error } = await supabaseClient
     .from('developments')
@@ -16,6 +35,9 @@ export async function getDevelopments(client = null) {
 }
 
 export async function getDevelopmentsList(client = null) {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    return MOCK_DEVELOPMENTS.map(d => ({ id: d.id, name: d.name, slug: d.slug, status: d.status }));
+  }
   const supabaseClient = getClient(client);
   const { data, error } = await supabaseClient
     .from('developments')
@@ -27,6 +49,9 @@ export async function getDevelopmentsList(client = null) {
 }
 
 export async function getDevelopmentsByAgentId(agentId, client = null) {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    return MOCK_DEVELOPMENTS.filter(d => d.agent_id === agentId);
+  }
   const supabaseClient = getClient(client);
   const { data, error } = await supabaseClient
     .from('developments')
@@ -39,6 +64,9 @@ export async function getDevelopmentsByAgentId(agentId, client = null) {
 }
 
 export async function getDevelopmentById(id, client = null) {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    return MOCK_DEVELOPMENTS.find(d => d.id === id) || MOCK_DEVELOPMENTS[0];
+  }
   const supabaseClient = getClient(client);
   const { data, error } = await supabaseClient
     .from('developments')
@@ -51,6 +79,10 @@ export async function getDevelopmentById(id, client = null) {
 }
 
 export async function getDevelopmentMinimal(id, client = null) {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    const d = MOCK_DEVELOPMENTS.find(dev => dev.id === id) || MOCK_DEVELOPMENTS[0];
+    return { id: d.id, name: d.name, slug: d.slug, status: d.status, agent_id: d.agent_id };
+  }
   const supabaseClient = getClient(client);
   const { data, error } = await supabaseClient
     .from('developments')
@@ -63,6 +95,10 @@ export async function getDevelopmentMinimal(id, client = null) {
 }
 
 export async function getActiveDevelopmentBySlug(slug, client = null) {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    const d = MOCK_DEVELOPMENTS.find(dev => dev.slug === slug) || MOCK_DEVELOPMENTS[0];
+    return { name: d.name, tagline_es: d.tagline_es, tagline_en: d.tagline_en, og_image_url: d.og_image_url, developer_name: d.developer_name, status: d.status };
+  }
   const supabaseClient = getClient(client);
   const { data, error } = await supabaseClient
     .from('developments')
@@ -76,6 +112,24 @@ export async function getActiveDevelopmentBySlug(slug, client = null) {
 }
 
 export async function getActiveDevelopmentWithProperties(slug, client = null) {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    const d = MOCK_DEVELOPMENTS.find(dev => dev.slug === slug) || MOCK_DEVELOPMENTS[0];
+    return {
+      ...d,
+      properties: [
+        {
+          id: 'property-1',
+          title_es: 'Hermosa Casa en Escazú',
+          title_en: 'Beautiful House in Escazu',
+          property_type: 'house',
+          size_m2: 350,
+          price: 450000,
+          status: 'published',
+          main_image_url: 'https://placeholder.supabase.co/img1.jpg'
+        }
+      ]
+    };
+  }
   const supabaseClient = getClient(client);
   const { data, error } = await supabaseClient
     .from('developments')
@@ -92,6 +146,23 @@ export async function getActiveDevelopmentWithProperties(slug, client = null) {
 }
 
 export async function getActiveDevelopmentsWithProperties(client = null) {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    return MOCK_DEVELOPMENTS.map(d => ({
+      ...d,
+      properties: [
+        {
+          id: 'property-1',
+          title_es: 'Hermosa Casa en Escazú',
+          title_en: 'Beautiful House in Escazu',
+          property_type: 'house',
+          size_m2: 350,
+          price: 450000,
+          status: 'published',
+          main_image_url: 'https://placeholder.supabase.co/img1.jpg'
+        }
+      ]
+    }));
+  }
   const supabaseClient = getClient(client);
   const { data, error } = await supabaseClient
     .from('developments')

@@ -1,6 +1,46 @@
 import { supabase as defaultClient } from '@/lib/supabase';
 
 function getClient(client) {
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
+    return {
+      from: (table) => {
+        const chain = {
+          select: () => chain,
+          insert: () => chain,
+          update: () => chain,
+          upsert: () => chain,
+          delete: () => chain,
+          eq: () => chain,
+          neq: () => chain,
+          gt: () => chain,
+          gte: () => chain,
+          lt: () => chain,
+          lte: () => chain,
+          in: () => chain,
+          is: () => chain,
+          order: () => chain,
+          limit: () => chain,
+          single: async () => {
+            if (table === 'office_settings') {
+              return { data: { office_id: 'altitud', photographer_calendar_url: 'https://example.com/calendar' }, error: null };
+            }
+            return { data: null, error: null };
+          },
+          maybeSingle: async () => ({ data: null, error: null }),
+        };
+        chain.then = (resolve) => {
+          let mockData = [];
+          if (table === 'profiles') {
+            mockData = [{ id: 'b2ebf531-50e5-4a67-85b4-d53b5161cebc', full_name: 'Mock Agent', avatar_url: '', role: 'broker' }];
+          } else if (table === 'commission_tiers') {
+            mockData = [{ id: 'tier-1', name: 'Standard', rate: 50, active: true, sort_order: 1 }];
+          }
+          return Promise.resolve(resolve({ data: mockData, error: null }));
+        };
+        return chain;
+      }
+    };
+  }
   return client || defaultClient;
 }
 
