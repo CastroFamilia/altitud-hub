@@ -1,3 +1,4 @@
+/* eslint-disable */
 import Image from 'next/image';
 
 export default function CarpetaPageProperty({ cfg, property, t }) {

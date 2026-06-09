@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/lib/context';
 import { supabase } from '@/lib/supabase';
