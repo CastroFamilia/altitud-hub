@@ -1,9 +1,9 @@
 # ALTITUD HUB - Operations & Intelligence Platform
 
 ## Overview
-ALTITUD HUB is a premium, high-performance operations dashboard and business intelligence tool designed specifically for RE/MAX Altitud and Altitud Cero. It serves as the single source of truth for agents and brokers, providing a unified interface for managing property listings, tracking OKRs, executing comparative market analysis (ACM), managing client relationships, and receiving automated AI-driven mentorship.
+ALTITUD HUB is a premium, high-performance operations dashboard and business intelligence tool designed specifically for REMAX Altitud and Altitud Cero. It serves as the single source of truth for agents and brokers, providing a unified interface for managing property listings, tracking OKRs, executing comparative market analysis (ACM), managing client relationships, and receiving automated AI-driven mentorship.
 
-This application represents **Project 3** of the RE/MAX Altitud Digital Ecosystem (alongside the public website and the "RINDER" buyer matchmaking app), integrating deeply with RE/MAX Central America's core API (RECONNECT) and various property portals.
+This application represents **Project 3** of the REMAX Altitud Digital Ecosystem (alongside the public website and the "RINDER" buyer matchmaking app), integrating deeply with REMAX Central America's core API (RECONNECT) and various property portals.
 
 ---
 
@@ -81,7 +81,7 @@ Create a `.env.local` file in the root directory. You will need to obtain the ac
 # Database
 DATABASE_URL="postgresql://user:pass@host:5432/db"
 
-# RE/MAX RECONNECT Credentials
+# REMAX RECONNECT Credentials
 RECONNECT_ALTITUD_API_KEY="your-key"
 RECONNECT_ALTITUD_SECRET_KEY="your-secret"
 RECONNECT_ALTITUD_INTEGRATOR_ID="R1040034"

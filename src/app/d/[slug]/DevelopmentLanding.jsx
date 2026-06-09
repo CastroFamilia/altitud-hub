@@ -318,7 +318,7 @@ const Blocks = {
           )}
           <h3 className="text-xl font-bold text-white">{agent.full_name}</h3>
           <p className="text-emerald-400 font-medium text-sm mb-1">
-            RE/MAX {agent.office === 'cero' ? 'Altitud Cero' : 'Altitud'}
+            REMAX {agent.office === 'cero' ? 'Altitud Cero' : 'Altitud'}
           </p>
           {agent.email && <p className="text-gray-500 text-sm mb-6">{agent.email}</p>}
           <div className="flex items-center justify-center gap-3">
@@ -483,7 +483,7 @@ export default function DevelopmentLanding({ development, properties, agent }) {
       {/* Footer */}
       <footer className="py-8 px-6 border-t border-white/5 print:hidden">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-600">© {new Date().getFullYear()} RE/MAX Altitud. All rights reserved.</p>
+          <p className="text-xs text-gray-600">© {new Date().getFullYear()} REMAX Altitud. All rights reserved.</p>
           <p className="text-xs text-gray-600">Powered by Altitud Hub</p>
         </div>
       </footer>

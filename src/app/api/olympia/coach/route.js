@@ -156,7 +156,7 @@ export async function POST(req) {
       if (agentEmail) {
         const { data: profile } = await supabase.from('profiles').select('full_name, office, start_date, role, preferred_follow_up_days').eq('email', agentEmail).single();
         if (profile) {
-          dbContext += `\nPerfil del Agente en DB:\n- Oficina: ${profile.office || 'RE/MAX Altitud'}\n- Rol: ${profile.role || 'agent'}\n- Días preferidos para seguimiento: ${(profile.preferred_follow_up_days || []).join(', ')}\n`;
+          dbContext += `\nPerfil del Agente en DB:\n- Oficina: ${profile.office || 'REMAX Altitud'}\n- Rol: ${profile.role || 'agent'}\n- Días preferidos para seguimiento: ${(profile.preferred_follow_up_days || []).join(', ')}\n`;
         }
       }
 
@@ -208,11 +208,11 @@ Instrucción: Pregunta por 1-2 tareas específicas, no toda la lista. Ej: "¿Ya 
 ` : '';
 
     // ── Role descriptions ─────────────────────────────────────
-    let roleDescription = `coach inmobiliaria exclusiva para agentes de RE/MAX Altitud y máxima experta en la plataforma "Altitud Hub". Tu deber es entrenar a los agentes en el hub y ayudarlos a alcanzar sus metas basándote en sus números reales.`;
+    let roleDescription = `coach inmobiliaria exclusiva para agentes de REMAX Altitud y máxima experta en la plataforma "Altitud Hub". Tu deber es entrenar a los agentes en el hub y ayudarlos a alcanzar sus metas basándote en sus números reales.`;
     if (moduleType === 'office') {
-      roleDescription = `asesora experta para el Broker / Office Manager de RE/MAX Altitud. Ayudas a analizar métricas de la oficina, liderar agentes y tomar decisiones gerenciales.`;
+      roleDescription = `asesora experta para el Broker / Office Manager de REMAX Altitud. Ayudas a analizar métricas de la oficina, liderar agentes y tomar decisiones gerenciales.`;
     } else if (moduleType === 'team') {
-      roleDescription = `asesora experta para Líderes de Equipo de RE/MAX Altitud. Ayudas a coachear agentes, medir rendimiento del equipo y alcanzar metas conjuntas.`;
+      roleDescription = `asesora experta para Líderes de Equipo de REMAX Altitud. Ayudas a coachear agentes, medir rendimiento del equipo y alcanzar metas conjuntas.`;
     }
 
     const languageInstruction = lang === 'en'

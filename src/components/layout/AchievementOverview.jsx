@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/auth-context';
 /* ═══════════════════════════════════════════════════════════════
    ACHIEVEMENT OVERVIEW COMPONENT
    Displays YTD actual commissions, volume, and closed sides.
-   Calculates progress towards RE/MAX Annual Award Clubs by dividing
+   Calculates progress towards REMAX Annual Award Clubs by dividing
    nominal club thresholds by the regional CCF (default: 1.307).
    ═══════════════════════════════════════════════════════════════ */
 

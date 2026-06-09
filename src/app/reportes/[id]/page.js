@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import ReportClient from './ReportClient';
 
 export const metadata = {
-  title: 'Performance Report — RE/MAX Altitud',
+  title: 'Performance Report — REMAX Altitud',
   description: 'Development marketing performance report',
 };
 

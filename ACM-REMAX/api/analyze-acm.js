@@ -27,7 +27,7 @@ module.exports = async function handler(req, res) {
     }
 
     const prompt = `
-      Eres un Analista Inmobiliario experto en Costa Rica asistiendo a un agente de RE/MAX.
+      Eres un Analista Inmobiliario experto en Costa Rica asistiendo a un agente de REMAX.
       El agente acaba de armar un Análisis Comparativo de Mercado (ACM) para una propiedad de tipo "${propertyType}".
       Aquí tienes los datos de la propiedad que quiere vender el agente:
       ${JSON.stringify(property, null, 2)}

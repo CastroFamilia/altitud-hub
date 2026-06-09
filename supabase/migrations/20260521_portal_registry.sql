@@ -46,7 +46,7 @@ ALTER TABLE public.property_syndication
 
 -- ── 3. Seed portal registry with all known portals ──
 INSERT INTO public.portal_registry (slug, display_name, icon_emoji, color_class, url_base, category, has_stats_api, display_order, office_scope) VALUES
-  ('reconnect',           'RE/MAX RECONNECT',          '🔵', 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',     'https://remax-centralamerica.com', 'manual', true,  1,  'all'),
+  ('reconnect',           'REMAX RECONNECT',          '🔵', 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',     'https://remax-centralamerica.com', 'manual', true,  1,  'all'),
   ('remax_costa_rica',    'remax-costa-rica.com',       '🔴', 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400',          'https://remax-costa-rica.com',     'manual', false, 2,  'all'),
   ('remax_altitud',       'remax-altitud.cr',           '🏔️', 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400', 'https://remax-altitud.cr',      'manual', false, 3,  'altitud'),
   ('yourhome_cr',         'YourHomeInCostaRica.com',    '🏡', 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400', 'https://yourhomeincostarica.com', 'manual', false, 4, 'all'),

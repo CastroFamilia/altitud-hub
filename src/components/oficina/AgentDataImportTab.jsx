@@ -134,8 +134,8 @@ export default function AgentDataImportTab({ profiles = [] }) {
   const downloadTemplate = (type) => {
     if (type === 'rcca_performance_dashboard') {
       alert(lang === 'en'
-        ? 'The RCCA Performance Dashboard spreadsheet is provided directly by RE/MAX Central America. Please upload the unaltered Excel file (.xlsx).'
-        : 'La planilla de Performance Dashboard de RCCA es provista directamente por RE/MAX Centroamérica. Por favor, suba el archivo Excel (.xlsx) sin modificaciones.');
+        ? 'The RCCA Performance Dashboard spreadsheet is provided directly by REMAX Central America. Please upload the unaltered Excel file (.xlsx).'
+        : 'La planilla de Performance Dashboard de RCCA es provista directamente por REMAX Centroamérica. Por favor, suba el archivo Excel (.xlsx) sin modificaciones.');
       return;
     }
     const csv = getCsvTemplate(type, selectedAgent === 'multi_agent');
@@ -525,7 +525,7 @@ export default function AgentDataImportTab({ profiles = [] }) {
                     <span className="text-2xl">📊</span>
                     <div className="text-left">
                       <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                        {lang === 'en' ? 'RE/MAX Central America Performance Excel Sheet' : 'Planilla Excel de Rendimiento RE/MAX Centroamérica'}
+                        {lang === 'en' ? 'REMAX Central America Performance Excel Sheet' : 'Planilla Excel de Rendimiento REMAX Centroamérica'}
                       </h4>
                       <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                         {lang === 'en' ? 'Detected Excel spreadsheet. Ready for ingestion.' : 'Planilla Excel detectada. Lista para su procesamiento.'}

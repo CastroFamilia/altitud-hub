@@ -6,7 +6,7 @@ El proyecto "ALTITUD HUB" ha sido migrado de Vanilla HTML a Next.js (App Router)
 ## Tecnologías Clave
 - **Next.js 15+** (App Router: `src/app`)
 - **React Server Components**
-- **Tailwind CSS 3/4** (Estilos globales configurados en `globals.css` integrando tokens de RE/MAX)
+- **Tailwind CSS 3/4** (Estilos globales configurados en `globals.css` integrando tokens de REMAX)
 - **Supabase** (Autenticación y Base de Datos ubicada en `src/lib/supabase.js`)
 
 ## Estructura BMB 

@@ -6,7 +6,7 @@ import { useApp } from '@/lib/context';
  * BuyerQualifyPrintForm
  *
  * Printer-friendly buyer qualification guide — "Calificando Compradores".
- * Designed for letter-size paper with RE/MAX Altitud branding.
+ * Designed for letter-size paper with REMAX Altitud branding.
  * Mirrors the PrelistingPrintForm pattern: inline styles for print fidelity.
  */
 export default function BuyerQualifyPrintForm() {
@@ -261,7 +261,7 @@ export default function BuyerQualifyPrintForm() {
       {/* ── FOOTER ── */}
       <div style={{ marginTop: '32px', paddingTop: '12px', borderTop: '2px solid #003DA5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <p style={{ fontSize: '7px', color: '#9ca3af', fontWeight: 600 }}>
-          RE/MAX Altitud — {es ? 'Confidencial' : 'Confidential'} — altitudhub.com
+          REMAX Altitud — {es ? 'Confidencial' : 'Confidential'} — altitudhub.com
         </p>
         <p style={{ fontSize: '7px', color: '#9ca3af' }}>
           {es ? 'Firma' : 'Signature'}: __________________________

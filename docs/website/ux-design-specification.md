@@ -15,7 +15,7 @@ documentCounts:
   projectContext: 0
 ---
 
-# UX Design Specification — RE/MAX Altitud
+# UX Design Specification — REMAX Altitud
 
 **Author:** Sebicas
 **Date:** 2026-03-27
@@ -26,7 +26,7 @@ documentCounts:
 
 ### Project Vision
 
-RE/MAX Altitud is building a multilingual, map-first real estate platform for Costa Rica's Southern Zone — replacing a limited WordPress site with a Next.js application that unifies the Pérez Zeledón (mountain) and Dominical/Uvita (coast) offices. The platform converts curiosity into trust and trust into qualified leads — across buyers, sellers, and investors, in up to 6 languages.
+REMAX Altitud is building a multilingual, map-first real estate platform for Costa Rica's Southern Zone — replacing a limited WordPress site with a Next.js application that unifies the Pérez Zeledón (mountain) and Dominical/Uvita (coast) offices. The platform converts curiosity into trust and trust into qualified leads — across buyers, sellers, and investors, in up to 6 languages.
 
 The UX must make unfamiliar geography visually accessible, surface legal property status (ZMT/titled) as trust signals, and collapse the traditional lead funnel into one-tap WhatsApp conversations — all while performing flawlessly on $150 Android phones and iPads alike.
 
@@ -72,7 +72,7 @@ The homepage must telegraph both modes within 3 seconds: **"Dream here"** (hero 
 
 4. **Three intents, one interface** — Buy, Sell, and Invest CTAs must coexist without cognitive overload. **Seller intent must be visually separated** in the navigation — "Vende tu propiedad" / "List with us" must be immediately visible without navigating a search engine.
 
-5. **Trust through clarity** — ZMT badges, titled property indicators, agent language matching, and RE/MAX branding are conversion-critical trust signals in a market where foreigners are buying property in an unfamiliar legal system.
+5. **Trust through clarity** — ZMT badges, titled property indicators, agent language matching, and REMAX branding are conversion-critical trust signals in a market where foreigners are buying property in an unfamiliar legal system.
 
 6. **Mobile-dominant (60-70% traffic)** — Every interaction (gallery, map, forms, WhatsApp CTAs) must be touch-optimized with LCP < 2.5s on 4G.
 
@@ -145,7 +145,7 @@ The defining interaction: three taps from discovery to agent conversation (map p
 1. **Geography first, filters second** — The map tells the story. International buyers need to SEE where things are before they can filter. The map is not a feature — it's the product.
 2. **One tap to human** — Every screen, every state, every dead end has a path to WhatsApp with context. The platform bridges users to agents, not replaces them.
 3. **Two modes, one interface** — Explore mode (visual, emotional, discovery) and Execute mode (search, filter, act) coexist. The homepage telegraphs both within 3 seconds.
-4. **Trust through transparency** — ZMT badges, title status, agent languages, RE/MAX branding, and localized legal terms build confidence. Don't hide complexity — make it simple.
+4. **Trust through transparency** — ZMT badges, title status, agent languages, REMAX branding, and localized legal terms build confidence. Don't hide complexity — make it simple.
 5. **Performance is UX** — If the seller form stutters on a $150 Android, it's a UX failure. LCP < 2.5s on 4G is a design constraint, not an engineering afterthought.
 6. **Zero-configuration localization** — Language, units, and currency adapt automatically. The user never configures their locale. The site works in their world.
 
@@ -174,7 +174,7 @@ The single emotional thread connecting all personas: **"This platform was made f
 | Maria | *"Is this in my language?"* → **Relief** | Auto-language detection, English loads instantly |
 | Carlos | *"Is this for ticos too?"* → **Belonging** | Full Spanish UX, "Vende tu propiedad" visible immediately |
 | Hans | *"Is this professional?"* → **Respect** | Clean data presentation, metric units, investment filters visible |
-| Shared link recipient | *"Is this legit?"* → **Instant credibility** | Professional gallery, RE/MAX branding, full property context, agent photo + WhatsApp CTA — trust established without prior site exploration |
+| Shared link recipient | *"Is this legit?"* → **Instant credibility** | Professional gallery, REMAX branding, full property context, agent photo + WhatsApp CTA — trust established without prior site exploration |
 
 #### Discovery (5-60 seconds)
 
@@ -189,7 +189,7 @@ The single emotional thread connecting all personas: **"This platform was made f
 | Persona | Emotional Need | Design Response |
 |---------|---------------|----------------|
 | Maria | *"Is this safe to buy?"* → **Trust** | "Titled Property ✓" badge, area context, agent with photo |
-| Carlos | *"Will my land look good?"* → **Pride** | Professional gallery, bilingual description, RE/MAX brand |
+| Carlos | *"Will my land look good?"* → **Pride** | Professional gallery, bilingual description, REMAX brand |
 | Hans | *"What am I actually getting?"* → **Precision** | m²/hectare display, ZMT classification, lot dimensions |
 
 #### Connection (CTA moment)
@@ -198,7 +198,7 @@ The single emotional thread connecting all personas: **"This platform was made f
 |---------|---------------|----------------|
 | Everyone | *"Can I talk to a real person NOW?"* → **Immediacy** | WhatsApp CTA, pre-populated message, one tap |
 | Maria | *"Will they understand me?"* → **Comfort** | Agent language badges, "Speaks: English" on profile |
-| Carlos | *"Are they local?"* → **Familiarity** | Agent photo, office affiliation, RE/MAX local presence |
+| Carlos | *"Are they local?"* → **Familiarity** | Agent photo, office affiliation, REMAX local presence |
 
 #### Return Visit (repeat users)
 
@@ -239,7 +239,7 @@ The single emotional thread connecting all personas: **"This platform was made f
 
 4. **Excitement ↔ Overwhelm** — Maria is excited about Costa Rica but could be overwhelmed by 300+ listings in unfamiliar places. Lifestyle tags and smart presets channel excitement into manageable discovery. Too many filters = overwhelm.
 
-5. **Trust ↔ Skepticism** — RE/MAX branding, agent photos, listing counts, and professional presentation build trust. Generic stock photos, broken translations, or missing property data trigger skepticism.
+5. **Trust ↔ Skepticism** — REMAX branding, agent photos, listing counts, and professional presentation build trust. Generic stock photos, broken translations, or missing property data trigger skepticism.
 
 6. **Pride ↔ Invisibility** — Sellers (Carlos, Jennifer) need to see their property presented professionally. Agents (Laura) need profiles they're proud to share. Social validation moments (sharing links, seeing bilingual listings) amplify pride and create organic advocacy.
 
@@ -249,7 +249,7 @@ The single emotional thread connecting all personas: **"This platform was made f
 
 | Emotional Goal | UX Design Approach |
 |---------------|-------------------|
-| **Confidence in unfamiliar** | ZMT/title badges prominent on every listing card AND detail page. Area context mini-guides attached to listings. Agent language badges. RE/MAX balloon logo as trust anchor |
+| **Confidence in unfamiliar** | ZMT/title badges prominent on every listing card AND detail page. Area context mini-guides attached to listings. Agent language badges. REMAX balloon logo as trust anchor |
 | **Belonging for locals** | Language detection loads Spanish first for CR visitors. "Vende tu propiedad" in primary nav. Neighborhood names from formal hierarchy. No forced English terminology |
 | **Legitimacy for new office** | Dominical/Uvita pages show agent count, listing count, and area expertise signals. Office pages feel established, not "coming soon" |
 | **Controlled excitement** | Lifestyle tags curate discovery — "Retirement Paradise" shows 8 properties, not 300. Smart presets reduce cognitive load. Area guides tell a story before showing listings |
@@ -277,13 +277,13 @@ The single emotional thread connecting all personas: **"This platform was made f
 
 ### Inspiration Sources
 
-The RE/MAX Altitud platform draws UX inspiration from three tiers: international best-in-class search platforms, a regional competitor doing communities right, and the project's own split-hero visual concept. Costa Rica lacks a centralized MLS, so most UX patterns must be adapted from platforms operating in more mature markets.
+The REMAX Altitud platform draws UX inspiration from three tiers: international best-in-class search platforms, a regional competitor doing communities right, and the project's own split-hero visual concept. Costa Rica lacks a centralized MLS, so most UX patterns must be adapted from platforms operating in more mature markets.
 
 ### Tier 1: Search & Discovery Patterns — Zillow, Idealista, Realtor.com
 
-All three platforms excel at the same core interactions that RE/MAX Altitud needs:
+All three platforms excel at the same core interactions that REMAX Altitud needs:
 
-| Pattern | Zillow | Idealista | Realtor.com | RE/MAX Altitud Adaptation |
+| Pattern | Zillow | Idealista | Realtor.com | REMAX Altitud Adaptation |
 |---------|--------|-----------|-------------|--------------------------|
 | **Map-first search** | Split-view default (map + grid side-by-side) with full-map and full-grid toggles | Map pinned to the left, listings scroll on right | Map toggle with clustering | Split-view default on desktop. Mobile: pull-up sheet pattern (Google Maps/Airbnb) over map |
 | **Similar properties** | "Similar homes nearby" carousel below listing detail | "Inmuebles similares" section; also "Others in the same area" | "Similar homes" + "Nearby homes" | Adopt dual approach: "Similar properties" (by specs) + "In the same area" (by geography). Critical for small inventory (~300-400 listings) — every dead end must offer alternatives |
@@ -299,7 +299,7 @@ All three platforms excel at the same core interactions that RE/MAX Altitud need
 
 3. **"Similar properties" as conversion safety net** — With only ~300-400 listings, 15-25% of searches will return zero results. Similar property suggestions on every listing page and every no-results state turn dead ends into discovery. The emotional payoff: *"The platform is helping me, not blocking me."*
 
-4. **Context-sensitive filters** — Zillow hides bedrooms/bathrooms for land listings. Idealista shows "Cerca del mar" as a filter. Both adapt the filter UI to what's relevant. RE/MAX Altitud must do the same — show lifestyle tags on all types, but hide bedroom/bathroom filters for lots and land.
+4. **Context-sensitive filters** — Zillow hides bedrooms/bathrooms for land listings. Idealista shows "Cerca del mar" as a filter. Both adapt the filter UI to what's relevant. REMAX Altitud must do the same — show lifestyle tags on all types, but hide bedroom/bathroom filters for lots and land.
 
 5. **Gallery as hero content** — All three platforms lead with the gallery, not the description. The first thing a user sees is images. This is critical for selling "confidence in a foreign country" — Maria needs to SEE the property and the landscape before she reads a single word.
 
@@ -320,9 +320,9 @@ LX Costa Rica (The Agency) provides the best local reference for how to organize
 
 4. **Photography-driven emotional connection** — Large, high-quality lifestyle imagery for regions and areas (not just property photos). The area itself is sold before the listings appear. This aligns with our "map as storytelling" opportunity.
 
-#### RE/MAX Altitud Adaptation
+#### REMAX Altitud Adaptation
 
-| LX Costa Rica Feature | RE/MAX Altitud Version |
+| LX Costa Rica Feature | REMAX Altitud Version |
 |----------------------|----------------------|
 | Region image cards (Beach, City, Mountain) | **Split hero**: Mountains (PZ) and Coast (Dominical) as the two primary entry paths — the visual concept already exists in the static HTML |
 | Area landing pages with tabbed navigation | **Area guide pages** per zone (San Isidro, Rivas, Dominical, Uvita, etc.) with: Description, Properties, Agents, Similar Areas |
@@ -333,7 +333,7 @@ LX Costa Rica (The Agency) provides the best local reference for how to organize
 
 The user explicitly identified remax-costa-rica.com as what to avoid. Analysis confirms several UX failures:
 
-| Anti-Pattern | What's Wrong | RE/MAX Altitud Must Avoid |
+| Anti-Pattern | What's Wrong | REMAX Altitud Must Avoid |
 |-------------|-------------|--------------------------|
 | **Overly complex navigation** | 200+ city/area links in the dropdown navigation, deeply nested subcategories. No user can parse this on mobile | Keep navigation flat: 2 offices (PZ / Dominical), 1 search page, key static pages. Area discovery happens through the map and area guide pages, not dropdown menus |
 | **URL query string chaos** | Price filter links contain URL-encoded strings hundreds of characters long with 10+ levels of nested referrer params. Breaks browser back-button, creates SEO noise | Clean, semantic URLs: `/en/properties?type=house&price_max=300000&area=perez-zeledon`. Human-readable, shareable, bookmarkable |
@@ -352,7 +352,7 @@ The static HTML prototype (`index.html`) establishes the signature visual concep
 ```
 ┌──────────────────────┬──────────────────────┐
 │                      │                      │
-│   RE/MAX ALTITUD     │   RE/MAX ALTITUD     │
+│   REMAX ALTITUD     │   REMAX ALTITUD     │
 │                      │       CERO           │
 │   The Mountains      │    The Coast         │
 │                      │                      │
@@ -374,7 +374,7 @@ The static HTML prototype (`index.html`) establishes the signature visual concep
 
 **Why this works:**
 
-1. **Dual geography = dual identity** — Instantly communicates that RE/MAX Altitud serves both mountains AND coast. No competitor in the Southern Zone does this.
+1. **Dual geography = dual identity** — Instantly communicates that REMAX Altitud serves both mountains AND coast. No competitor in the Southern Zone does this.
 2. **Entry path self-selection** — Maria looking for beach property clicks right. Carlos looking to sell mountain land clicks left. The split-hero IS the two-mode gateway.
 3. **Search overlay bridges both** — The glassmorphism search bar sits above the split, unified. Whether you know what you want (execute mode) or want to explore (explore mode), the search is always there.
 4. **Mobile adaptation** — On mobile, the split stacks vertically: Mountain pane → Coast pane → Search bar. Each pane becomes a full-width, swipeable card.
@@ -384,14 +384,14 @@ The static HTML prototype (`index.html`) establishes the signature visual concep
 | Element | Implementation | Design System Signal |
 |---------|---------------|---------------------|
 | **Typography** | Montserrat (300–800 weights) | Clean, geometric, modern — works in both EN and ES |
-| **Color palette** | RE/MAX Blue (`#003DA5`) + RE/MAX Red (`#DC1C2E`) + warm neutrals | Brand-compliant with enough contrast for accessibility |
+| **Color palette** | REMAX Blue (`#003DA5`) + REMAX Red (`#DC1C2E`) + warm neutrals | Brand-compliant with enough contrast for accessibility |
 | **Glassmorphism** | Search bar and join-team section use backdrop-blur + transparency | Premium, modern feel; use sparingly (search, overlays, cards on dark backgrounds) |
 | **Property cards** | Image-first with badge overlay (location), specs row below | Consistent card pattern for all property displays |
 | **Area unit toggle** | m² / Acres / ft² in-search toggle | Zero-config localization — units adapt, no separate settings page |
 
 ### Design Inspiration Strategy Summary
 
-| Design Dimension | Primary Inspiration | Adaptation for RE/MAX Altitud |
+| Design Dimension | Primary Inspiration | Adaptation for REMAX Altitud |
 |-----------------|--------------------|-----------------------------|
 | **Search UX** | Zillow (split-view, filter intelligence) | Split-view desktop, pull-up sheet mobile, context-sensitive filters |
 | **Discovery UX** | LX Costa Rica (communities, area hierarchy) | Region → Area → Community browsing with "Similar Areas" sliders |
@@ -421,13 +421,13 @@ A hybrid approach that combines production-ready unstyled primitives with full v
 
 1. **Solo developer velocity** — shadcn/ui components are copy-pasted into your codebase (not imported from node_modules). You own every line, can modify anything, and have zero version-coupling risk. No "waiting for the library to fix a bug."
 
-2. **Full brand control** — Tailwind's design token system means RE/MAX Blue (`#003DA5`), RE/MAX Red (`#DC1C2E`), warm neutrals, and glassmorphism effects are first-class citizens, not overrides fighting a framework's defaults.
+2. **Full brand control** — Tailwind's design token system means REMAX Blue (`#003DA5`), REMAX Red (`#DC1C2E`), warm neutrals, and glassmorphism effects are first-class citizens, not overrides fighting a framework's defaults.
 
 3. **Performance on $150 Android** — Tailwind generates only the CSS classes you use. shadcn/ui components are tree-shakeable. No 300KB UI framework payload. The property card CSS might be 2KB, not 200KB.
 
 4. **Accessibility included** — Radix primitives (which shadcn/ui wraps) provide WCAG-compliant keyboard navigation, focus management, ARIA attributes, and screen reader support out of the box. You don't need to build dropdown focus trapping from scratch.
 
-5. **Custom UX where it matters** — The split-hero, map pull-up sheet, and property gallery are unique to RE/MAX Altitud. These need to be custom. But the modal that shows property photos full-screen? That's a standard Dialog. The filter panel that slides in on mobile? That's a standard Sheet. shadcn/ui handles the boring parts so you focus on the differentiators.
+5. **Custom UX where it matters** — The split-hero, map pull-up sheet, and property gallery are unique to REMAX Altitud. These need to be custom. But the modal that shows property photos full-screen? That's a standard Dialog. The filter panel that slides in on mobile? That's a standard Sheet. shadcn/ui handles the boring parts so you focus on the differentiators.
 
 6. **Next.js native** — shadcn/ui is built for the React/Next.js ecosystem. Server Components, App Router, and ISR play nicely. No "this library doesn't work with RSC" surprises.
 
@@ -437,8 +437,8 @@ A hybrid approach that combines production-ready unstyled primitives with full v
 Project Component Architecture:
 
 ├── Design Tokens (CSS Custom Properties)
-│   ├── --color-primary: #003DA5        (RE/MAX Blue)
-│   ├── --color-accent: #DC1C2E         (RE/MAX Red)
+│   ├── --color-primary: #003DA5        (REMAX Blue)
+│   ├── --color-accent: #DC1C2E         (REMAX Red)
 │   ├── --color-surface: #FFFFFF
 │   ├── --color-surface-elevated: rgba(255,255,255,0.85)
 │   ├── --font-display: 'Montserrat', sans-serif
@@ -459,7 +459,7 @@ Project Component Architecture:
 │   ├── Toast (save confirmation, form feedback)
 │   └── Skeleton (loading states for search, map, cards)
 │
-├── Custom Components (RE/MAX Altitud specific)
+├── Custom Components (REMAX Altitud specific)
 │   ├── SplitHero (dual-pane mountain/coast gateway)
 │   ├── PropertyCard (image-first, badge overlay, specs row)
 │   ├── PropertyGallery (hero image + grid + fullscreen swipe)
@@ -487,7 +487,7 @@ Project Component Architecture:
 
 | Customization Layer | Approach |
 |--------------------|----------|
-| **Colors** | RE/MAX brand palette defined as CSS custom properties → Tailwind `theme.extend.colors` → used everywhere via `bg-primary`, `text-accent`, etc. |
+| **Colors** | REMAX brand palette defined as CSS custom properties → Tailwind `theme.extend.colors` → used everywhere via `bg-primary`, `text-accent`, etc. |
 | **Typography** | Montserrat (display/headings) + Inter (body/UI) loaded via `next/font`. Type scale: 12/14/16/18/24/32/48px with responsive adjustments |
 | **Spacing** | 4px base grid. Component spacing: 8/12/16/24/32/48px. Section spacing: 48/64/96px |
 | **Border radius** | Consistent radii: buttons 8px, cards 12px, modals 16px, pills 9999px |
@@ -512,7 +512,7 @@ Project Component Architecture:
 
 ### The Defining Interaction
 
-**RE/MAX Altitud in one sentence:** *"See a property on the map, tap it, and start a WhatsApp conversation with the agent — in three taps."*
+**REMAX Altitud in one sentence:** *"See a property on the map, tap it, and start a WhatsApp conversation with the agent — in three taps."*
 
 This is the interaction users will describe to friends: *"I found this amazing mountain property in Costa Rica, I literally tapped it on the map and was chatting with the agent in 30 seconds."* If this flow feels effortless, the platform succeeds. If it has friction at any point, leads die.
 
@@ -545,7 +545,7 @@ Users are migrating FROM informal social channels TO a structured platform. The 
 
 3. **Add what social channels can't** — Map location, filters, photos you can zoom, specs you can compare, agents you can verify. The platform's value proposition is *structure* on top of the *warmth* users already expect.
 
-4. **Never feel corporate** — Users are leaving intimate social channels. If RE/MAX Altitud feels like a corporate portal with registration walls and formal contact forms, they'll go back to Facebook. The tone must be: professional but warm, structured but not rigid.
+4. **Never feel corporate** — Users are leaving intimate social channels. If REMAX Altitud feels like a corporate portal with registration walls and formal contact forms, they'll go back to Facebook. The tone must be: professional but warm, structured but not rigid.
 
 ### Success Criteria
 
@@ -685,8 +685,8 @@ Users are migrating FROM informal social channels TO a structured platform. The 
 │  • Footer persistent link                                      │
 │                                                                │
 │  Lands on → Seller landing page with value proposition:        │
-│  "List with RE/MAX Altitud — the Southern Zone's #1 team"     │
-│  Benefits (global reach, local expertise, RE/MAX brand)        │
+│  "List with REMAX Altitud — the Southern Zone's #1 team"     │
+│  Benefits (global reach, local expertise, REMAX brand)        │
 │  + Start button → begins 3-step form                           │
 └──────────────────────────┬──────────────────────────────────────┘
                            │
@@ -732,7 +732,7 @@ Users are migrating FROM informal social channels TO a structured platform. The 
 │  │  area. Your dedicated agent:             │                  │
 │  │                                          │                  │
 │  │  ┌──────┐  Laura Rodríguez               │                  │
-│  │  │ 📷   │  RE/MAX Altitud                │                  │
+│  │  │ 📷   │  REMAX Altitud                │                  │
 │  │  │      │  🗣 Español, English            │                  │
 │  │  └──────┘  ⭐ 12 years experience         │                  │
 │  │                                          │                  │
@@ -799,7 +799,7 @@ remax-altitud.cr
 │       ├── Active listings
 │       └── WhatsApp + Email contact
 │
-├── /about (About RE/MAX Altitud)
+├── /about (About REMAX Altitud)
 ├── /services (Buy/Sell/Invest services)
 ├── /join (Join Our Team)
 ├── /contact (Contact page)
@@ -814,7 +814,7 @@ remax-altitud.cr
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ RE/MAX Altitud    Properties ▾   Areas ▾        Sell   About   │ EN|ES │
+│ REMAX Altitud    Properties ▾   Areas ▾        Sell   About   │ EN|ES │
 │                   ├─ Mountains    ├─ Pérez Z.                  │      │
 │                   ├─ Coast        ├─ Dominical                  │      │
 │                   └─ Search All   ├─ Uvita                      │      │
@@ -835,7 +835,7 @@ remax-altitud.cr
 
 ```
 ┌─────────────────────────┐
-│ RE/MAX Altitud    ☰    │
+│ REMAX Altitud    ☰    │
 └─────────────────────────┘
 
 ☰ opens full-screen slide-out:
@@ -866,7 +866,7 @@ remax-altitud.cr
 
 ### Brand Color Source
 
-Official RE/MAX brand guidelines provide six core colors:
+Official REMAX brand guidelines provide six core colors:
 
 | Brand Token | Hex | Usage in Brand |
 |-------------|-----|----------------|
@@ -877,7 +877,7 @@ Official RE/MAX brand guidelines provide six core colors:
 | Azul Oscuro Primario | `#000E35` | Dark blue |
 | Negro | `#000000` | Text / contrast |
 
-**Design direction**: The bright brand reds (#FF1200) and blues (#0043FF) are not inherently elegant at scale. For a luxury real estate platform, the **dark variants** (#660000, #000E35) serve as the primary UI palette, while the bright colors are reserved for **accent moments** — CTAs, badges, active states, and micro-interactions. Gold accents (#C2A661) from the prototype are approved and add the boutique luxury feel that distinguishes RE/MAX Altitud from generic RE/MAX franchise sites.
+**Design direction**: The bright brand reds (#FF1200) and blues (#0043FF) are not inherently elegant at scale. For a luxury real estate platform, the **dark variants** (#660000, #000E35) serve as the primary UI palette, while the bright colors are reserved for **accent moments** — CTAs, badges, active states, and micro-interactions. Gold accents (#C2A661) from the prototype are approved and add the boutique luxury feel that distinguishes REMAX Altitud from generic REMAX franchise sites.
 
 ### Color System
 
@@ -1161,7 +1161,7 @@ A single, unified visual direction that synthesizes all decisions from Steps 1�
 4. **Map as product** — The search page IS a map, not a page with a map widget
 5. **Card-first content** — Everything (properties, areas, agents) is a card with consistent structure
 6. **Glassmorphism as luxury signal** — Used sparingly on search bar, overlays, hero elements
-7. **Swappable logo component** — The RE/MAX brand has updated its balloon logo to a modern design. The logo component must support easy asset swapping without code changes. The new balloon icon (visible at remax-altitud.cr) should be used as an SVG/PNG with transparent background, paired with the "RE/MAX Altitud" wordmark.
+7. **Swappable logo component** — The REMAX brand has updated its balloon logo to a modern design. The logo component must support easy asset swapping without code changes. The new balloon icon (visible at remax-altitud.cr) should be used as an SVG/PNG with transparent background, paired with the "REMAX Altitud" wordmark.
 
 ### Key Page Compositions
 
@@ -1288,7 +1288,7 @@ A single, unified visual direction that synthesizes all decisions from Steps 1�
 | **Unified direction (no variants)** | The prototype, brand guidelines, and 8 steps of design development have converged on a clear direction. Generating alternate themes would be artificial variation. |
 | **Cream canvas, not white** | Brand-mandated crema (#F7F5EE) adds warmth that white backgrounds lack. Luxury feel without coldness. |
 | **Dark primaries dominate** | Navy (#000E35) and burgundy (#660000) as primaries ensure the site reads as premium, not generic franchise. |
-| **Gold as differentiator** | No other RE/MAX franchise uses gold accents. Elevates Altitud above the brand standard. |
+| **Gold as differentiator** | No other REMAX franchise uses gold accents. Elevates Altitud above the brand standard. |
 | **Map-first, not grid-first** | International buyers don't know CR geography. The map IS the product for 60%+ of users. |
 | **Photography-driven** | In tropical real estate, the landscape sells the property. UI must frame and elevate photography, never compete with it. |
 | **Horizontal carousels on mobile** | Vertical stacks push CTAs below fold. Carousels keep pages compact and encourage discovery through swipe. |
@@ -1447,7 +1447,7 @@ flowchart TD
 | "Vende tu propiedad" visible | *"This is for me"* | Visually separated seller CTA in nav |
 | No email required | *"They don't make me jump through hoops"* | WhatsApp is primary, email optional |
 | "Necesito ayuda con precio" | *"I'm not stupid for not knowing"* | Checkbox makes price field optional |
-| Agent match with photo | *"Real person, real company"* | RE/MAX badge, photo, language |
+| Agent match with photo | *"Real person, real company"* | REMAX badge, photo, language |
 | Total: ~3 minutes | *"That was fast"* | Progress indicator + time estimates |
 
 ---
@@ -1691,7 +1691,7 @@ Across all journeys, these reusable patterns emerge:
 | **Pre-populated WhatsApp** | Message includes property ref, user language, search context. Supports multiple refs from shortlist. | All contact flows |
 | **Agent match card** | Photo + languages + office + WhatsApp/Email. Appears after form and on listings. | All journeys |
 | **No-results recovery** | Smart suggestions + "Tell an agent" CTA. Never a dead end. | Maria edge case |
-| **Trust signals** | ZMT badge, RE/MAX logo, agent photo, listing count | All journeys |
+| **Trust signals** | ZMT badge, REMAX logo, agent photo, listing count | All journeys |
 | **Sticky mobile CTA** | WhatsApp + Email float at bottom of listing pages on mobile | All mobile listing views |
 | **Pin data density** | All pins show total price only. Tap → popup card with photo, price/m² (land), specs, ZMT, "View Details." | Hans, all search |
 
@@ -1712,7 +1712,7 @@ Across all journeys, these reusable patterns emerge:
 2. **Geography-as-UX**: Map solves the "I don't know where anything is" problem for international buyers. Grid solves the "I already know" problem for locals. Both are first-class.
 3. **Forms respect the user**: No required email (WhatsApp-first market). "I need help with pricing." Optional photo upload. Progress bar with time estimates.
 4. **Every dead end is a lead**: No-results, removed listings, and abandoned searches all offer forward paths + agent CTAs.
-5. **Trust is visual**: ZMT badge, agent photo, RE/MAX balloon, listing count, language badges — trust signals at every decision point.
+5. **Trust is visual**: ZMT badge, agent photo, REMAX balloon, listing count, language badges — trust signals at every decision point.
 6. **Language is invisible**: Auto-detection means zero friction. Manual toggle exists but is rarely needed.
 7. **Community context persists**: Navigating from community page to a listing and back preserves the community filter context.
 
@@ -2263,7 +2263,7 @@ User taps Submit
 
 | Element | Behavior |
 |---------|----------|
-| **Logo** | Click → Homepage. Swappable asset (new RE/MAX balloon). |
+| **Logo** | Click → Homepage. Swappable asset (new REMAX balloon). |
 | **Top-level items** | Max 5: Properties, Areas, Sell, About, Lang toggle. |
 | **Dropdowns** | Open on hover (150ms delay), close on mouse leave (300ms delay). Max 4 items per dropdown + "View all" link. |
 | **Active state** | Bottom border 2px navy on current top-level section. |
@@ -2314,7 +2314,7 @@ User taps Submit
 | **Empty search** | "No properties match your filters in this area" | Map zoomed to searched area | Smart suggestions + "Tell an agent" WhatsApp |
 | **Listing removed** | "This property is no longer available" | Faded property card with overlay | "Similar properties" carousel + agent CTA |
 | **Empty community** | "No properties currently listed in [Community]" | Community info still visible | "Get notified when new listings appear" |
-| **Offline / error** | "Something went wrong. We're working on it." | RE/MAX balloon icon | "Try again" button + homepage link |
+| **Offline / error** | "Something went wrong. We're working on it." | REMAX balloon icon | "Try again" button + homepage link |
 | **Shortlist full (20)** | "You've saved the maximum. Remove one to add more." | Shortlist with highlighted remove icons | Remove buttons pulse subtly |
 
 **Rule:** Every empty state has a **forward path.** No dead ends.

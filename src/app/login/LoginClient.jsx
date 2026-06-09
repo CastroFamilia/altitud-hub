@@ -42,7 +42,7 @@ export default function LoginClient() {
             <div className="inline-flex items-center justify-center p-3 bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100">
               <Image  
                 src="/assets/logo-altitud.png" 
-                alt="RE/MAX Altitud" 
+                alt="REMAX Altitud" 
                 className="h-8 object-contain"
                 width={200}
                 height={32}
@@ -62,7 +62,7 @@ export default function LoginClient() {
           <div className="space-y-2">
             <h2 className="text-lg font-bold text-slate-700">Bienvenido</h2>
             <p className="text-sm text-slate-500 leading-relaxed">
-              Inicia sesión con tu cuenta de correo de RE/MAX Altitud para acceder a tu panel.
+              Inicia sesión con tu cuenta de correo de REMAX Altitud para acceder a tu panel.
             </p>
           </div>
 
@@ -98,7 +98,7 @@ export default function LoginClient() {
 
         {/* Footer */}
         <p className="text-center text-[10px] text-slate-400 mt-6 font-medium">
-          RE/MAX Altitud · Pérez Zeledón, Costa Rica
+          REMAX Altitud · Pérez Zeledón, Costa Rica
         </p>
       </div>
     </div>

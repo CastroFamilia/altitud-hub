@@ -61,9 +61,9 @@ export const RECONNECT_TYPE_MAP = {
 
 // ── RECONNECT CATEGORIES (ListingProbableUseId) ─────────────
 export const RECONNECT_CATEGORIES = [
-  { id: 1, label: 'RE/MAX (General)' },
-  { id: 2, label: 'RE/MAX Commercial' },
-  { id: 3, label: 'The RE/MAX Collection' },
+  { id: 1, label: 'REMAX (General)' },
+  { id: 2, label: 'REMAX Commercial' },
+  { id: 3, label: 'The REMAX Collection' },
 ];
 
 // ── Resolve a RECONNECT feed item → Hub property_type_id ────

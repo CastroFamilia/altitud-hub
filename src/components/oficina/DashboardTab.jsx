@@ -819,7 +819,7 @@ export default function DashboardTab({
               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Promedios de Equipo (por agente)</p>
               <div className="space-y-2">
                 <div className="flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/10 p-2 rounded-xl border border-slate-100 dark:border-slate-700/30 text-xs">
-                  <span className="text-slate-400 font-medium">Antigüedad RE/MAX</span>
+                  <span className="text-slate-400 font-medium">Antigüedad REMAX</span>
                   <span className="font-black text-slate-800 dark:text-white tabular-nums bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">{hrPromedios.tenure.toFixed(1)} a</span>
                 </div>
                 <div className="flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/10 p-2 rounded-xl border border-slate-100 dark:border-slate-700/30 text-xs">

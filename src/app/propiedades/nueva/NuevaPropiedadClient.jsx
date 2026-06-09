@@ -289,7 +289,7 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
                     {nameError && <p className="text-red-500 text-xs font-bold mt-1">{nameError}</p>}
                   </div>
                   <div>
-                    <label className={labelCls}>{lang === 'en' ? 'RE/MAX Category' : 'Categoría RE/MAX'}</label>
+                    <label className={labelCls}>{lang === 'en' ? 'REMAX Category' : 'Categoría REMAX'}</label>
                     <select value={form.listing_probable_use_id} onChange={e => setNum('listing_probable_use_id', e.target.value)} className={inputCls}>
                       {RECONNECT_CATEGORIES.map(cat => (<option key={cat.id} value={cat.id}>{cat.label}</option>))}
                     </select>
@@ -323,7 +323,7 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
                     <label className={labelCls}>{t('auto_office')}</label>
                     <select value={form.office_code} onChange={e => set('office_code', e.target.value)} className={`${inputCls} opacity-70 cursor-not-allowed`} disabled>
                       <option value="">—</option>
-                      <option value="R0700130">RE/MAX Altitud</option>
+                      <option value="R0700130">REMAX Altitud</option>
                       <option value="R0700151">Altitud Cero</option>
                     </select>
                   </div>

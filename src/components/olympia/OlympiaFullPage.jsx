@@ -388,7 +388,7 @@ export default function OlympiaFullPage() {
               </div>
               <div>
                 <h2 className="text-xl font-black">Olympia</h2>
-                <p className="text-white/70 text-sm">RE/MAX Altitud AI</p>
+                <p className="text-white/70 text-sm">REMAX Altitud AI</p>
                 <div className="flex items-center gap-1.5 mt-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                   <span className="text-[10px] text-emerald-300 font-bold">ONLINE</span>

@@ -8,7 +8,7 @@ const ICONS = { office: '🏢', signs: '🪧', gas: '⛽', phone: '📱', market
 const CATEGORIES = ['office', 'signs', 'gas', 'phone', 'marketing', 'convention', 'training', 'platforms'];
 
 /* ═══════════════════════════════════════════════════════
-   COMMISSION PLANS — RE/MAX Altitud
+   COMMISSION PLANS — REMAX Altitud
    ═══════════════════════════════════════════════════════ */
 const COMMISSION_PLANS = [
   {

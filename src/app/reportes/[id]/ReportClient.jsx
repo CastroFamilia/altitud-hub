@@ -20,7 +20,7 @@ const LABELS = {
     devices: 'Dispositivos', resActive: 'Reservas Activas', salesClosed: 'Ventas Cerradas',
     salesVolume: 'Volumen Total', property: 'Propiedad', date: 'Fecha', price: 'Precio',
     buyer: 'Comprador', commentary: 'Comentarios del Agente', noData: 'Sin datos para este período',
-    confidential: 'Confidencial — RE/MAX Altitud', downloadPdf: 'Descargar PDF',
+    confidential: 'Confidencial — REMAX Altitud', downloadPdf: 'Descargar PDF',
     shareLink: 'Copiar Link', linkCopied: '¡Copiado!',
     week: 'Esta Semana', month: 'Este Mes', '30d': 'Últimos 30 días', ytd: 'Año (YTD)',
     loading: 'Cargando reporte...', notFound: 'Desarrollo no encontrado.',
@@ -36,7 +36,7 @@ const LABELS = {
     devices: 'Devices', resActive: 'Active Reservations', salesClosed: 'Closed Sales',
     salesVolume: 'Total Volume', property: 'Property', date: 'Date', price: 'Price',
     buyer: 'Buyer', commentary: 'Agent Commentary', noData: 'No data for this period',
-    confidential: 'Confidential — RE/MAX Altitud', downloadPdf: 'Download PDF',
+    confidential: 'Confidential — REMAX Altitud', downloadPdf: 'Download PDF',
     shareLink: 'Copy Link', linkCopied: 'Copied!',
     week: 'This Week', month: 'This Month', '30d': 'Last 30 Days', ytd: 'Year to Date',
     loading: 'Loading report...', notFound: 'Development not found.',
@@ -202,7 +202,7 @@ export default function ReportClient({ params }) {
             {[
               { label: 'Desarrollo', value: dev.name },
               { label: L.period, value: L[period] || period, sub: `${start} → ${end}` },
-              { label: L.prepared, value: agentName || 'RE/MAX Altitud' },
+              { label: L.prepared, value: agentName || 'REMAX Altitud' },
               { label: L.generated, value: formatDate(new Date()) },
             ].map((item, i) => (
               <div key={i} className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/15">

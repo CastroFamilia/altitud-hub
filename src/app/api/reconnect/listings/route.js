@@ -46,7 +46,7 @@ export async function GET(request) {
             all_images: images,
             // Office
             office_key: officeKey,
-            office_label: officeKey === 'altitud' ? 'RE/MAX Altitud' : 'Altitud Cero',
+            office_label: officeKey === 'altitud' ? 'REMAX Altitud' : 'Altitud Cero',
             // Dates
             listing_date: rp.ListingContractDate || rp.listingContractDate || rp.CreatedAt || rp.createdAt || null,
             modification_timestamp: rp.ModificationTimestamp || rp.modificationTimestamp || null,
