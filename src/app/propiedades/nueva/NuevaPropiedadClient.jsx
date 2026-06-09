@@ -8,7 +8,7 @@ import { updateProperty, insertProperty, upsertListingMilestone } from '@/lib/da
 import TopNav from '@/components/layout/TopNav';
 import Link from 'next/link';
 import { trackOkrActivity } from '@/lib/okr-tracker';
-import { PROPERTY_TYPES_LIST } from '@/lib/constants/property-constants';
+import { PROPERTY_TYPES_LIST, RECONNECT_CATEGORIES } from '@/lib/constants/property-constants';
 
 const AMENITY_FIELDS = [
   { key: 'pool_private', es: 'Piscina', en: 'Pool' },
@@ -60,6 +60,7 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
   const contactLocked = editId && !isBroker && initialForm?._status && ['approved', 'published', 'sold'].includes(initialForm._status);
   const [loading, setLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+  const [nameError, setNameError] = useState(null);
   const [form, setForm] = useState(initialForm || INITIAL_FORM);
   const [step, setStep] = useState(0); // 0=basics, 1=details, 2=marketing
   const [acmReports, setAcmReports] = useState(initialAcms || []);
@@ -105,7 +106,39 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
   // Load existing property for edit mode removed (handled server-side)
 
   const handleSubmit = async (statusOverride = null) => {
+    if (!form.name || form.name.trim() === '') {
+      setNameError(lang === 'en' ? 'Property Name is required' : 'El nombre de fantasía es requerido');
+      setStep(0);
+      return;
+    }
+
     setLoading(true);
+    setNameError(null);
+
+    // Validate name uniqueness if not cancelled or paused
+    if (statusOverride !== 'cancelled' && statusOverride !== 'paused') {
+      try {
+        const res = await fetch('/api/properties/check-name', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: form.name, excludeId: editId })
+        });
+        const data = await res.json();
+        if (data.existsInProperties) {
+          setNameError(
+            lang === 'en' 
+              ? 'This name is already registered by another agent. Please choose a unique name.' 
+              : 'Este nombre ya está registrado por otro agente en el sistema. Por favor, elige un nombre único.'
+          );
+          setLoading(false);
+          setStep(0);
+          return;
+        }
+      } catch (e) {
+        console.error('Validation error:', e);
+      }
+    }
+
     try {
       const payload = {
         ...form,
@@ -252,7 +285,14 @@ export default function NuevaPropiedadClient({ editId, initialAcms, initialForm 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className={labelCls}>{t('auto_internal_name')}</label>
-                    <input required value={form.name} onChange={e => set('name', e.target.value)} className={inputCls} placeholder="Ej: Lote Vista Chirripó #12" />
+                    <input required value={form.name} onChange={e => { set('name', e.target.value); setNameError(null); }} className={`${inputCls} ${nameError ? 'border-red-500 ring-red-500' : ''}`} placeholder="Ej: Lote Vista Chirripó #12" />
+                    {nameError && <p className="text-red-500 text-xs font-bold mt-1">{nameError}</p>}
+                  </div>
+                  <div>
+                    <label className={labelCls}>{lang === 'en' ? 'RE/MAX Category' : 'Categoría RE/MAX'}</label>
+                    <select value={form.listing_probable_use_id} onChange={e => setNum('listing_probable_use_id', e.target.value)} className={inputCls}>
+                      {RECONNECT_CATEGORIES.map(cat => (<option key={cat.id} value={cat.id}>{cat.label}</option>))}
+                    </select>
                   </div>
                   <div>
                     <label className={labelCls}>{t('auto_property_type')}</label>

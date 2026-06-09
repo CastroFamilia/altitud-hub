@@ -1,204 +1,80 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { createClient } from '@/lib/supabase-browser';
-
-/* ═══════════════════════════════════════════════════════════════
-   AUTH CONTEXT — Manages user session, profile, and role
-   ═══════════════════════════════════════════════════════════════ */
+import { SessionProvider, useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
 
 const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
-  const [supabase] = useState(() => createClient());
-  const [user, setUser] = useState(null);         // auth.users row
-  const [profile, setProfile] = useState(null);    // profiles row
-  const [realProfile, setRealProfile] = useState(null); // real profile for broker
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+function AuthProviderInner({ children }) {
+  const { data: session, status } = useSession();
+  
   const [isImpersonating, setIsImpersonating] = useState(false);
+  const [impersonatedProfile, setImpersonatedProfile] = useState(null);
 
-  const fetchProfile = useCallback(async (authUser, retryCount = 0) => {
-    if (!authUser) {
-      setProfile(null);
-      return null;
-    }
-    try {
-      // IMPORTANT: No JOIN on teams here — avoids RLS cross-table recursion freeze
-      const { data, error: err } = await supabase
-        .from('profiles')
-        .select('id, email, full_name, role, office, status, avatar_url, auth_user_id, team_id')
-        .eq('auth_user_id', authUser.id)
-        .maybeSingle();
-
-      if (err || !data) {
-        // Transient lock error — retry with backoff (do NOT sign out)
-        if ((err?.message?.includes('lock') || err?.message?.includes('Lock')) && retryCount < 3) {
-          console.warn(`[fetchProfile] Lock conflict, retrying (${retryCount + 1}/3)...`);
-          await new Promise(r => setTimeout(r, 600 * (retryCount + 1)));
-          return fetchProfile(authUser, retryCount + 1);
-        }
-
-        // Fallback: look up by email to link new Google auth users to existing profiles
-        const { data: emailMatch, error: emailErr } = await supabase
-          .from('profiles')
-          .select('id, email, full_name, role, office, status, avatar_url, auth_user_id, team_id')
-          .eq('email', authUser.email?.toLowerCase())
-          .maybeSingle();
-
-        if (emailErr || !emailMatch) {
-          // Also retry email lookup on lock errors
-          if ((emailErr?.message?.includes('lock') || emailErr?.message?.includes('Lock')) && retryCount < 3) {
-            console.warn(`[fetchProfile] Lock conflict on email lookup, retrying (${retryCount + 1}/3)...`);
-            await new Promise(r => setTimeout(r, 600 * (retryCount + 1)));
-            return fetchProfile(authUser, retryCount + 1);
-          }
-          setError('Tu cuenta no está autorizada. Contacta al administrador de la oficina.');
-          await supabase.auth.signOut();
-          setProfile(null);
-          return null;
-        }
-
-        // Link the Google auth_user_id to the existing profile row
-        if (!emailMatch.auth_user_id) {
-          await supabase
-            .from('profiles')
-            .update({
-              auth_user_id: authUser.id,
-              status: 'active',
-              last_login: new Date().toISOString(),
-              avatar_url: authUser.user_metadata?.avatar_url || emailMatch.avatar_url,
-            })
-            .eq('id', emailMatch.id);
-          emailMatch.auth_user_id = authUser.id;
-          emailMatch.status = 'active';
-        }
-
-        setRealProfile(emailMatch);
-        setProfile(emailMatch);
-        setError(null);
-        return emailMatch;
-      }
-
-      // Update last_login timestamp (fire-and-forget)
-      supabase
-        .from('profiles')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', data.id)
-        .then(() => {});
-
-      setRealProfile(data);
-      setProfile(data);
-      setError(null);
-      return data;
-    } catch (e) {
-      console.error('fetchProfile error:', e);
-      return null;
-    }
-  }, [supabase]);
-
-  // Initialize auth state — rely ONLY on onAuthStateChange.
-  // It fires with INITIAL_SESSION on mount, making a separate
-  // initAuth() call redundant AND dangerous (they race for the auth lock).
+  const loading = status === "loading";
+  const user = session?.user || null;
+  const realProfile = session?.profile || null;
+  
+  // Impersonation logic
   useEffect(() => {
-    const applyImpersonation = async (realP) => {
-      if (realP?.role === 'broker') {
-        const impId = localStorage.getItem('impersonated_id');
-        if (impId) {
-          const { data: impP } = await supabase.from('profiles').select('*, teams:teams!profiles_team_id_fkey(id, name)').eq('id', impId).single();
-          if (impP) {
-            setProfile(impP);
-            setIsImpersonating(true);
-            return;
-          }
-        }
+    if (realProfile?.role === 'broker') {
+      const impId = localStorage.getItem('impersonated_id');
+      if (impId) {
+        // We need to fetch the impersonated profile from the API
+        fetch(`/api/profile?id=${impId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data?.profile) {
+              setImpersonatedProfile(data.profile);
+              setIsImpersonating(true);
+            }
+          })
+          .catch(e => console.error("Error fetching impersonated profile", e));
+      } else {
+        setIsImpersonating(false);
+        setImpersonatedProfile(null);
       }
-      setProfile(realP);
+    } else {
       setIsImpersonating(false);
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        try {
-          const authUser = session?.user ?? null;
-          setUser(authUser);
-          if (authUser) {
-            const realP = await fetchProfile(authUser);
-            await applyImpersonation(realP);
-          } else {
-            setRealProfile(null);
-            setProfile(null);
-            setIsImpersonating(false);
-          }
-        } catch (e) {
-          console.error('Error on auth state change:', e);
-        } finally {
-          setLoading(false);
-        }
-      }
-    );
-
-    // Fallback: if onAuthStateChange never fires (edge case), stop loading after 6s
-    const timeoutId = setTimeout(() => setLoading(false), 6000);
-
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(timeoutId);
-    };
-  }, [supabase, fetchProfile]);
-
-  // Sign in with Google OAuth — restricted to @remax-altitud.cr
-  const signIn = useCallback(async () => {
-    try {
-      setError(null);
-      const { error: err } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            hd: 'remax-altitud.cr'  // Only show @remax-altitud.cr accounts
-          }
-        }
-      });
-      if (err) {
-        console.error('Supabase auth error:', err);
-        setError('Error de autenticación: ' + err.message);
-      }
-    } catch (e) {
-      console.error('JavaScript Error in signIn:', e);
-      setError('Error inesperado: ' + e.message);
+      setImpersonatedProfile(null);
     }
-  }, [supabase]);
+  }, [realProfile]);
 
-  // Sign out
+  const profile = isImpersonating ? impersonatedProfile : realProfile;
+
+  const signIn = useCallback(async () => {
+    await nextAuthSignIn('google');
+  }, []);
+
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setProfile(null);
-    setError(null);
-  }, [supabase]);
+    await nextAuthSignOut();
+  }, []);
+
+  const fetchProfile = useCallback(async () => {
+    // With NextAuth, profile is fetched on session creation.
+    // If we really need to refresh it, we can call a next-auth refresh or API.
+    return profile;
+  }, [profile]);
 
   // Derived helpers
   const role = profile?.role || null;
   const realRole = realProfile?.role || null;
-  const isBroker = (realRole === 'broker' || realRole === 'admin') && !isImpersonating; // broker OR admin (administrativa), but false if impersonating
+  const isBroker = (realRole === 'broker' || realRole === 'admin') && !isImpersonating;
   const isTeamLeader = role === 'team_leader';
   const isAgent = role === 'agent' || role === 'junior';
   const isJunior = role === 'junior';
   const isOfficeAssistant = role === 'office_assistant';
   const isAuthenticated = !!user && !!realProfile;
 
-
-
   return (
     <AuthContext.Provider value={{
-      supabase,
+      supabase: null, // Removed, will break direct client supabase calls, needs DAL replacement
       user,
       profile,
       realProfile,
       role,
       loading,
-      error,
+      error: null,
       signIn,
       signOut,
       isBroker,
@@ -212,6 +88,14 @@ export function AuthProvider({ children }) {
     }}>
       {children}
     </AuthContext.Provider>
+  );
+}
+
+export function AuthProvider({ children }) {
+  return (
+    <SessionProvider>
+      <AuthProviderInner>{children}</AuthProviderInner>
+    </SessionProvider>
   );
 }
 

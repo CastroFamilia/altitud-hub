@@ -29,9 +29,10 @@ export async function POST(req) {
 
     // Get all views grouped by property + date
     const { data: views, error } = await supabase
-      .from('listing_page_views')
-      .select('property_id, development_id, ip_hash, device_type, referrer, duration_seconds, viewed_at')
-      .gte('viewed_at', startDate + 'T00:00:00Z');
+      .from('page_events')
+      .select('property_id, development_id, event_meta, referrer, created_at')
+      .eq('event_type', 'page_view')
+      .gte('created_at', startDate + 'T00:00:00Z');
 
     if (error) throw error;
     if (!views || views.length === 0) {
@@ -42,7 +43,7 @@ export async function POST(req) {
     const groups = {};
 
     for (const v of views) {
-      const date = v.viewed_at.split('T')[0];
+      const date = v.created_at.split('T')[0];
       const key = `${v.property_id || 'null'}_${v.development_id || 'null'}_${date}`;
 
       if (!groups[key]) {
@@ -62,11 +63,14 @@ export async function POST(req) {
 
       const g = groups[key];
       g.total_views++;
-      if (v.ip_hash) g.unique_ips.add(v.ip_hash);
-      if (v.duration_seconds > 0) g.durations.push(v.duration_seconds);
+      const ipHash = v.event_meta?.ip_hash || null;
+      if (ipHash) g.unique_ips.add(ipHash);
+      const duration = v.event_meta?.duration_seconds || 0;
+      if (duration > 0) g.durations.push(duration);
       if (v.referrer) g.referrers[v.referrer] = (g.referrers[v.referrer] || 0) + 1;
-      if (v.device_type === 'mobile') g.mobile++;
-      else if (v.device_type === 'tablet') g.tablet++;
+      const deviceType = v.event_meta?.device_type || 'desktop';
+      if (deviceType === 'mobile') g.mobile++;
+      else if (deviceType === 'tablet') g.tablet++;
       else g.desktop++;
     }
 

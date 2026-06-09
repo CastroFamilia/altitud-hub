@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-export default function ReConnectSyncTab({ properties = [], profiles = [] }) {
+export default function ReConnectSyncTab({ properties = [], profiles = [], syncLogs = [] }) {
   const router = useRouter();
   const [syncingOffice, setSyncingOffice] = useState(null); // 'altitud' | 'cero' | null
   const [syncResult, setSyncResult] = useState(null); // { success: boolean, imported: number, total_in_feed: number, skipped: number, errors?: array }
@@ -249,6 +249,57 @@ export default function ReConnectSyncTab({ properties = [], profiles = [] }) {
           </button>
         </div>
 
+      </div>
+
+      {/* ── Daily Sync Logs Monitoring ── */}
+      <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm mt-8">
+        <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <span>📉</span> Monitoreo del Sync Diario
+        </h4>
+        {syncLogs.length === 0 ? (
+          <p className="text-xs text-slate-400 italic">No hay registros de sincronización disponibles.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[600px]">
+              <thead>
+                <tr className="bg-white/50 dark:bg-slate-800/50">
+                  <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400">Fecha</th>
+                  <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400">Estado</th>
+                  <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400">Propiedades</th>
+                  <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400">Errores / Notas</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                {syncLogs.slice(0, 10).map(log => (
+                  <tr key={log.id} className="hover:bg-white/40 dark:hover:bg-slate-800/30">
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-medium">
+                      {new Date(log.created_at).toLocaleString('es-CR')}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                        log.status === 'success' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                      }`}>
+                        {log.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-bold text-slate-900 dark:text-white tabular-nums">
+                      {log.properties_synced}
+                    </td>
+                    <td className="px-4 py-3">
+                      {log.errors && log.errors.length > 0 ? (
+                        <div className="max-h-16 overflow-y-auto text-[10px] text-rose-500 space-y-1">
+                          {Array.isArray(log.errors) ? log.errors.map((e, i) => <div key={i}>• {typeof e === 'string' ? e : JSON.stringify(e)}</div>) : JSON.stringify(log.errors)}
+                        </div>
+                      ) : (
+                        <span className="text-emerald-500 font-black text-[10px] uppercase">Sin Errores</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* ── Sync Feedback Box ── */}

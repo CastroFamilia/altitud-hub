@@ -1,42 +1,35 @@
-import { supabase } from '@/lib/supabase';
+import sql from '@/lib/db';
 
 export async function getListingDailyStats(propertyId, developmentId) {
-  let query = supabase
-    .from('listing_daily_stats')
-    .select('*')
-    .order('stat_date', { ascending: false })
-    .limit(90);
-
-  if (propertyId) query = query.eq('property_id', propertyId);
-  if (developmentId) query = query.eq('development_id', developmentId);
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
+  let query = sql`SELECT * FROM listing_daily_stats WHERE 1=1`;
+  if (propertyId) query = sql`${query} AND property_id = ${propertyId}`;
+  if (developmentId) query = sql`${query} AND development_id = ${developmentId}`;
+  
+  query = sql`${query} ORDER BY stat_date DESC LIMIT 90`;
+  return await query;
 }
 
 export async function getListingPageViewsReferrers(propertyId, developmentId, sinceDate) {
-  let query = supabase
-    .from('listing_page_views')
-    .select('referrer')
-    .gte('viewed_at', sinceDate + 'T00:00:00Z')
-    .not('referrer', 'is', null)
-    .limit(200);
-
-  if (propertyId) query = query.eq('property_id', propertyId);
-  if (developmentId) query = query.eq('development_id', developmentId);
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
+  let query = sql`
+    SELECT referrer 
+    FROM page_events 
+    WHERE created_at >= ${sinceDate + 'T00:00:00Z'} 
+    AND event_type = 'page_view'
+    AND referrer IS NOT NULL
+  `;
+  
+  if (propertyId) query = sql`${query} AND property_id = ${propertyId}`;
+  if (developmentId) query = sql`${query} AND development_id = ${developmentId}`;
+  
+  query = sql`${query} LIMIT 200`;
+  return await query;
 }
 
 export async function getListingLeadsCount(propertyId) {
-  const { count, error } = await supabase
-    .from('property_inquiries')
-    .select('id', { count: 'exact', head: true })
-    .eq('reconnect_listing_id', propertyId);
-
-  if (error) throw error;
-  return count;
+  const data = await sql`
+    SELECT count(*) as count 
+    FROM property_inquiries 
+    WHERE reconnect_listing_id = ${propertyId}
+  `;
+  return parseInt(data[0].count, 10);
 }

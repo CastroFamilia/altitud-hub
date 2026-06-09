@@ -42,10 +42,11 @@ export default function WebsiteAnalyticsTab({ properties = [], developments = []
           .gte('stat_date', startDate)
           .order('stat_date', { ascending: false }),
         supabase
-          .from('listing_page_views')
-          .select('property_id, development_id, referrer, device_type, viewed_at, duration_seconds, session_id')
-          .gte('viewed_at', startDate + 'T00:00:00Z')
-          .order('viewed_at', { ascending: false })
+          .from('page_events')
+          .select('property_id, development_id, referrer, event_meta, created_at')
+          .eq('event_type', 'page_view')
+          .gte('created_at', startDate + 'T00:00:00Z')
+          .order('created_at', { ascending: false })
           .limit(5000),
       ]);
       setDailyStats(daily || []);
@@ -159,7 +160,10 @@ export default function WebsiteAnalyticsTab({ properties = [], developments = []
   // ── Device breakdown ──
   const deviceBreakdown = useMemo(() => {
     const counts = { desktop: 0, mobile: 0, tablet: 0, unknown: 0 };
-    rawViews.forEach(v => { counts[v.device_type] = (counts[v.device_type] || 0) + 1; });
+    rawViews.forEach(v => { 
+      const dt = v.event_meta?.device_type || 'desktop';
+      counts[dt] = (counts[dt] || 0) + 1; 
+    });
     const total = rawViews.length || 1;
     return [
       { type: '🖥️ Desktop', count: counts.desktop, pct: Math.round((counts.desktop / total) * 100) },

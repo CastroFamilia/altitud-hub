@@ -20,13 +20,9 @@ export async function PATCH(request) {
 
     const { data: callerProfile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('id, role')
       .eq('auth_user_id', user.id)
       .single();
-
-    if (!callerProfile || callerProfile.role !== 'broker') {
-      return Response.json({ error: 'Solo el broker puede modificar perfiles' }, { status: 403 });
-    }
 
     const body = await request.json();
     const { id, ...updates } = body;
@@ -35,8 +31,20 @@ export async function PATCH(request) {
       return Response.json({ error: 'Profile ID requerido' }, { status: 400 });
     }
 
-    // Only allow safe fields to be updated
-    const allowedFields = ['role', 'team_id', 'status', 'full_name', 'phone', 'office', 'remax_agent_id', 'remax_agent_name', 'avatar_url', 'psicotest_url', 'psicotest_file_id', 'olympia_behavior_analysis', 'commission_split', 'monthly_fee', 'fee_start_date', 'start_date', 'birth_date'];
+    const isBroker = callerProfile?.role === 'broker';
+    const isSelf = callerProfile?.id === id;
+
+    if (!isBroker && !isSelf) {
+      return Response.json({ error: 'No tienes permisos para modificar este perfil' }, { status: 403 });
+    }
+
+    let allowedFields = [];
+    if (isBroker) {
+      allowedFields = ['role', 'team_id', 'status', 'full_name', 'phone', 'office', 'remax_agent_id', 'remax_agent_name', 'avatar_url', 'psicotest_url', 'psicotest_file_id', 'olympia_behavior_analysis', 'commission_split', 'monthly_fee', 'fee_start_date', 'start_date', 'birth_date', 'bio_en', 'bio_es', 'video_url'];
+    } else if (isSelf) {
+      allowedFields = ['full_name', 'phone', 'bio_en', 'bio_es', 'video_url', 'avatar_url'];
+    }
+
     const safeUpdates = {};
     for (const key of allowedFields) {
       if (key in updates) safeUpdates[key] = updates[key];

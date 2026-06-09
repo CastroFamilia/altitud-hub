@@ -59,6 +59,13 @@ export const RECONNECT_TYPE_MAP = {
   10: 'Lote',        // Terreno → Lote for search matching
 };
 
+// ── RECONNECT CATEGORIES (ListingProbableUseId) ─────────────
+export const RECONNECT_CATEGORIES = [
+  { id: 1, label: 'RE/MAX (General)' },
+  { id: 2, label: 'RE/MAX Commercial' },
+  { id: 3, label: 'The RE/MAX Collection' },
+];
+
 // ── Resolve a RECONNECT feed item → Hub property_type_id ────
 export function resolveTypeId(feedItem) {
   const directId = feedItem.PropertyTypeId || feedItem.PropertyTypeId_ || feedItem.propertyTypeId;

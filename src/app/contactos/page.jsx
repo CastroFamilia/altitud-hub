@@ -2,8 +2,7 @@ import { createClient } from '@/lib/supabase-server';
 import { cookies } from 'next/headers';
 import ContactosClient from './ContactosClient';
 import TopNav from '@/components/layout/TopNav';
-import { getContacts } from '@/lib/dal/contacts';
-
+import { getContacts, getLeadsAsContacts } from '@/lib/dal/contacts';
 export default async function ContactosPage() {
   const supabase = await createClient();
   
@@ -20,23 +19,31 @@ export default async function ContactosPage() {
 
       let targetUserId = user.id;
 
+      let targetProfileId = realP?.id;
+
       if (realP && (realP.role === 'broker' || realP.role === 'admin')) {
         const cookieStore = await cookies();
         const impId = cookieStore.get('impersonated_id')?.value;
         if (impId) {
           const { data: impP } = await supabase
             .from('profiles')
-            .select('auth_user_id')
+            .select('id, auth_user_id')
             .eq('id', impId)
             .maybeSingle();
           
           if (impP?.auth_user_id) {
             targetUserId = impP.auth_user_id;
+            targetProfileId = impP.id;
           }
         }
       }
 
-      initialContacts = await getContacts(targetUserId, supabase);
+      const [hubContacts, webLeads] = await Promise.all([
+        getContacts(targetUserId),
+        targetProfileId ? getLeadsAsContacts(targetProfileId) : Promise.resolve([])
+      ]);
+
+      initialContacts = [...hubContacts, ...webLeads].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     } catch (e) {
       console.error(e);
     }
