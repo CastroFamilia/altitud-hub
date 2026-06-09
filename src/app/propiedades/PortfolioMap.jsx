@@ -51,7 +51,7 @@ function safeDestroyMap(map) {
     if (pane) {
       pane.style.transition = 'none';
       // Force a reflow to flush the cancelled transition
-      // eslint-disable-next-line no-unused-expressions
+       
       pane.offsetHeight;
     }
 
