@@ -1105,7 +1105,7 @@ CREATE TABLE IF NOT EXISTS public.page_events (
     event_type TEXT NOT NULL
       CHECK (event_type IN (
         'page_view', 'listing_click', 'whatsapp_click', 'faq_expand',
-        'lead_submit', 'gallery_view', 'video_play', 'social_click', 'map_interact'
+        'lead_submit', 'gallery_view', 'video_play', 'social_click', 'map_interact', 'qr_scan'
       )),
     event_meta JSONB DEFAULT '{}'::jsonb,   -- Which listing, which FAQ, which social button, etc.
     referrer TEXT,                           -- Where the visitor came from
