@@ -1,20 +1,22 @@
-import { createClient } from '@/lib/supabase-server';
+import { auth } from '@/auth';
+import sql from '@/lib/db';
 
 export async function getServerAuth() {
-  const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) return null;
+  const session = await auth();
+  if (!session?.user) return null;
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, email, full_name, role, office, status, avatar_url, auth_user_id, team_id')
-    .eq('auth_user_id', user.id)
-    .maybeSingle();
+  const users = await sql`
+    SELECT id, email, full_name, role, office, status, avatar_url, auth_user_id, team_id
+    FROM profiles
+    WHERE auth_user_id = ${session.user.id}
+    LIMIT 1
+  `;
+  const profile = users[0];
 
   if (!profile) return null;
 
   return {
-    ...user,
+    ...session.user,
     profile,
     isBroker: profile.role === 'broker',
     isTeamLeader: profile.role === 'team_leader',

@@ -1,27 +1,29 @@
-import { supabase } from '@/lib/supabase';
+import sql from '@/lib/db';
 
-const getClient = (client) => client || supabase;
-
-export async function getAcmsByContactId(contactId, client = null) {
-  const supabaseClient = getClient(client);
-  const { data, error } = await supabaseClient
-    .from('acm_reports')
-    .select('id, property_address, created_at, suggested_price, status')
-    .eq('contact_id', contactId)
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-  return data;
+export async function getAcmsByContactId(contactId) {
+  try {
+    const data = await sql`
+      SELECT id, property_address, created_at, suggested_price, status 
+      FROM acm_reports 
+      WHERE contact_id = ${contactId} 
+      ORDER BY created_at DESC
+    `;
+    return data;
+  } catch (error) {
+    throw error;
+  }
 }
 
-export async function getAcmsByIds(ids, client = null) {
+export async function getAcmsByIds(ids) {
   if (!ids || ids.length === 0) return [];
-  const supabaseClient = getClient(client);
-  const { data, error } = await supabaseClient
-    .from('acm_reports')
-    .select('*')
-    .in('id', ids);
-
-  if (error) throw error;
-  return data;
+  try {
+    const data = await sql`
+      SELECT * 
+      FROM acm_reports 
+      WHERE id IN ${sql(ids)}
+    `;
+    return data;
+  } catch (error) {
+    throw error;
+  }
 }

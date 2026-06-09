@@ -1,10 +1,49 @@
+import { useState } from 'react';
 import { useApp } from '@/lib/context';
 
 export default function Step2Property({ formData, updateForm, onNext, onPrev }) {
   const { t, lang } = useApp();
+  const [isValidating, setIsValidating] = useState(false);
+  const [nameError, setNameError] = useState(null);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     updateForm(name, value);
+    if (name === 'property_name') setNameError(null);
+  };
+
+  const handleNext = async () => {
+    if (!formData.property_name || formData.property_name.trim() === '') {
+      setNameError(lang === 'en' ? 'Property Name is required' : 'El nombre de fantasía es requerido');
+      return;
+    }
+
+    setIsValidating(true);
+    setNameError(null);
+
+    try {
+      const res = await fetch('/api/properties/check-name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: formData.property_name })
+      });
+      
+      const data = await res.json();
+      if (data.existsInProperties || data.existsInAcm) {
+        setNameError(
+          lang === 'en' 
+            ? 'This name is already registered by another agent. Please choose a unique name.' 
+            : 'Este nombre ya está registrado por otro agente en el sistema. Por favor, elige un nombre único.'
+        );
+        setIsValidating(false);
+        return;
+      }
+    } catch (e) {
+      console.error('Validation error:', e);
+    }
+    
+    setIsValidating(false);
+    onNext();
   };
 
   return (
@@ -23,8 +62,9 @@ export default function Step2Property({ formData, updateForm, onNext, onPrev }) 
         <h3 className="text-brand-600 dark:text-brand-400 font-bold uppercase text-xs tracking-wider mb-4 border-b border-gray-100 dark:border-dark-border pb-2">{t('pre_s2_id_title')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="col-span-1 md:col-span-2">
-                <label className="form-label">{t('pre_s2_prop_name')}</label>
-                <input type="text" name="property_name" value={formData.property_name || ''} onChange={handleChange} className="form-input text-lg font-semibold" placeholder={t('pre_s2_prop_placeholder')} />
+                <label className="form-label">{lang === 'en' ? 'Internal Fantasy Name' : 'Nombre de Fantasía (Interno)'}</label>
+                <input type="text" name="property_name" value={formData.property_name || ''} onChange={handleChange} className={`form-input text-lg font-semibold ${nameError ? 'border-red-500 ring-red-500' : ''}`} placeholder={t('pre_s2_prop_placeholder')} />
+                {nameError && <p className="text-red-500 text-xs font-bold mt-1">{nameError}</p>}
                 <p className="text-[10px] text-brand-600 dark:text-brand-400 font-bold bg-brand-50/50 dark:bg-brand-950/20 px-3 py-2 rounded-lg border border-brand-100/30 dark:border-brand-900/20 flex items-center gap-1.5 mt-2">
                   <span>💡</span> {lang === 'en' 
                     ? "This property name will be used to create the single base Google Drive folder. Avoid duplicates!" 
@@ -86,8 +126,8 @@ export default function Step2Property({ formData, updateForm, onNext, onPrev }) 
 
       <div className="flex justify-between pt-4 border-t border-gray-100 dark:border-dark-border">
           <button onClick={onPrev} className="bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-dark-input text-gray-700 dark:text-gray-300 px-6 py-2.5 rounded-lg text-sm font-bold transition-all">{t('pre_s2_prev')}</button>
-          <button onClick={onNext} className="bg-brand-600 hover:bg-brand-500 text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg shadow-brand-500/25 transition-all transform hover:scale-105 flex items-center">
-              <span>{t('pre_s2_next')}</span> 
+          <button onClick={handleNext} disabled={isValidating} className="bg-brand-600 hover:bg-brand-500 text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg shadow-brand-500/25 transition-all transform hover:scale-105 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+              <span>{isValidating ? '...' : t('pre_s2_next')}</span> 
               <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
           </button>
       </div>

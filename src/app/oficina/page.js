@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase-server';
 import OficinaClient from './OficinaClient';
 import { getDevelopments } from '@/lib/dal/developments';
 import { getOfficeExpenses, getOfficeExpenseCategories, getPettyCashFunds, getPettyCashTransactions, getOfficeSalaryConfig, getOfficeEvents, getEventAttendance, getAgentCommissions, getOfficeReservations } from '@/lib/dal/office';
+import { getSyncLogs } from '@/lib/dal/properties';
 
 export default async function OficinaPage() {
   const supabase = await createClient();
@@ -70,6 +71,7 @@ export default async function OficinaPage() {
   // --- Dashboard Analytics Data ---
   const commissions = await getAgentCommissions(supabase);
   const reservations = await getOfficeReservations(supabase);
+  const syncLogs = await getSyncLogs();
 
 
   return (
@@ -92,6 +94,7 @@ export default async function OficinaPage() {
       initialAttendance={eventAttendance || []}
       initialCommissions={commissions || []}
       initialReservations={reservations || []}
+      initialSyncLogs={syncLogs || []}
     />
   );
 }

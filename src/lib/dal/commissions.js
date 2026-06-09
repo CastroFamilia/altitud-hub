@@ -1,18 +1,18 @@
-import { supabase } from '@/lib/supabase';
+import sql from '@/lib/db';
 
 export async function getActiveCommissionTiers() {
-  const { data, error } = await supabase
-    .from('commission_tiers')
-    .select('*')
-    .eq('active', true)
-    .order('sort_order');
-  if (error) throw error;
+  const data = await sql`
+    SELECT * 
+    FROM commission_tiers 
+    WHERE active = true 
+    ORDER BY sort_order ASC
+  `;
   return data;
 }
 
 export async function insertAgentCommission(commissionData) {
-  const { error } = await supabase
-    .from('agent_commissions')
-    .insert(commissionData);
-  if (error) throw error;
+  // postgres.js can insert objects directly
+  await sql`
+    INSERT INTO agent_commissions ${sql(commissionData)}
+  `;
 }

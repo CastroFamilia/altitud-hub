@@ -45,3 +45,4 @@ scratch.*
 test-*.mjs
 .json
 *.xlsx
+.env*.local

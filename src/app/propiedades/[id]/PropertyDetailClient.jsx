@@ -381,6 +381,17 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
                   ✅ {t('pd_approved_ready')}
                 </span>
               )}
+              {p.status === 'published' && p.slug && (
+                <a
+                  href={`https://www.remax-altitud.cr/${lang === 'es' ? 'es/propiedad' : 'en/property'}/${p.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-sm font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex items-center gap-1.5 border border-blue-200 dark:border-blue-800"
+                  title="Ver en la Web Pública"
+                >
+                  🌐 {t('pd_view_website') || 'Ver en Web'}
+                </a>
+              )}
               {(p.status === 'published' || p.status === 'approved') && p.status !== 'sold' && (
                 <button
                   onClick={() => setShowSoldModal(true)}

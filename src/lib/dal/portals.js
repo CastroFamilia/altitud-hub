@@ -1,16 +1,10 @@
-import { createAdminSupabase } from '@/lib/supabase-server';
-import { supabase as anonClient } from '@/lib/supabase';
+import sql from '@/lib/db';
 
 /* ═══════════════════════════════════════════════════════════════
    PORTALS DAL — Data Access Layer for Portal Registry
    & Property Syndication management.
-   Uses admin (service-role) client to bypass RLS on server-side
-   API routes where auth.uid() is unavailable.
+   Uses raw SQL via postgres.js (bypassing RLS inherently as it's a direct connection)
    ═══════════════════════════════════════════════════════════════ */
-
-function getClient() {
-  return createAdminSupabase() || anonClient;
-}
 
 // ── Portal Registry ──
 
@@ -19,18 +13,21 @@ function getClient() {
  * Optionally filter by office scope.
  */
 export async function getPortalRegistry(officeScope = null) {
-  let query = getClient()
-    .from('portal_registry')
-    .select('*')
-    .eq('is_active', true)
-    .order('display_order', { ascending: true });
-
+  let data;
   if (officeScope) {
-    query = query.or(`office_scope.eq.all,office_scope.eq.${officeScope}`);
+    data = await sql`
+      SELECT * FROM portal_registry
+      WHERE is_active = true
+        AND (office_scope = 'all' OR office_scope = ${officeScope})
+      ORDER BY display_order ASC
+    `;
+  } else {
+    data = await sql`
+      SELECT * FROM portal_registry
+      WHERE is_active = true
+      ORDER BY display_order ASC
+    `;
   }
-
-  const { data, error } = await query;
-  if (error) throw error;
   return data || [];
 }
 
@@ -38,11 +35,10 @@ export async function getPortalRegistry(officeScope = null) {
  * Get all portals (including inactive) for admin management.
  */
 export async function getAllPortals() {
-  const { data, error } = await getClient()
-    .from('portal_registry')
-    .select('*')
-    .order('display_order', { ascending: true });
-  if (error) throw error;
+  const data = await sql`
+    SELECT * FROM portal_registry
+    ORDER BY display_order ASC
+  `;
   return data || [];
 }
 
@@ -50,12 +46,22 @@ export async function getAllPortals() {
  * Create or update a portal in the registry.
  */
 export async function upsertPortal(portalData) {
-  const { data, error } = await getClient()
-    .from('portal_registry')
-    .upsert(portalData, { onConflict: 'slug' })
-    .select()
-    .single();
-  if (error) throw error;
+  const keys = Object.keys(portalData).filter(k => k !== 'slug');
+  let data;
+  if (keys.length > 0) {
+    [data] = await sql`
+      INSERT INTO portal_registry ${sql(portalData)}
+      ON CONFLICT (slug)
+      DO UPDATE SET ${sql(portalData, keys)}
+      RETURNING *
+    `;
+  } else {
+    [data] = await sql`
+      INSERT INTO portal_registry ${sql(portalData)}
+      ON CONFLICT (slug) DO NOTHING
+      RETURNING *
+    `;
+  }
   return data;
 }
 
@@ -63,39 +69,33 @@ export async function upsertPortal(portalData) {
  * Toggle a portal's active status.
  */
 export async function togglePortalActive(portalId, isActive) {
-  const { error } = await getClient()
-    .from('portal_registry')
-    .update({ is_active: isActive })
-    .eq('id', portalId);
-  if (error) throw error;
+  await sql`
+    UPDATE portal_registry
+    SET is_active = ${isActive}
+    WHERE id = ${portalId}
+  `;
 }
 
 /**
  * Delete a portal from the registry.
  */
 export async function deletePortal(portalId) {
-  const { error } = await getClient()
-    .from('portal_registry')
-    .delete()
-    .eq('id', portalId);
-  if (error) throw error;
+  await sql`
+    DELETE FROM portal_registry
+    WHERE id = ${portalId}
+  `;
 }
 
 /**
  * Update display order for multiple portals (batch reorder).
  */
 export async function reorderPortals(orderedSlugs) {
-  const updates = orderedSlugs.map((slug, i) => ({
-    slug,
-    display_order: i + 1,
-  }));
-
-  for (const update of updates) {
-    const { error } = await getClient()
-      .from('portal_registry')
-      .update({ display_order: update.display_order })
-      .eq('slug', update.slug);
-    if (error) throw error;
+  for (let i = 0; i < orderedSlugs.length; i++) {
+    await sql`
+      UPDATE portal_registry
+      SET display_order = ${i + 1}
+      WHERE slug = ${orderedSlugs[i]}
+    `;
   }
 }
 
@@ -110,12 +110,10 @@ export async function getPropertySyndicationsWithPortals(propertyId, officeScope
   const portals = await getPortalRegistry(officeScope);
 
   // Get syndication records for this property
-  const { data: syndications, error } = await getClient()
-    .from('property_syndication')
-    .select('*')
-    .eq('property_id', propertyId);
-
-  if (error) throw error;
+  const syndications = await sql`
+    SELECT * FROM property_syndication
+    WHERE property_id = ${propertyId}
+  `;
 
   // Merge: for each portal, attach its syndication record (if exists)
   return portals.map(portal => {
@@ -133,12 +131,22 @@ export async function getPropertySyndicationsWithPortals(propertyId, officeScope
  * Create or update a syndication record (broker registers a portal link).
  */
 export async function upsertPropertySyndication(data) {
-  const { data: result, error } = await getClient()
-    .from('property_syndication')
-    .upsert(data, { onConflict: 'property_id,portal_name' })
-    .select()
-    .single();
-  if (error) throw error;
+  const keys = Object.keys(data).filter(k => k !== 'property_id' && k !== 'portal_name');
+  let result;
+  if (keys.length > 0) {
+    [result] = await sql`
+      INSERT INTO property_syndication ${sql(data)}
+      ON CONFLICT (property_id, portal_name)
+      DO UPDATE SET ${sql(data, keys)}
+      RETURNING *
+    `;
+  } else {
+    [result] = await sql`
+      INSERT INTO property_syndication ${sql(data)}
+      ON CONFLICT (property_id, portal_name) DO NOTHING
+      RETURNING *
+    `;
+  }
   return result;
 }
 
@@ -146,35 +154,34 @@ export async function upsertPropertySyndication(data) {
  * Remove a syndication record (set status to 'removed').
  */
 export async function removePropertySyndication(propertyId, portalName) {
-  const { error } = await getClient()
-    .from('property_syndication')
-    .update({ status: 'removed' })
-    .eq('property_id', propertyId)
-    .eq('portal_name', portalName);
-  if (error) throw error;
+  await sql`
+    UPDATE property_syndication
+    SET status = 'removed'
+    WHERE property_id = ${propertyId}
+      AND portal_name = ${portalName}
+  `;
 }
 
 /**
  * Delete a syndication record entirely.
  */
 export async function deletePropertySyndication(id) {
-  const { error } = await getClient()
-    .from('property_syndication')
-    .delete()
-    .eq('id', id);
-  if (error) throw error;
+  await sql`
+    DELETE FROM property_syndication
+    WHERE id = ${id}
+  `;
 }
 
 /**
  * Get all properties with RECONNECT syndication for stats sync.
  */
 export async function getReconnectSyncedProperties() {
-  const { data, error } = await getClient()
-    .from('property_syndication')
-    .select('id, property_id, portal_listing_id, portal_listing_url, listing_views, interested_count, days_listed')
-    .eq('portal_name', 'reconnect')
-    .eq('status', 'synced');
-  if (error) throw error;
+  const data = await sql`
+    SELECT id, property_id, portal_listing_id, portal_listing_url, listing_views, interested_count, days_listed
+    FROM property_syndication
+    WHERE portal_name = 'reconnect'
+      AND status = 'synced'
+  `;
   return data || [];
 }
 
@@ -182,28 +189,26 @@ export async function getReconnectSyncedProperties() {
  * Update stats for a syndication record (used by cron).
  */
 export async function updateSyndicationStats(syndicationId, stats) {
-  const { error } = await getClient()
-    .from('property_syndication')
-    .update({
-      listing_views: stats.listing_views,
-      interested_count: stats.interested_count,
-      days_listed: stats.days_listed,
-      stats_updated_at: new Date().toISOString(),
-    })
-    .eq('id', syndicationId);
-  if (error) throw error;
+  await sql`
+    UPDATE property_syndication
+    SET 
+      listing_views = ${stats.listing_views},
+      interested_count = ${stats.interested_count},
+      days_listed = ${stats.days_listed},
+      stats_updated_at = NOW()
+    WHERE id = ${syndicationId}
+  `;
 }
 
 /**
  * Get inquiry counts grouped by portal_name for a property.
  */
 export async function getInquiryCountsByPortal(propertyId) {
-  const { data, error } = await getClient()
-    .from('property_inquiries')
-    .select('portal_name')
-    .eq('property_id', propertyId);
-
-  if (error) throw error;
+  const data = await sql`
+    SELECT portal_name
+    FROM property_inquiries
+    WHERE property_id = ${propertyId}
+  `;
 
   const counts = {};
   (data || []).forEach(inq => {

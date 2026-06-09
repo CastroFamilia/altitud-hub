@@ -30,7 +30,7 @@ import Image from 'next/image';
    OFFICE PANEL — Broker Admin Dashboard
    ═══════════════════════════════════════ */
 
-export default function OficinaClient({ initialProfiles = [], initialTeams = [], initialMilestones = [], initialInquiries = [], initialLeadSources = [], initialCommunications = [], initialFollowUps = [], initialProperties = [], initialDevelopments = [], initialExpenses = [], initialCategories = [], initialFunds = [], initialTxs = [], initialSalaries = [], initialEvents = [], initialAttendance = [], initialCommissions = [], initialReservations = [] }) {
+export default function OficinaClient({ initialProfiles = [], initialTeams = [], initialMilestones = [], initialInquiries = [], initialLeadSources = [], initialCommunications = [], initialFollowUps = [], initialProperties = [], initialDevelopments = [], initialExpenses = [], initialCategories = [], initialFunds = [], initialTxs = [], initialSalaries = [], initialEvents = [], initialAttendance = [], initialCommissions = [], initialReservations = [], initialSyncLogs = [] }) {
   const { profile, isBroker, supabase } = useAuth();
   const { t, lang } = useApp();
   const router = useRouter();
@@ -664,7 +664,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
             </div>
           ) : activeTab === 'reconnect-sync' ? (
             <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6">
-              <ReConnectSyncTab properties={initialProperties} profiles={profiles} />
+              <ReConnectSyncTab properties={initialProperties} profiles={profiles} syncLogs={initialSyncLogs} />
             </div>
           ) : activeTab === 'newsletter' ? (
             <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-6 lg:p-8">

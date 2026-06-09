@@ -1,150 +1,151 @@
-import { supabase as defaultClient } from '@/lib/supabase';
+import sql from '@/lib/db';
 
-function getClient(client) {
-  return client || defaultClient;
-}
-
-export async function getDevelopments(client = null) {
-  const supabaseClient = getClient(client);
-  const { data, error } = await supabaseClient
-    .from('developments')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
+export async function getDevelopments() {
+  const data = await sql`
+    SELECT *
+    FROM developments
+    ORDER BY created_at DESC
+  `;
   return data;
 }
 
-export async function getDevelopmentsList(client = null) {
-  const supabaseClient = getClient(client);
-  const { data, error } = await supabaseClient
-    .from('developments')
-    .select('id, name, slug, status')
-    .order('name');
-
-  if (error) throw error;
+export async function getDevelopmentsList() {
+  const data = await sql`
+    SELECT id, name, slug, status
+    FROM developments
+    ORDER BY name ASC
+  `;
   return data;
 }
 
-export async function getDevelopmentsByAgentId(agentId, client = null) {
-  const supabaseClient = getClient(client);
-  const { data, error } = await supabaseClient
-    .from('developments')
-    .select('*')
-    .eq('agent_id', agentId)
-    .order('updated_at', { ascending: false });
-
-  if (error) throw error;
+export async function getDevelopmentsByAgentId(agentId) {
+  const data = await sql`
+    SELECT *
+    FROM developments
+    WHERE agent_id = ${agentId}
+    ORDER BY updated_at DESC
+  `;
   return data;
 }
 
-export async function getDevelopmentById(id, client = null) {
-  const supabaseClient = getClient(client);
-  const { data, error } = await supabaseClient
-    .from('developments')
-    .select('*')
-    .eq('id', id)
-    .single();
+export async function getDevelopmentById(id) {
+  const data = await sql`
+    SELECT *
+    FROM developments
+    WHERE id = ${id}
+  `;
+  return data[0] || null;
+}
 
-  if (error) throw error;
+export async function getDevelopmentMinimal(id) {
+  const data = await sql`
+    SELECT id, name, slug, status, agent_id
+    FROM developments
+    WHERE id = ${id}
+  `;
+  return data[0] || null;
+}
+
+export async function getActiveDevelopmentBySlug(slug) {
+  const data = await sql`
+    SELECT name, tagline_es, tagline_en, og_image_url, developer_name, status
+    FROM developments
+    WHERE slug = ${slug} AND status = 'active'
+  `;
+  return data[0] || null;
+}
+
+export async function getActiveDevelopmentWithProperties(slug) {
+  const data = await sql`
+    SELECT 
+      d.*,
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'id', p.id,
+            'title_es', p.title_es,
+            'title_en', p.title_en,
+            'property_type', p.property_type,
+            'size_m2', p.size_m2,
+            'price', p.price,
+            'status', p.status,
+            'main_image_url', p.main_image_url
+          )
+        ) FILTER (WHERE p.id IS NOT NULL), '[]'
+      ) as properties
+    FROM developments d
+    LEFT JOIN properties p ON p.development_id = d.id
+    WHERE d.slug = ${slug} AND d.status = 'active'
+    GROUP BY d.id
+  `;
+  return data[0] || null;
+}
+
+export async function getActiveDevelopmentsWithProperties() {
+  const data = await sql`
+    SELECT 
+      d.*,
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'id', p.id,
+            'title_es', p.title_es,
+            'title_en', p.title_en,
+            'property_type', p.property_type,
+            'size_m2', p.size_m2,
+            'price', p.price,
+            'status', p.status,
+            'main_image_url', p.main_image_url
+          )
+        ) FILTER (WHERE p.id IS NOT NULL), '[]'
+      ) as properties
+    FROM developments d
+    LEFT JOIN properties p ON p.development_id = d.id
+    WHERE d.status = 'active'
+    GROUP BY d.id
+  `;
   return data;
 }
 
-export async function getDevelopmentMinimal(id, client = null) {
-  const supabaseClient = getClient(client);
-  const { data, error } = await supabaseClient
-    .from('developments')
-    .select('id, name, slug, status, agent_id')
-    .eq('id', id)
-    .single();
+export async function insertDevelopment(developmentData) {
+  const data = await sql`
+    INSERT INTO developments ${sql(developmentData)}
+    RETURNING *
+  `;
+  const development = data[0];
 
-  if (error) throw error;
-  return data;
-}
-
-export async function getActiveDevelopmentBySlug(slug, client = null) {
-  const supabaseClient = getClient(client);
-  const { data, error } = await supabaseClient
-    .from('developments')
-    .select('name, tagline_es, tagline_en, og_image_url, developer_name, status')
-    .eq('slug', slug)
-    .eq('status', 'active')
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function getActiveDevelopmentWithProperties(slug, client = null) {
-  const supabaseClient = getClient(client);
-  const { data, error } = await supabaseClient
-    .from('developments')
-    .select(`
-      *,
-      properties:properties(id, title_es, title_en, property_type, size_m2, price, status, main_image_url)
-    `)
-    .eq('slug', slug)
-    .eq('status', 'active')
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function getActiveDevelopmentsWithProperties(client = null) {
-  const supabaseClient = getClient(client);
-  const { data, error } = await supabaseClient
-    .from('developments')
-    .select(`
-      *,
-      properties:properties(id, title_es, title_en, property_type, size_m2, price, status, main_image_url)
-    `)
-    .eq('status', 'active');
-
-  if (error) throw error;
-  return data;
-}
-
-export async function insertDevelopment(developmentData, client = null) {
-  const supabaseClient = getClient(client);
-  const { data, error } = await supabaseClient
-    .from('developments')
-    .insert([developmentData])
-    .select()
-    .single();
-
-  if (error) throw error;
-
-  if (data && data.status === 'pending_approval') {
+  if (development && development.status === 'pending_approval') {
     try {
-      const title = data.name || 'Desarrollo sin título';
-      const officeId = data.office_code?.toLowerCase()?.includes('cero') ? 'cero' : 'altitud';
+      const title = development.name || 'Desarrollo sin título';
+      const officeId = development.office_code?.toLowerCase()?.includes('cero') ? 'cero' : 'altitud';
       
-      const { data: brokers } = await supabaseClient
-        .from('profiles')
-        .select('auth_user_id')
-        .eq('role', 'broker')
-        .eq('office', officeId);
+      const brokers = await sql`
+        SELECT auth_user_id
+        FROM profiles
+        WHERE role = 'broker' AND office = ${officeId}
+      `;
       
       if (brokers && brokers.length > 0) {
         let agentName = 'Un agente';
-        if (data.agent_id) {
-          const { data: agentProfile } = await supabaseClient
-            .from('profiles')
-            .select('full_name')
-            .eq('auth_user_id', data.agent_id)
-            .single();
-          if (agentProfile?.full_name) agentName = agentProfile.full_name;
+        if (development.agent_id) {
+          const agentProfile = await sql`
+            SELECT full_name
+            FROM profiles
+            WHERE auth_user_id = ${development.agent_id}
+          `;
+          if (agentProfile[0]?.full_name) agentName = agentProfile[0].full_name;
         }
 
         for (const broker of brokers) {
           if (broker.auth_user_id) {
-            await supabaseClient.from('notifications').insert({
-              user_id: broker.auth_user_id,
-              title: '🏢 Desarrollo por aprobar',
-              message: `${agentName} ha enviado el desarrollo "${title}" para aprobación.`,
-              link: '/oficina?tab=propiedades',
-            });
+            await sql`
+              INSERT INTO notifications ${sql({
+                user_id: broker.auth_user_id,
+                title: '🏢 Desarrollo por aprobar',
+                message: `${agentName} ha enviado el desarrollo "${title}" para aprobación.`,
+                link: '/oficina?tab=propiedades'
+              })}
+            `;
           }
         }
       }
@@ -153,51 +154,50 @@ export async function insertDevelopment(developmentData, client = null) {
     }
   }
 
-  return data;
+  return development;
 }
 
-export async function updateDevelopment(id, updates, client = null) {
-  const supabaseClient = getClient(client);
-  const { data, error } = await supabaseClient
-    .from('developments')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single();
+export async function updateDevelopment(id, updates) {
+  const data = await sql`
+    UPDATE developments
+    SET ${sql(updates)}
+    WHERE id = ${id}
+    RETURNING *
+  `;
+  const development = data[0];
 
-  if (error) throw error;
-
-  // Notify brokers if status is pending_approval
-  if (updates && updates.status === 'pending_approval' && data) {
+  if (updates && updates.status === 'pending_approval' && development) {
     try {
-      const title = data.name || 'Desarrollo sin título';
-      const officeId = data.office_code?.toLowerCase()?.includes('cero') ? 'cero' : 'altitud';
+      const title = development.name || 'Desarrollo sin título';
+      const officeId = development.office_code?.toLowerCase()?.includes('cero') ? 'cero' : 'altitud';
       
-      const { data: brokers } = await supabaseClient
-        .from('profiles')
-        .select('auth_user_id')
-        .eq('role', 'broker')
-        .eq('office', officeId);
+      const brokers = await sql`
+        SELECT auth_user_id
+        FROM profiles
+        WHERE role = 'broker' AND office = ${officeId}
+      `;
       
       if (brokers && brokers.length > 0) {
         let agentName = 'Un agente';
-        if (data.agent_id) {
-          const { data: agentProfile } = await supabaseClient
-            .from('profiles')
-            .select('full_name')
-            .eq('auth_user_id', data.agent_id)
-            .single();
-          if (agentProfile?.full_name) agentName = agentProfile.full_name;
+        if (development.agent_id) {
+          const agentProfile = await sql`
+            SELECT full_name
+            FROM profiles
+            WHERE auth_user_id = ${development.agent_id}
+          `;
+          if (agentProfile[0]?.full_name) agentName = agentProfile[0].full_name;
         }
 
         for (const broker of brokers) {
           if (broker.auth_user_id) {
-            await supabaseClient.from('notifications').insert({
-              user_id: broker.auth_user_id,
-              title: '🏢 Desarrollo por aprobar',
-              message: `${agentName} ha enviado el desarrollo "${title}" para aprobación.`,
-              link: '/oficina?tab=propiedades',
-            });
+            await sql`
+              INSERT INTO notifications ${sql({
+                user_id: broker.auth_user_id,
+                title: '🏢 Desarrollo por aprobar',
+                message: `${agentName} ha enviado el desarrollo "${title}" para aprobación.`,
+                link: '/oficina?tab=propiedades'
+              })}
+            `;
           }
         }
       }
@@ -206,16 +206,13 @@ export async function updateDevelopment(id, updates, client = null) {
     }
   }
 
-  return data;
+  return development;
 }
 
-export async function deleteDevelopment(id, client = null) {
-  const supabaseClient = getClient(client);
-  const { error } = await supabaseClient
-    .from('developments')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
+export async function deleteDevelopment(id) {
+  await sql`
+    DELETE FROM developments
+    WHERE id = ${id}
+  `;
   return true;
 }

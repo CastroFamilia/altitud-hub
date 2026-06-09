@@ -3,7 +3,7 @@ import NuevaPropiedadClient from './NuevaPropiedadClient';
 
 const INITIAL_FORM = {
   name: '', listing_title_es: '', listing_title_en: '',
-  property_type_id: 3, listing_contract_type: 1,
+  property_type_id: 3, listing_contract_type: 1, listing_probable_use_id: 1,
   owner_name: '', owner_phones: '', owner_email: '', listing_agreement: false,
   unparsed_address: '', latitude: '', longitude: '',
   bedrooms_total: 0, bathrooms_full: 0, bathrooms_half: 0, stories: 1,

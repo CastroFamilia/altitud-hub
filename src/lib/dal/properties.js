@@ -1,78 +1,118 @@
-import { supabase } from '@/lib/supabase';
+import sql from '@/lib/db';
 
 // --- Properties ---
 
+export async function getSyncLogs() {
+  try {
+    const data = await sql`
+      SELECT *
+      FROM sync_logs
+      ORDER BY created_at DESC
+      LIMIT 100
+    `;
+    return data;
+  } catch (err) {
+    console.error('Error fetching sync logs:', err.message);
+    return [];
+  }
+}
+
 export async function getPropertyDetails(id) {
-  const { data, error } = await supabase
-    .from('properties')
-    .select('*, property_images(id, image_url, thumbnail_url, priority, drive_file_id)')
-    .eq('id', id)
-    .single();
-  if (error) throw error;
-  return data;
+  const data = await sql`
+    SELECT 
+      p.*,
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'id', pi.id,
+            'image_url', pi.image_url,
+            'thumbnail_url', pi.thumbnail_url,
+            'priority', pi.priority,
+            'drive_file_id', pi.drive_file_id
+          )
+        ) FILTER (WHERE pi.id IS NOT NULL),
+        '[]'
+      ) as property_images
+    FROM properties p
+    LEFT JOIN property_images pi ON p.id = pi.property_id
+    WHERE p.id = ${id}
+    GROUP BY p.id
+  `;
+  if (!data || data.length === 0) return null;
+  return data[0];
 }
 
 export async function getPropertiesWithDriveFolders() {
-  const { data, error } = await supabase
-    .from('properties')
-    .select(`
-      id, name, listing_title_es, listing_title_en,
-      unparsed_address, owner_name, agent_id,
-      drive_photos_folder_id, drive_photos_folder_url,
-      photos_ready, status, created_at,
-      property_images(id)
-    `)
-    .not('drive_photos_folder_id', 'is', null)
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
+  const data = await sql`
+    SELECT 
+      p.id, p.name, p.listing_title_es, p.listing_title_en,
+      p.unparsed_address, p.owner_name, p.agent_id,
+      p.drive_photos_folder_id, p.drive_photos_folder_url,
+      p.photos_ready, p.status, p.created_at,
+      COALESCE(
+        json_agg(
+          json_build_object('id', pi.id)
+        ) FILTER (WHERE pi.id IS NOT NULL),
+        '[]'
+      ) as property_images
+    FROM properties p
+    LEFT JOIN property_images pi ON p.id = pi.property_id
+    WHERE p.drive_photos_folder_id IS NOT NULL
+    GROUP BY p.id
+    ORDER BY p.created_at DESC
+  `;
   return data;
 }
 
-
-export async function updateProperty(id, updates, client = null) {
-  const supabaseClient = client || supabase;
-  const { error } = await supabaseClient.from('properties').update(updates).eq('id', id);
-  if (error) throw error;
+export async function updateProperty(id, updates) {
+  await sql`
+    UPDATE properties
+    SET ${sql(updates)}
+    WHERE id = ${id}
+  `;
 
   // Notify brokers if status is pending_approval
   if (updates && updates.status === 'pending_approval') {
     try {
-      const { data: prop } = await supabaseClient
-        .from('properties')
-        .select('name, listing_title_es, listing_title_en, agent_id, office_code')
-        .eq('id', id)
-        .single();
+      const props = await sql`
+        SELECT name, listing_title_es, listing_title_en, agent_id, office_code
+        FROM properties
+        WHERE id = ${id}
+      `;
+      const prop = props[0];
       
       if (prop) {
         const title = prop.listing_title_es || prop.listing_title_en || prop.name || 'Propiedad sin título';
         const officeId = prop.office_code?.toLowerCase()?.includes('cero') || prop.office_code === 'R0700151' ? 'cero' : 'altitud';
         
-        const { data: brokers } = await supabaseClient
-          .from('profiles')
-          .select('auth_user_id')
-          .eq('role', 'broker')
-          .eq('office', officeId);
+        const brokers = await sql`
+          SELECT auth_user_id
+          FROM profiles
+          WHERE role = 'broker' AND office = ${officeId}
+        `;
         
         if (brokers && brokers.length > 0) {
           let agentName = 'Un agente';
           if (prop.agent_id) {
-            const { data: agentProfile } = await supabaseClient
-              .from('profiles')
-              .select('full_name')
-              .eq('auth_user_id', prop.agent_id)
-              .single();
-            if (agentProfile?.full_name) agentName = agentProfile.full_name;
+            const agentProfile = await sql`
+              SELECT full_name
+              FROM profiles
+              WHERE auth_user_id = ${prop.agent_id}
+            `;
+            if (agentProfile[0]?.full_name) agentName = agentProfile[0].full_name;
           }
 
           for (const broker of brokers) {
             if (broker.auth_user_id) {
-              await supabaseClient.from('notifications').insert({
-                user_id: broker.auth_user_id,
-                title: '🏠 Propiedad por aprobar',
-                message: `${agentName} ha enviado la propiedad "${title}" para aprobación.`,
-                link: '/oficina?tab=propiedades',
-              });
+              await sql`
+                INSERT INTO notifications (user_id, title, message, link)
+                VALUES (
+                  ${broker.auth_user_id},
+                  '🏠 Propiedad por aprobar',
+                  ${agentName + ' ha enviado la propiedad "' + title + '" para aprobación.'},
+                  '/oficina?tab=propiedades'
+                )
+              `;
             }
           }
         }
@@ -83,172 +123,194 @@ export async function updateProperty(id, updates, client = null) {
   }
 }
 
-export async function getPropertiesForApproval(client = null) {
-  const supabaseClient = client || supabase;
-  const { data, error } = await supabaseClient
-    .from('properties')
-    .select('*, property_images(image_url, priority)')
-    .order('submitted_at', { ascending: false });
-  if (error) throw error;
+export async function getPropertiesForApproval() {
+  const data = await sql`
+    SELECT 
+      p.*,
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'image_url', pi.image_url,
+            'priority', pi.priority
+          )
+        ) FILTER (WHERE pi.id IS NOT NULL),
+        '[]'
+      ) as property_images
+    FROM properties p
+    LEFT JOIN property_images pi ON p.id = pi.property_id
+    GROUP BY p.id
+    ORDER BY p.submitted_at DESC NULLS LAST
+  `;
   return data;
 }
 
-export async function getPropertiesByDevelopmentId(devId, client = null) {
-  const supabaseClient = client || supabase;
-  const { data, error } = await supabaseClient
-    .from('properties')
-    .select('id,title_es,title_en,property_type,size_m2,price,status,main_image_url')
-    .eq('development_id', devId);
-  if (error) throw error;
+export async function getPropertiesByDevelopmentId(devId) {
+  const data = await sql`
+    SELECT id, title_es, title_en, property_type, size_m2, price, status, main_image_url
+    FROM properties
+    WHERE development_id = ${devId}
+  `;
   return data;
 }
 
-export async function getUnlinkedProperties(client = null) {
-  const supabaseClient = client || supabase;
-  const { data, error } = await supabaseClient
-    .from('properties')
-    .select('id,title_es,title_en,property_type,status')
-    .is('development_id', null);
-  if (error) throw error;
+export async function getUnlinkedProperties() {
+  const data = await sql`
+    SELECT id, title_es, title_en, property_type, status
+    FROM properties
+    WHERE development_id IS NULL
+  `;
   return data;
 }
 
 // --- Images ---
 
 export async function deletePropertyImage(imageId) {
-  const { error } = await supabase.from('property_images').delete().eq('id', imageId);
-  if (error) throw error;
+  await sql`
+    DELETE FROM property_images
+    WHERE id = ${imageId}
+  `;
 }
-export async function getPropertiesByContactId(contactId, client = null) {
-  const supabaseClient = client || supabase;
-  const { data, error } = await supabaseClient
-    .from('properties')
-    .select('*')
-    .eq('contact_id', contactId)
-    .order('created_at', { ascending: false });
 
-  if (error) throw error;
+export async function getPropertiesByContactId(contactId) {
+  const data = await sql`
+    SELECT *
+    FROM properties
+    WHERE contact_id = ${contactId}
+    ORDER BY created_at DESC
+  `;
   return data;
 }
 
-export async function getPropertiesByIds(ids, client = null) {
+export async function getPropertiesByIds(ids) {
   if (!ids || ids.length === 0) return [];
-  const supabaseClient = client || supabase;
-  const { data, error } = await supabaseClient
-    .from('properties')
-    .select('*')
-    .in('id', ids);
-
-  if (error) throw error;
+  const data = await sql`
+    SELECT *
+    FROM properties
+    WHERE id IN ${sql(ids)}
+  `;
   return data;
 }
 
 // --- Syndications & Inquiries ---
 
 export async function getPropertySyndications(propertyId) {
-  const { data, error } = await supabase.from('property_syndication').select('*').eq('property_id', propertyId);
-  if (error) throw error;
+  const data = await sql`
+    SELECT *
+    FROM property_syndication
+    WHERE property_id = ${propertyId}
+  `;
   return data;
 }
 
 export async function upsertPropertySyndication({ property_id, portal_name, portal_listing_url, status }) {
-  const { data, error } = await supabase
-    .from('property_syndication')
-    .upsert({
-      property_id,
-      portal_name,
-      portal_listing_url,
-      status: status || 'synced',
-      published_at: status === 'synced' ? new Date().toISOString() : undefined,
-    }, { onConflict: 'property_id,portal_name' })
-    .select()
-    .single();
-  if (error) throw error;
+  const finalStatus = status || 'synced';
+  const publishedAt = finalStatus === 'synced' ? new Date().toISOString() : null;
+  const data = await sql`
+    INSERT INTO property_syndication (property_id, portal_name, portal_listing_url, status, published_at)
+    VALUES (${property_id}, ${portal_name}, ${portal_listing_url}, ${finalStatus}, ${publishedAt})
+    ON CONFLICT (property_id, portal_name) 
+    DO UPDATE SET 
+      portal_listing_url = EXCLUDED.portal_listing_url,
+      status = EXCLUDED.status,
+      published_at = EXCLUDED.published_at
+    RETURNING *
+  `;
+  return data[0];
+}
+
+export async function getPropertyInquiries(propertyId) {
+  const data = await sql`
+    SELECT id, portal_name, status
+    FROM property_inquiries
+    WHERE property_id = ${propertyId}
+  `;
   return data;
 }
 
-export async function getPropertyInquiries(propertyId, client = null) {
-  const supabaseClient = client || supabase;
-  const { data, error } = await supabaseClient.from('property_inquiries').select('id, portal_name, status').eq('property_id', propertyId);
-  if (error) throw error;
+export async function getInquiriesByContactId(contactId) {
+  const data = await sql`
+    SELECT *
+    FROM property_inquiries
+    WHERE contact_id = ${contactId}
+    ORDER BY inquiry_date DESC
+  `;
   return data;
 }
 
-export async function getInquiriesByContactId(contactId, client = null) {
-  const supabaseClient = client || supabase;
-  const { data, error } = await supabaseClient
-    .from('property_inquiries')
-    .select('*')
-    .eq('contact_id', contactId)
-    .order('inquiry_date', { ascending: false });
-
-  if (error) throw error;
-  return data;
-}
-
-export async function insertPropertyInquiry(inquiryData, client = null) {
-  const supabaseClient = client || supabase;
-  const { data, error } = await supabaseClient
-    .from('property_inquiries')
-    .insert([inquiryData])
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+export async function insertPropertyInquiry(inquiryData) {
+  const data = await sql`
+    INSERT INTO property_inquiries ${sql(inquiryData)}
+    RETURNING *
+  `;
+  return data[0];
 }
 
 // --- Milestones ---
 
 export async function getListingMilestone(propertyId) {
-  const { data, error } = await supabase
-    .from('listing_milestones')
-    .select('*')
-    .eq('property_id', propertyId)
-    .maybeSingle();
-  if (error && error.code !== 'PGRST116') throw error; // Ignore 0 rows error
-  return data;
+  const data = await sql`
+    SELECT *
+    FROM listing_milestones
+    WHERE property_id = ${propertyId}
+  `;
+  return data[0] || null;
 }
 
 export async function upsertListingMilestone(milestoneUpdate) {
-  const { error } = await supabase.from('listing_milestones').upsert(milestoneUpdate, { onConflict: 'property_id' });
-  if (error) throw error;
+  const keysToUpdate = Object.keys(milestoneUpdate).filter(k => k !== 'property_id');
+  if (keysToUpdate.length > 0) {
+    await sql`
+      INSERT INTO listing_milestones ${sql(milestoneUpdate)}
+      ON CONFLICT (property_id) DO UPDATE SET ${sql(milestoneUpdate, keysToUpdate)}
+    `;
+  } else {
+    await sql`
+      INSERT INTO listing_milestones ${sql(milestoneUpdate)}
+      ON CONFLICT (property_id) DO NOTHING
+    `;
+  }
 }
 
 export async function insertProperty(payload) {
-  const { data, error } = await supabase.from('properties').insert([payload]).select().single();
-  if (error) throw error;
+  const data = await sql`
+    INSERT INTO properties ${sql(payload)}
+    RETURNING *
+  `;
+  const property = data[0];
 
-  if (data && data.status === 'pending_approval') {
+  if (property && property.status === 'pending_approval') {
     try {
-      const title = data.listing_title_es || data.listing_title_en || data.name || 'Propiedad sin título';
-      const officeId = data.office_code?.toLowerCase()?.includes('cero') || data.office_code === 'R0700151' ? 'cero' : 'altitud';
+      const title = property.listing_title_es || property.listing_title_en || property.name || 'Propiedad sin título';
+      const officeId = property.office_code?.toLowerCase()?.includes('cero') || property.office_code === 'R0700151' ? 'cero' : 'altitud';
       
-      const { data: brokers } = await supabase
-        .from('profiles')
-        .select('auth_user_id')
-        .eq('role', 'broker')
-        .eq('office', officeId);
+      const brokers = await sql`
+        SELECT auth_user_id
+        FROM profiles
+        WHERE role = 'broker' AND office = ${officeId}
+      `;
       
       if (brokers && brokers.length > 0) {
         let agentName = 'Un agente';
-        if (data.agent_id) {
-          const { data: agentProfile } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('auth_user_id', data.agent_id)
-            .single();
-          if (agentProfile?.full_name) agentName = agentProfile.full_name;
+        if (property.agent_id) {
+          const agentProfile = await sql`
+            SELECT full_name
+            FROM profiles
+            WHERE auth_user_id = ${property.agent_id}
+          `;
+          if (agentProfile[0]?.full_name) agentName = agentProfile[0].full_name;
         }
 
         for (const broker of brokers) {
           if (broker.auth_user_id) {
-            await supabase.from('notifications').insert({
-              user_id: broker.auth_user_id,
-              title: '🏠 Propiedad por aprobar',
-              message: `${agentName} ha enviado la propiedad "${title}" para aprobación.`,
-              link: '/oficina?tab=propiedades',
-            });
+            await sql`
+              INSERT INTO notifications (user_id, title, message, link)
+              VALUES (
+                ${broker.auth_user_id},
+                '🏠 Propiedad por aprobar',
+                ${agentName + ' ha enviado la propiedad "' + title + '" para aprobación.'},
+                '/oficina?tab=propiedades'
+              )
+            `;
           }
         }
       }
@@ -257,5 +319,5 @@ export async function insertProperty(payload) {
     }
   }
 
-  return data;
+  return property;
 }

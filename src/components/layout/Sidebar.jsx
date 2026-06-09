@@ -16,6 +16,9 @@ function SidebarContent() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
+  const isPublicRoute = pathname?.startsWith('/d/') || pathname?.startsWith('/reportes/');
+  if (isPublicRoute) return null;
+
   const handleStopImpersonate = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('impersonated_id');
@@ -345,6 +348,16 @@ function SidebarContent() {
             <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-700">
               <p className="text-[10px] text-slate-400 truncate">{displayEmail}</p>
             </div>
+            <Link
+              href="/perfil"
+              onClick={() => { setShowUserMenu(false); setMobileOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Mi Perfil Web
+            </Link>
             <button
               onClick={() => { signOut(); setShowUserMenu(false); }}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
