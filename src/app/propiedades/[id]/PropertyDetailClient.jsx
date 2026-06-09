@@ -18,6 +18,7 @@ import PropertyInquiriesPanel from '@/components/propiedades/PropertyInquiriesPa
 import Link from 'next/link';
 import Image from 'next/image';
 import WhatsAppSendButton from '@/components/propiedades/WhatsAppSendButton';
+import QRCode from 'react-qr-code';
 
 const AMENITY_LABELS = {
   pool_private: { es: 'Piscina', en: 'Pool' },
@@ -71,6 +72,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
   const [showWaPhotographerModal, setShowWaPhotographerModal] = useState(false);
   const [waPhotographerMsg, setWaPhotographerMsg] = useState('');
   const [copiedWaPhotographer, setCopiedWaPhotographer] = useState(false);
+  const [copiedQrLink, setCopiedQrLink] = useState(false);
 
   useEffect(() => {
     async function loadOfficeSettings() {
@@ -603,6 +605,48 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
               <SectionCard title={t('pd_section_analytics')} icon="📊">
                 <ListingAnalyticsPanel propertyId={p.id} />
               </SectionCard>
+
+              {/* QR Tracking & Print */}
+              {p.slug && (
+                <SectionCard title="Print & QR Tracking" icon="🖨️">
+                  <div className="flex flex-col items-center p-4 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-dark-border">
+                    <div className="bg-white p-2 rounded-lg shadow-sm border border-gray-100 mb-4">
+                      <QRCode 
+                        value={`https://www.remax-altitud.cr/api/tracking/qr?propertyId=${p.id}&slug=${p.slug}&locale=${lang || 'en'}`} 
+                        size={120} 
+                        level="M" 
+                      />
+                    </div>
+                    <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-3">
+                      This QR code links directly to the property and tracks scans in your analytics.
+                    </p>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(`https://www.remax-altitud.cr/api/tracking/qr?propertyId=${p.id}&slug=${p.slug}&locale=${lang || 'en'}`);
+                          setCopiedQrLink(true);
+                          setTimeout(() => setCopiedQrLink(false), 2000);
+                        } catch (err) {
+                          console.error('Failed to copy QR link', err);
+                        }
+                      }}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 text-xs font-semibold hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                    >
+                      {copiedQrLink ? (
+                        <>
+                          <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                          Copy Trackable Link
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </SectionCard>
+              )}
             </div>
         </div>
 

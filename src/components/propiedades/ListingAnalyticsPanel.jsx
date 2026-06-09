@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useApp } from '@/lib/context';
-import { getListingDailyStats, getListingPageViewsReferrers, getListingLeadsCount } from '@/lib/dal/analytics';
+import { getListingDailyStats, getListingPageViewsReferrers, getListingLeadsCount, getListingQrScansCount } from '@/lib/dal/analytics';
 
 /* ═══════════════════════════════════════════════════════════════
    LISTING ANALYTICS PANEL
@@ -13,7 +13,7 @@ import { getListingDailyStats, getListingPageViewsReferrers, getListingLeadsCoun
 
 export default function ListingAnalyticsPanel({ propertyId, developmentId }) {
   const { t, lang } = useApp();
-  const [stats, setStats] = useState({ views7d: 0, views30d: 0, viewsAll: 0, uniqueAll: 0, avgDuration: 0, mobile: 0, desktop: 0, leads: 0 });
+  const [stats, setStats] = useState({ views7d: 0, views30d: 0, viewsAll: 0, uniqueAll: 0, avgDuration: 0, mobile: 0, desktop: 0, leads: 0, qrScans: 0 });
   const [dailyData, setDailyData] = useState([]);
   const [topReferrers, setTopReferrers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +73,8 @@ export default function ListingAnalyticsPanel({ propertyId, developmentId }) {
         // Leads count
         if (propertyId) {
           const count = await getListingLeadsCount(propertyId);
-          setStats(prev => ({ ...prev, leads: count || 0 }));
+          const qrScans = await getListingQrScansCount(propertyId);
+          setStats(prev => ({ ...prev, leads: count || 0, qrScans: qrScans || 0 }));
         }
       } catch (err) {
         console.error('Analytics load error:', err);
@@ -149,6 +150,12 @@ export default function ListingAnalyticsPanel({ propertyId, developmentId }) {
           <div className="flex justify-between">
             <span className="text-slate-400">{t('auto_leads')}</span>
             <span className="font-bold text-emerald-600 dark:text-emerald-400">{stats.leads}</span>
+          </div>
+        )}
+        {stats.qrScans > 0 && (
+          <div className="flex justify-between">
+            <span className="text-slate-400">QR Scans / Print Views</span>
+            <span className="font-bold text-amber-600 dark:text-amber-400">{stats.qrScans}</span>
           </div>
         )}
       </div>

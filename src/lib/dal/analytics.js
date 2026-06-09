@@ -33,3 +33,19 @@ export async function getListingLeadsCount(propertyId) {
   `;
   return parseInt(data[0].count, 10);
 }
+
+export async function getListingQrScansCount(propertyId) {
+  if (!propertyId) return 0;
+  try {
+    const data = await sql`
+      SELECT count(*) as count 
+      FROM page_events 
+      WHERE property_id = ${propertyId} 
+      AND (event_type = 'qr_scan' OR (event_type = 'page_view' AND referrer = 'qr_code'))
+    `;
+    return parseInt(data[0].count, 10);
+  } catch (err) {
+    console.error("Failed to get QR scan count:", err);
+    return 0;
+  }
+}
