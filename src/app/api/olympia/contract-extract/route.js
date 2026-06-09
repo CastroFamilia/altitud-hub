@@ -23,7 +23,7 @@ export async function POST(req) {
     
     // We send the document as an inline part to Gemini
     const prompt = `
-Eres Olympia, una IA experta legal inmobiliaria para RE/MAX.
+Eres Olympia, una IA experta legal inmobiliaria para REMAX.
 Lee el siguiente contrato adjunto (puede ser un LOI, SPA, Opción de Compra, etc.) y extrae EXCLUSIVAMENTE los siguientes datos de la transacción.
 
 Devuelve tu respuesta ÚNICAMENTE en este formato JSON exacto:

@@ -267,7 +267,7 @@ export default function AcmPrintForm({ report }) {
 
         {/* Footer */}
         <div style={footerStyle}>
-          <span>RE/MAX ALTITUD — Confidencial</span>
+          <span>REMAX ALTITUD — Confidencial</span>
           <span>Dossier de Mercado</span>
           <span>Página 1</span>
         </div>
@@ -343,7 +343,7 @@ export default function AcmPrintForm({ report }) {
           </div>
 
           <div style={footerStyle}>
-            <span>RE/MAX ALTITUD</span>
+            <span>REMAX ALTITUD</span>
             <span>Estudio de Comparables</span>
             <span>Página {activeMethods.indexOf('comparables') + 2}</span>
           </div>
@@ -459,7 +459,7 @@ export default function AcmPrintForm({ report }) {
           </div>
 
           <div style={footerStyle}>
-            <span>RE/MAX ALTITUD</span>
+            <span>REMAX ALTITUD</span>
             <span>Rentabilidad (Cap Rate)</span>
             <span>Página {activeMethods.indexOf('rentabilidad') + 2}</span>
           </div>
@@ -568,7 +568,7 @@ export default function AcmPrintForm({ report }) {
           </div>
 
           <div style={footerStyle}>
-            <span>RE/MAX ALTITUD</span>
+            <span>REMAX ALTITUD</span>
             <span>Reposición (Costos)</span>
             <span>Página {activeMethods.indexOf('reposicion') + 2}</span>
           </div>
@@ -655,7 +655,7 @@ export default function AcmPrintForm({ report }) {
           {/* Legal / Closing footer */}
           <div style={{ textAlign: 'center', padding: '0 24px', color: '#64748b', fontSize: '9px', marginTop: '24px' }}>
             <p style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#003DA5', marginBottom: '4px' }}>
-              RE/MAX ALTITUD — DEPARTAMENTO DE VALORACIÓN Y ANÁLISIS
+              REMAX ALTITUD — DEPARTAMENTO DE VALORACIÓN Y ANÁLISIS
             </p>
             <p>
               Este informe es exclusivamente de carácter consultivo e indicativo y no constituye un aval oficial certificado por perito bancario.
@@ -665,7 +665,7 @@ export default function AcmPrintForm({ report }) {
 
         {/* Footer */}
         <div style={footerStyle}>
-          <span>RE/MAX ALTITUD — CONFIDENCIAL</span>
+          <span>REMAX ALTITUD — CONFIDENCIAL</span>
           <span>VALORACIÓN CONSOLIDADA</span>
           <span>Página Final</span>
         </div>

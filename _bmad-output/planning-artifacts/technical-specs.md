@@ -19,7 +19,7 @@
 - **Endpoints Utilized:**
   - `CreateProperty`: Initiates a new listing.
   - `FullUpdateProperty`: Syncs changes made in the Hub.
-  - `CreatePropertyImage`: Syncs Drive URLs to the RE/MAX central server.
+  - `CreatePropertyImage`: Syncs Drive URLs to the REMAX central server.
   - `CancelProperty`: Delists the property.
 
 ### 2.2 Google Drive API

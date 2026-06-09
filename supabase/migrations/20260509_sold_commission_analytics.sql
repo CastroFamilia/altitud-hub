@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS public.commission_tiers (
     iva_pct NUMERIC NOT NULL DEFAULT 13,    -- Costa Rica IVA
     monthly_fee_total NUMERIC GENERATED ALWAYS AS (monthly_fee_usd * (1 + iva_pct / 100)) STORED,
     fee_starts_month INTEGER NOT NULL DEFAULT 6,  -- Month when fee kicks in
-    rcca_fee_pct NUMERIC NOT NULL DEFAULT 6,      -- RE/MAX CCA franchise fee
+    rcca_fee_pct NUMERIC NOT NULL DEFAULT 6,      -- REMAX CCA franchise fee
     sort_order INTEGER DEFAULT 0,
     active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW()

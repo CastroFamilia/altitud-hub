@@ -25,7 +25,7 @@ async function generateOlympiaHint(search, listing) {
       no_sabe: 'sin plazo definido',
     }[search.purchase_timeframe] || search.purchase_timeframe || '';
 
-    const prompt = `Eres Olympia, coach inmobiliaria de RE/MAX Altitud. 
+    const prompt = `Eres Olympia, coach inmobiliaria de REMAX Altitud. 
 Genera UNA sola oración en español (máximo 25 palabras), profesional y motivadora, que le diga al agente por qué este inmueble nuevo en RECONNECT es relevante para su búsqueda activa.
 
 Datos del comprador: Cliente "${search.client_name}", busca ${search.property_type} en ${(search.zones || []).join(', ') || 'zona sin especificar'}, presupuesto ${price}, plazo ${timeframe}.

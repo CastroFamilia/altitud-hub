@@ -47,7 +47,7 @@ export default function CarpetaPageProperty({ cfg, property, t }) {
 
       {/* Header */}
       <div style={{ padding: '14px 44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
-        <Image src={cfg.logo || '/assets/logo-altitud.png'} alt="RE/MAX Logo" style={{ height: 20, width: 'auto' }} width={100} height={20} unoptimized />
+        <Image src={cfg.logo || '/assets/logo-altitud.png'} alt="REMAX Logo" style={{ height: 20, width: 'auto' }} width={100} height={20} unoptimized />
         <span style={{ fontSize: 9, color: '#94a3b8', fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
           {t.p_specs_header || 'ESPECIFICACIONES DE PROPIEDAD'}
         </span>

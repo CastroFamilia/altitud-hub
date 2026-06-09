@@ -7,7 +7,7 @@
 ---
 
 ## 🎯 Sprint Goal
-Establish a 100% stable property ingestion pipeline from RE/MAX Costa Rica's REI API (RECONNECT) and construct a premium, glassmorphic **Sync Desk** workspace inside the Office Panel to monitor, audit, and trigger listings synchronization.
+Establish a 100% stable property ingestion pipeline from REMAX Costa Rica's REI API (RECONNECT) and construct a premium, glassmorphic **Sync Desk** workspace inside the Office Panel to monitor, audit, and trigger listings synchronization.
 
 ---
 

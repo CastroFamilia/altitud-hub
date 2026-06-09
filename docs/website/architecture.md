@@ -14,7 +14,7 @@ classification:
 workflowType: 'architecture'
 ---
 
-# Software Architecture Document — RE/MAX Altitud
+# Software Architecture Document — REMAX Altitud
 
 **Author:** Nico
 **Date:** 2026-04-08
@@ -26,7 +26,7 @@ workflowType: 'architecture'
 
 ### System Purpose
 
-RE/MAX Altitud is a multilingual, map-first real estate platform for Costa Rica's Southern Zone. The system replaces a static WordPress site with a Next.js 15 application that unifies two offices — RE/MAX Altitud (Pérez Zeledón) and RE/MAX Altitud Cero (Dominical/Uvita) — supports 6 languages via AI translation, and generates qualified leads through WhatsApp-first contact flows.
+REMAX Altitud is a multilingual, map-first real estate platform for Costa Rica's Southern Zone. The system replaces a static WordPress site with a Next.js 15 application that unifies two offices — REMAX Altitud (Pérez Zeledón) and REMAX Altitud Cero (Dominical/Uvita) — supports 6 languages via AI translation, and generates qualified leads through WhatsApp-first contact flows.
 
 ### Architecture Philosophy
 
@@ -103,7 +103,7 @@ Every architectural decision optimizes for three constraints in this priority or
 ┌─────────────────────────────────────────────────────────────────────┐
 │                   EXTERNAL SERVICES                                  │
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────────────────────┐ │
-│  │ RE/MAX CCA   │  │ DeepL API    │  │ Mapbox GL JS              │ │
+│  │ REMAX CCA   │  │ DeepL API    │  │ Mapbox GL JS              │ │
 │  │ API (JSON)   │  │ (translation)│  │ (map tiles, geocoding)    │ │
 │  └──────────────┘  └──────────────┘  └───────────────────────────┘ │
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────────────────────┐ │
@@ -291,7 +291,7 @@ remax-altitud/
 │   │   │
 │   │   ├── sync/
 │   │   │   ├── pipeline.ts             # Main sync orchestrator
-│   │   │   ├── api-client.ts           # RE/MAX CCA API client
+│   │   │   ├── api-client.ts           # REMAX CCA API client
 │   │   │   ├── differ.ts               # Diff detection (new/updated/removed)
 │   │   │   ├── translator.ts           # DeepL + GPT-4 translation
 │   │   │   ├── image-optimizer.ts      # Image download + optimization
@@ -344,7 +344,7 @@ remax-altitud/
 │   │   ├── lead.ts                     # Lead types
 │   │   ├── community.ts               # Community types
 │   │   ├── search.ts                   # Search filter/result types
-│   │   └── api.ts                      # RE/MAX API response types
+│   │   └── api.ts                      # REMAX API response types
 │   │
 │   └── styles/
 │       └── globals.css                 # Tailwind v4 CSS-first config: @import, @theme directives, design tokens
@@ -355,7 +355,7 @@ remax-altitud/
 │   └── fixtures/                       # Test data fixtures
 │
 └── docs/
-    ├── api/                            # RE/MAX API documentation
+    ├── api/                            # REMAX API documentation
     └── redirects/                      # WordPress URL mapping
 ```
 
@@ -750,7 +750,7 @@ export async function searchProperties(filters: SearchFilters) {
 }
 ```
 
-### RE/MAX CCA API Integration
+### REMAX CCA API Integration
 
 | Endpoint | Method | Response | Caching |
 |----------|--------|----------|---------|
@@ -759,7 +759,7 @@ export async function searchProperties(filters: SearchFilters) {
 
 **Office GUIDs:**
 - Pérez Zeledón: `{PZ_OFFICE_GUID}` (env var)
-- RE/MAX Altitud Cero (Dominical/Uvita): `{DOM_OFFICE_GUID}` (env var)
+- REMAX Altitud Cero (Dominical/Uvita): `{DOM_OFFICE_GUID}` (env var)
 
 ---
 
@@ -794,7 +794,7 @@ middleware.ts
 | Content Type | Source | Translation Method | Storage |
 |-------------|--------|-------------------|---------|
 | **UI strings** (nav, labels, CTAs) | `messages/en.json`, `messages/es.json` | Manual (developer-authored) | JSON files in repo |
-| **Listing content** (title, description) | RE/MAX CCA API (EN+ES) | API provides both | `title_en`, `title_es` columns |
+| **Listing content** (title, description) | REMAX CCA API (EN+ES) | API provides both | `title_en`, `title_es` columns |
 | **Phase 2 listing translations** | EN source | DeepL API with glossary | `title_it`, `title_de`, etc. columns |
 | **Area/community descriptions** | Manual content | Developer-authored in both languages | `description_en`, `description_es` columns |
 | **SEO metadata** (title, description) | Derived from content | GPT-4 locale-specific prompts | Generated in `generateMetadata()` |
@@ -982,7 +982,7 @@ Auto-regenerated after each daily sync via `app/sitemap.ts`.
 # Database (PostgreSQL via Coolify)
 DATABASE_URL=
 
-# RE/MAX API
+# REMAX API
 REMAX_API_BASE_URL=
 PZ_OFFICE_GUID=
 DOM_OFFICE_GUID=
@@ -1065,7 +1065,7 @@ GitHub (main branch)
 
 | # | Risk | Impact | Probability | Mitigation |
 |---|------|--------|-------------|------------|
-| R1 | RE/MAX CCA API downtime | Stale listings (no new sync) | Low | PostgreSQL DB is source of truth; site serves cached data; admin alerted |
+| R1 | REMAX CCA API downtime | Stale listings (no new sync) | Low | PostgreSQL DB is source of truth; site serves cached data; admin alerted |
 | R2 | Sync failure for large batch | Sync errors for unusual data volume | Low | Retry with backoff; log + alert admin; no timeout constraint on Coolify |
 | R3 | Translation API rate limits | Untranslated content | Medium | Translate only changed content; queue with backoff; serve original as fallback |
 | R4 | Mapbox cost at scale (>50K loads) | Budget overrun | Low (initially) | Monitor monthly; cache tiles; evaluate Google Maps if needed |
@@ -1120,7 +1120,7 @@ GitHub (main branch)
 
 ### ADR-6: Soft Delete for Removed Listings
 
-**Context:** Listings removed from the RE/MAX API need graceful handling.
+**Context:** Listings removed from the REMAX API need graceful handling.
 
 **Decision:** Soft delete (`is_visible = false`); preserve URL; serve "No longer available" page.
 

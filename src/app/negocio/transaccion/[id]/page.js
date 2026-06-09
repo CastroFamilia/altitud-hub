@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { getOfficeReservationById } from '@/lib/dal/office';
 
 export const metadata = {
-  title: 'Deal Room | RE/MAX Altitud',
+  title: 'Deal Room | REMAX Altitud',
   description: 'Progreso y Documentos de la Transacción',
 };
 
@@ -65,7 +65,7 @@ export default async function TransaccionPage(props) {
             <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 text-xs font-semibold text-slate-500 dark:text-slate-400">DEAL ROOM</span>
           </div>
           <div className="text-sm font-medium text-slate-500">
-            Agente: <span className="text-slate-900 dark:text-white">{res.profiles?.full_name || 'RE/MAX Agent'}</span>
+            Agente: <span className="text-slate-900 dark:text-white">{res.profiles?.full_name || 'REMAX Agent'}</span>
           </div>
         </div>
       </header>

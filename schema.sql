@@ -63,8 +63,8 @@ CREATE TABLE IF NOT EXISTS acm_reports (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
 
-    -- Agent info (from RE/MAX API)
-    agent_id INTEGER,                    -- RE/MAX agent ID
+    -- Agent info (from REMAX API)
+    agent_id INTEGER,                    -- REMAX agent ID
     agent_name TEXT NOT NULL,
     agent_email TEXT,
     agent_phone TEXT,
@@ -304,7 +304,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     phone TEXT,
     role TEXT DEFAULT 'agent' CHECK (role IN ('agent','team_leader','broker')),
     team_id UUID REFERENCES teams(id),
-    remax_agent_id INTEGER,         -- AssociateID from RE/MAX CCA API
+    remax_agent_id INTEGER,         -- AssociateID from REMAX CCA API
     remax_agent_name TEXT,          -- backup name from API
     office TEXT DEFAULT 'altitud' CHECK (office IN ('altitud','cero')),
     status TEXT DEFAULT 'invited' CHECK (status IN ('invited','active','disabled')),
@@ -433,7 +433,7 @@ CREATE TABLE IF NOT EXISTS contacts (
     email TEXT,
     phone TEXT,
     lead_origin TEXT, -- e.g., 'Property Inquiry', 'Referral', 'Import', 'Web'
-    original_property_id TEXT, -- RE/MAX property ID if origin is inquiry
+    original_property_id TEXT, -- REMAX property ID if origin is inquiry
     type TEXT, -- e.g., 'Buyer', 'Seller', 'Renter', 'Investor', 'Other'
     status TEXT DEFAULT 'active', -- 'active', 'inactive', 'closed'
     tags TEXT[],
@@ -456,7 +456,7 @@ CREATE TABLE IF NOT EXISTS contact_relations (
 CREATE TABLE IF NOT EXISTS property_inquiries (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     contact_id UUID REFERENCES contacts(id) ON DELETE CASCADE,
-    remax_property_id TEXT NOT NULL, -- RE/MAX API Property ID
+    remax_property_id TEXT NOT NULL, -- REMAX API Property ID
     inquiry_date TIMESTAMPTZ DEFAULT NOW(),
     notes TEXT,
     status TEXT DEFAULT 'new', -- 'new', 'contacted', 'showing_scheduled', 'closed'
@@ -1782,7 +1782,7 @@ CREATE TABLE IF NOT EXISTS public.commission_tiers (
     iva_pct NUMERIC NOT NULL DEFAULT 13,    -- Costa Rica IVA
     monthly_fee_total NUMERIC GENERATED ALWAYS AS (monthly_fee_usd * (1 + iva_pct / 100)) STORED,
     fee_starts_month INTEGER NOT NULL DEFAULT 6,  -- Month when fee kicks in
-    rcca_fee_pct NUMERIC NOT NULL DEFAULT 6,      -- RE/MAX CCA franchise fee
+    rcca_fee_pct NUMERIC NOT NULL DEFAULT 6,      -- REMAX CCA franchise fee
     sort_order INTEGER DEFAULT 0,
     active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW()
@@ -3017,7 +3017,7 @@ ALTER TABLE public.property_syndication
 
 -- ── 3. Seed portal registry with all known portals ──
 INSERT INTO public.portal_registry (slug, display_name, icon_emoji, color_class, url_base, category, has_stats_api, display_order, office_scope) VALUES
-  ('reconnect',           'RE/MAX RECONNECT',          '🔵', 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',     'https://remax-centralamerica.com', 'manual', true,  1,  'all'),
+  ('reconnect',           'REMAX RECONNECT',          '🔵', 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',     'https://remax-centralamerica.com', 'manual', true,  1,  'all'),
   ('remax_costa_rica',    'remax-costa-rica.com',       '🔴', 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400',          'https://remax-costa-rica.com',     'manual', false, 2,  'all'),
   ('remax_altitud',       'remax-altitud.cr',           '🏔️', 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400', 'https://remax-altitud.cr',      'manual', false, 3,  'altitud'),
   ('yourhome_cr',         'YourHomeInCostaRica.com',    '🏡', 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400', 'https://yourhomeincostarica.com', 'manual', false, 4, 'all'),

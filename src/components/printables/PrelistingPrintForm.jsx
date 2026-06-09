@@ -7,7 +7,7 @@ import { useApp } from '@/lib/context';
  * 
  * A printer-friendly version of the Pre-Listing interview form.
  * Mirrors the 3-step wizard (Owners, Property, Tech) in a single,
- * professional PDF-ready layout with RE/MAX branding.
+ * professional PDF-ready layout with REMAX branding.
  */
 export default function PrelistingPrintForm() {
   const { t, lang } = useApp();
@@ -198,7 +198,7 @@ export default function PrelistingPrintForm() {
       {/* ── FOOTER ── */}
       <div style={{ marginTop: '32px', paddingTop: '12px', borderTop: '2px solid #003DA5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <p style={{ fontSize: '7px', color: '#9ca3af', fontWeight: 600 }}>
-          RE/MAX Altitud — {t('auto_confidential')} — altitudhub.com
+          REMAX Altitud — {t('auto_confidential')} — altitudhub.com
         </p>
         <p style={{ fontSize: '7px', color: '#9ca3af' }}>
           {t('auto_signature')}: __________________________

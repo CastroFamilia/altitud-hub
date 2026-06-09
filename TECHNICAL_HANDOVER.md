@@ -1,12 +1,12 @@
 # Technical Handover - ALTITUD HUB
 
-## The RE/MAX Altitud Ecosystem — Three Projects, One Database
+## The REMAX Altitud Ecosystem — Three Projects, One Database
 
 This Hub is **Project 3** of a three-project ecosystem. All three are developed in parallel by different developers and must synchronize through a shared PostgreSQL database.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    RE/MAX ALTITUD ECOSYSTEM                             │
+│                    REMAX ALTITUD ECOSYSTEM                             │
 │                                                                         │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────────┐  │
 │  │  1. WEBSITE       │  │  2. RINDER        │  │  3. HUB              │  │
@@ -52,8 +52,8 @@ This Hub is **Project 3** of a three-project ecosystem. All three are developed 
 | Buyer matching | Hub → RINDER | API | Hub writes `buyer_search_pipeline`, RINDER reads via `/api/portal/searches/[id]` |
 | Buyer votes | RINDER → Hub | API | RINDER calls `/api/portal/votes` POST, Hub shows votes + notifications |
 | Organic demand | Website → Hub | Shared DB | Website logs `page_events`/`search_demand`, Hub reads for agent intel |
-| RECONNECT sync | Hub → RECONNECT | API | Hub pushes approved properties to RE/MAX global (future) |
-| RE/MAX data feed | RECONNECT → Website | API | Website pulls daily from RE/MAX CCA API (cron sync) |
+| RECONNECT sync | Hub → RECONNECT | API | Hub pushes approved properties to REMAX global (future) |
+| REMAX data feed | RECONNECT → Website | API | Website pulls daily from REMAX CCA API (cron sync) |
 
 ---
 
@@ -72,9 +72,9 @@ This Hub is **Project 3** of a three-project ecosystem. All three are developed 
 - **RLS → Application Layer:** Supabase Row Level Security policies will be replaced by application-layer RBAC middleware in Next.js API routes.
 
 ### RECONNECT API (REI API CCA v1.0)
-RE/MAX Central America's property management system. The Hub reads from and writes to RECONNECT.
+REMAX Central America's property management system. The Hub reads from and writes to RECONNECT.
 
-**Endpoints (confirmed by Roberto Ceron, RE/MAX CCA):**
+**Endpoints (confirmed by Roberto Ceron, REMAX CCA):**
 | Environment | Base URL | OAuth Token |
 |-------------|----------|-------------|
 | **Production** | `https://remax-cca.com/apiCCA` | `https://remax-cca.com/apiCCA/oauth/token` |
@@ -183,7 +183,7 @@ The project has recently seen massive capability expansions. Key architectural n
 ## Website ↔ Hub Relationship
 
 ### Overview
-The RE/MAX Altitud **public website** (remax-altitud.cr) and the **internal Hub** (hub.remax-altitud.cr) are **separate projects** that share a PostgreSQL database and deploy to the same Coolify instance.
+The REMAX Altitud **public website** (remax-altitud.cr) and the **internal Hub** (hub.remax-altitud.cr) are **separate projects** that share a PostgreSQL database and deploy to the same Coolify instance.
 
 | Aspect | Website | Hub |
 |--------|---------|-----|
@@ -209,14 +209,14 @@ The Hub and the Website will share the same PostgreSQL instance, but with clear 
 | `leads` | **Website** (forms, WhatsApp clicks) | Hub (lead management, agent assignment) |
 | `buyer_search_pipeline` | **Hub** (agent matches buyer → property) | Website (future: Tinder Inmobiliario) |
 | `areas`, `communities` | **Website** (geo-fenced area guides) | Hub (area context for properties) |
-| `sync_logs` | **Website** (daily RE/MAX API sync pipeline) | Hub (sync monitoring dashboard) |
+| `sync_logs` | **Website** (daily REMAX API sync pipeline) | Hub (sync monitoring dashboard) |
 | `page_events` | **Website** (analytics tracking) | Hub (development analytics dashboard) |
 
 ### Data Flow Architecture
 
 ```
                     ┌──────────────────┐
-                    │  RE/MAX CCA API  │
+                    │  REMAX CCA API  │
                     │  (Source Data)   │
                     └────────┬─────────┘
                              │
@@ -245,7 +245,7 @@ The Hub and the Website will share the same PostgreSQL instance, but with clear 
 │ • Area guides    │    │ • RECONNECT API sync     │
 │ • Agent profiles │    │ • Portal syndication     │
 │ • 6 languages    │    │ • OKRs, analytics        │
-│ • RE/MAX API sync│    │ • Olympia AI coach       │
+│ • REMAX API sync│    │ • Olympia AI coach       │
 │   pipeline       │    │ • Tinder Inmobiliario    │
 └──────────────────┘    └──────────────────────────┘
 ```
@@ -254,8 +254,8 @@ The Hub and the Website will share the same PostgreSQL instance, but with clear 
 
 There are **two distinct data ingestion flows** that both write to the shared PostgreSQL. They do NOT conflict:
 
-1. **Website Daily Sync** (RE/MAX CCA API → PostgreSQL)
-   - Pulls all properties + agents from the RE/MAX global system via API
+1. **Website Daily Sync** (REMAX CCA API → PostgreSQL)
+   - Pulls all properties + agents from the REMAX global system via API
    - Validates, diffs, translates, optimizes images, geo-tags
    - Writes to `properties`, `agents`, `sync_logs`
    - Triggers ISR revalidation on the website
@@ -362,7 +362,7 @@ AGENT (in Hub)                    BUYER (in RINDER)                  AGENT (in H
 
 ### Website Key Tech Decisions (for Hub team awareness)
 - **ORM:** Drizzle ORM (not Supabase client) — type-safe SQL with PostGIS support
-- **Sync:** Daily cron at 6 AM CST pulls from RE/MAX CCA API, translates via DeepL, optimizes images
+- **Sync:** Daily cron at 6 AM CST pulls from REMAX CCA API, translates via DeepL, optimizes images
 - **Maps:** Mapbox GL JS with PostGIS spatial queries (bounding box, radius, geo-fence matching)
 - **Images:** Self-hosted optimization via `sharp` in Docker (WebP, responsive sizes, LQIP blur)
 - **SEO:** SSG + ISR, JSON-LD structured data, hreflang, WordPress 301 redirects

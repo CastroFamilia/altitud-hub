@@ -19,28 +19,28 @@ classification:
   projectContext: 'brownfield (platform migration: WordPress → Next.js with SEO continuity)'
   existingSite: 'https://www.remax-altitud.cr'
 vision:
-  statement: 'RE/MAX Altitud makes exploring, selling, or investing in Costa Rica''s Southern Zone feel guided, visual, and multilingual — converting curiosity into trust and trust into qualified leads for agents.'
-  differentiator: 'Competitors sell properties. RE/MAX Altitud sells confidence in a foreign country — in 6 languages.'
+  statement: 'REMAX Altitud makes exploring, selling, or investing in Costa Rica''s Southern Zone feel guided, visual, and multilingual — converting curiosity into trust and trust into qualified leads for agents.'
+  differentiator: 'Competitors sell properties. REMAX Altitud sells confidence in a foreign country — in 6 languages.'
   leadModel: 'One funnel, three intents (Buy, Sell, Invest) — one search engine with intent-aware responses'
   mvpFocus: 'Map-first search + lifestyle area guides + agent-language match + seller CTAs + investment-aware filters'
   phase2Moat: 'Relocation hub + seller valuation tools + dedicated investor experience'
 workflowType: 'prd'
 ---
 
-# Product Requirements Document - RE/MAX Altitud
+# Product Requirements Document - REMAX Altitud
 
 **Author:** Nico
 **Date:** 2026-03-23
 
 ## Executive Summary
 
-RE/MAX Altitud is building a multilingual, map-first real estate platform for Costa Rica's Southern Zone — replacing the current WordPress site (English-only, no API sync, Pérez Zeledón office only) with a Next.js application that unifies both RE/MAX Altitud (Pérez Zeledón) and RE/MAX Altitud Cero (Dominical/Uvita) under one digital experience.
+REMAX Altitud is building a multilingual, map-first real estate platform for Costa Rica's Southern Zone — replacing the current WordPress site (English-only, no API sync, Pérez Zeledón office only) with a Next.js application that unifies both REMAX Altitud (Pérez Zeledón) and REMAX Altitud Cero (Dominical/Uvita) under one digital experience.
 
 The platform serves a single purpose: **convert curiosity into trust and trust into qualified leads for agents** — across buyers, sellers, and investors, in 6 languages.
 
 **Migration consideration:** The existing site at remax-altitud.cr has established Google indexing and inbound traffic. The rebuild includes a URL migration strategy (301 redirects, sitemap transition) to preserve SEO equity during the WordPress → Next.js transition.
 
-Costa Rica has no centralized MLS, ~40% of transactions involve international buyers, and no competitor offers more than 2 languages, map-first search, or integrated relocation tools. RE/MAX Altitud fills this vacuum with an SEO-first, daily-refreshed platform that operates as **one search engine with three intent-aware responses:**
+Costa Rica has no centralized MLS, ~40% of transactions involve international buyers, and no competitor offers more than 2 languages, map-first search, or integrated relocation tools. REMAX Altitud fills this vacuum with an SEO-first, daily-refreshed platform that operates as **one search engine with three intent-aware responses:**
 
 | Intent | What the User Wants | How the Platform Responds |
 |--------|---------------------|--------------------------|
@@ -48,11 +48,11 @@ Costa Rica has no centralized MLS, ~40% of transactions involve international bu
 | **Sell** | List a property with a trusted agency | "List with us" / "Vende tu propiedad" CTAs, seller capture forms, agent assignment |
 | **Invest** | Identify investment opportunities (commercial, land, rental yield) | Investment-aware filters/tags, ROI context on listings, "Investment inquiry" CTA |
 
-The platform replaces a WordPress site serving the Pérez Zeledón market while simultaneously launching RE/MAX Altitud Cero's (Dominical/Uvita) first digital presence — expanding lead generation into a coastal market with 6–10% annual appreciation and zero existing online footprint.
+The platform replaces a WordPress site serving the Pérez Zeledón market while simultaneously launching REMAX Altitud Cero's (Dominical/Uvita) first digital presence — expanding lead generation into a coastal market with 6–10% annual appreciation and zero existing online footprint.
 
 ### What Makes This Special
 
-Competitors sell properties. RE/MAX Altitud sells **confidence in a foreign country** — in 6 languages, with visual discovery tools that make unfamiliar geography accessible, and bilingual agents a WhatsApp tap away.
+Competitors sell properties. REMAX Altitud sells **confidence in a foreign country** — in 6 languages, with visual discovery tools that make unfamiliar geography accessible, and bilingual agents a WhatsApp tap away.
 
 **The single insight:** In a market with no centralized MLS and 40% international buyers, the first platform to combine API-synced listing freshness, multilingual access, and visual discovery will own the search intent for Costa Rica's Southern Zone.
 
@@ -62,7 +62,7 @@ Competitors sell properties. RE/MAX Altitud sells **confidence in a foreign coun
 2. **Map-first search with 3D terrain** — make unfamiliar geography visually accessible. Interactive pins, clustering, and topography context for mountain (PZ) and coastal (Dominical/Uvita) areas.
 3. **Intent-aware lead capture** — every interaction (search, listing view, agent contact, seller form) feeds a unified lead pipeline with source tracking and agent auto-assignment.
 
-The strategic moat deepens in Phase 2 with a full relocation hub ("Move to Costa Rica"), seller valuation tools, and dedicated investor experiences — capabilities that separate RE/MAX Altitud not only from competitors but from other RE/MAX offices in Costa Rica.
+The strategic moat deepens in Phase 2 with a full relocation hub ("Move to Costa Rica"), seller valuation tools, and dedicated investor experiences — capabilities that separate REMAX Altitud not only from competitors but from other REMAX offices in Costa Rica.
 
 ## Project Classification
 
@@ -73,7 +73,7 @@ The strategic moat deepens in Phase 2 with a full relocation hub ("Move to Costa
 | **Complexity** | Medium-High |
 | **Project Context** | Brownfield — platform migration from WordPress (remax-altitud.cr) to Next.js with SEO continuity |
 | **Existing Site** | www.remax-altitud.cr (Pérez Zeledón office only, English-only WordPress, 15 agents) |
-| **New Capability** | RE/MAX Altitud Cero (Dominical/Uvita) office digital launch, 6-language support, map-first search, three-intent lead funnel |
+| **New Capability** | REMAX Altitud Cero (Dominical/Uvita) office digital launch, 6-language support, map-first search, three-intent lead funnel |
 
 ## Success Criteria
 
@@ -163,7 +163,7 @@ The following are explicitly excluded from MVP and will NOT be built:
 - ❌ Native mobile app
 - ❌ AI chatbot
 - ❌ Payment processing
-- ❌ Manual listing entry (all listings come from RE/MAX API sync)
+- ❌ Manual listing entry (all listings come from REMAX API sync)
 - ❌ Property alerts / saved searches
 - ❌ Blog/CMS
 
@@ -172,12 +172,12 @@ The following are explicitly excluded from MVP and will NOT be built:
 | Type | Item | Addressed In |
 |------|------|--------------|
 | Constraint | Solo developer for MVP | Executive Summary |
-| Constraint | RE/MAX brand guidelines compliance | NFR25-26 |
-| Constraint | RE/MAX API dependency (daily sync, no real-time) | FR46, Risk Mitigation |
+| Constraint | REMAX brand guidelines compliance | NFR25-26 |
+| Constraint | REMAX API dependency (daily sync, no real-time) | FR46, Risk Mitigation |
 | Constraint | Two-office structure (Altitud + Altitud Cero) | FR46, Project Classification |
 | Constraint | Third-party API cost budgets (maps, translation) | Risk Mitigation |
 | Constraint | SEO migration — must preserve existing rankings | FR69, Success Criteria |
-| Assumption | RE/MAX API provides sufficient listing data | FR55 (validation pipeline) |
+| Assumption | REMAX API provides sufficient listing data | FR55 (validation pipeline) |
 | Assumption | Agents will adopt WhatsApp-first workflow | Journey 1-4, FR34 |
 | Assumption | European markets drive primary non-US demand | FR10 (EUR prioritization) |
 | Assumption | 6-language coverage addresses target buyer markets | Success Criteria, FR29-33 |
@@ -190,7 +190,7 @@ The following are explicitly excluded from MVP and will NOT be built:
 
 **Persona:** Maria, 62, retired teacher from Oregon. iPad user, no Spanish. Watched HGTV Costa Rica shows for 2 years. Husband passed last year — ready for a fresh start.
 
-**Opening Scene:** Maria Googles "retire in Costa Rica southern zone" at 10 PM. A RE/MAX Altitud area guide for Pérez Zeledón ranks on page 1. The site loads in English automatically. She sees mountain photos, climate data, cost comparisons. *"Wait — this is only 45 minutes from the beach?"*
+**Opening Scene:** Maria Googles "retire in Costa Rica southern zone" at 10 PM. A REMAX Altitud area guide for Pérez Zeledón ranks on page 1. The site loads in English automatically. She sees mountain photos, climate data, cost comparisons. *"Wait — this is only 45 minutes from the beach?"*
 
 **Rising Action:** She taps "View Properties" — the map opens. She's never heard of "Pérez Zeledón" but on the map she sees San Isidro, the hospital marker, the road to Dominical. She gets it instantly. She filters by "Retirement Paradise" lifestyle tag. 8 properties appear. She swipes through galleries on her iPad.
 
@@ -208,11 +208,11 @@ The following are explicitly excluded from MVP and will NOT be built:
 
 **Persona:** Carlos, 48, farmer in PZ. Owns 2 hectares inherited from his father. Kids moved to San José. Wants to sell land and buy a smaller house in town. Spanish only. Uses a basic Android phone.
 
-**Opening Scene:** Carlos's neighbor says RE/MAX sold a nearby property well. Carlos searches "vender terreno Pérez Zeledón" on his phone. Site loads in Spanish. He sees "Vende tu propiedad" in the nav.
+**Opening Scene:** Carlos's neighbor says REMAX sold a nearby property well. Carlos searches "vender terreno Pérez Zeledón" on his phone. Site loads in Spanish. He sees "Vende tu propiedad" in the nav.
 
 **Rising Action:** He taps it. Simple form: Name *(required)*, Phone/WhatsApp *(required)*, **Email *(optional)***, Property Type → "Lote/Terreno", Location, Size. No email required — just phone and WhatsApp. He fills it out in 2 minutes on his $150 Android.
 
-**Climax:** WhatsApp message from agent Gustavo Valverde within the hour. Gustavo will visit the land this week. Carlos checks Gustavo's profile — photo, RE/MAX badge, listing count. The balloon logo signals a real company.
+**Climax:** WhatsApp message from agent Gustavo Valverde within the hour. Gustavo will visit the land this week. Carlos checks Gustavo's profile — photo, REMAX badge, listing count. The balloon logo signals a real company.
 
 **Resolution:** Gustavo visits, photographs the property, lists it. Carlos sees his land on the website two weeks later — professionally shot, described in English AND Spanish. He shows his wife on his phone. *"Mirá, salió bonito."* Three months later, his nephew in San José texts: *"Tío, vi tu terreno en Google! Sale hasta en inglés!"* Carlos has never felt prouder of 2 hectares of dirt.
 
@@ -240,7 +240,7 @@ The following are explicitly excluded from MVP and will NOT be built:
 
 **Persona:** Jennifer, 58, American who bought a Dominical villa 5 years ago. Grandkids in Texas — ready to move back. Needs to sell from 3,000 miles away.
 
-**Opening Scene:** Jennifer searches "sell property Dominical Costa Rica RE/MAX." Finds remax-altitud.cr in English. Sees "List with us" in the nav — and the Altitud Cero office listed for the first time.
+**Opening Scene:** Jennifer searches "sell property Dominical Costa Rica REMAX." Finds remax-altitud.cr in English. Sees "List with us" in the nav — and the Altitud Cero office listed for the first time.
 
 **Rising Action:** She fills out the seller form: House/Villa, Dominical, approximate value, contact info. Notes she's in Texas. Browses agent profiles — filters by Altitud Cero office. Picks an English-speaking coastal specialist.
 
@@ -266,7 +266,7 @@ The following are explicitly excluded from MVP and will NOT be built:
 
 **Failure scenario:** One morning, sync log shows "❌ API timeout — 0 properties synced." Nico receives an **automated alert** (email/WhatsApp). The site continues serving all existing listings from PostgreSQL — optimized photos and translations intact. No user-facing impact. He contacts the API provider and the next day's sync recovers.
 
-**Edge case — Agent departure:** Gustavo announces he's leaving RE/MAX Altitud. Nico opens the per-agent lead history (FR64) — all 47 leads Gustavo handled over 8 months are visible: buyer inquiries, seller listings, CMA requests, shortlist inquiries. Each shows the client's name, contact info, property reference, and source. Nico selects "Bulk Reassign" (FR65) — distributes Gustavo's active leads across Laura and two other agents based on language match and area coverage. The system logs every reassignment (previous agent, new agent, date). He exports Gustavo's full client contact list as CSV and sends a personal WhatsApp to each client introducing their new agent. No client falls through the cracks. No institutional knowledge is lost.
+**Edge case — Agent departure:** Gustavo announces he's leaving REMAX Altitud. Nico opens the per-agent lead history (FR64) — all 47 leads Gustavo handled over 8 months are visible: buyer inquiries, seller listings, CMA requests, shortlist inquiries. Each shows the client's name, contact info, property reference, and source. Nico selects "Bulk Reassign" (FR65) — distributes Gustavo's active leads across Laura and two other agents based on language match and area coverage. The system logs every reassignment (previous agent, new agent, date). He exports Gustavo's full client contact list as CSV and sends a personal WhatsApp to each client introducing their new agent. No client falls through the cracks. No institutional knowledge is lost.
 
 > **Capabilities:** Sync monitoring with failure alerts, lead review + agent reassignment, lifestyle tag management (admin table), SEO monitoring, multi-office visibility, per-agent lead history with full audit trail (FR64), bulk lead reassignment with logging (FR65), CSV export of agent contacts (FR65), shortlist popularity analytics (FR66). **Resilience pattern:** PostgreSQL DB is the source of truth — API failures don't affect the live site, only halt new data flow.
 
@@ -276,7 +276,7 @@ The following are explicitly excluded from MVP and will NOT be built:
 
 **Persona:** Andrés, 35, hospital administrator in San Isidro del General. Renting an apartment with his wife and 2 kids. They've saved enough for a down payment on a house. Spanish only. Uses an Android phone.
 
-**Opening Scene:** Andrés searches "casas en venta Pérez Zeledón" on his phone during lunch. RE/MAX Altitud's PZ area page ranks on Google — loads in Spanish. He sees "Buscar Propiedades" and familiar town names.
+**Opening Scene:** Andrés searches "casas en venta Pérez Zeledón" on his phone during lunch. REMAX Altitud's PZ area page ranks on Google — loads in Spanish. He sees "Buscar Propiedades" and familiar town names.
 
 **Rising Action:** He skips the map — he knows every neighborhood in PZ. Switches to grid view (FR2). Filters: "Casa," 2+ bedrooms, under $150K. 12 results. He scrolls through listings, recognizing streets from the photos. No surprises geographically — he's evaluating price, condition, and title status.
 
@@ -290,17 +290,17 @@ The following are explicitly excluded from MVP and will NOT be built:
 
 ### Journey 7: Laura — The Active Agent
 
-**Persona:** Laura, 34, bilingual agent at RE/MAX Altitud PZ office. 3 years in real estate, 22 exclusive listings. Speaks English and Spanish. Active on WhatsApp with her client network.
+**Persona:** Laura, 34, bilingual agent at REMAX Altitud PZ office. 3 years in real estate, 22 exclusive listings. Speaks English and Spanish. Active on WhatsApp with her client network.
 
-**Opening Scene:** Laura adds her RE/MAX Altitud profile link to her email signature, WhatsApp status, and Instagram bio. A Canadian prospect opens it — sees Laura's photo, RE/MAX badge, "Speaks: English, Spanish," and all 22 of her listings with thumbnails. WhatsApp CTA at the top of her profile.
+**Opening Scene:** Laura adds her REMAX Altitud profile link to her email signature, WhatsApp status, and Instagram bio. A Canadian prospect opens it — sees Laura's photo, REMAX badge, "Speaks: English, Spanish," and all 22 of her listings with thumbnails. WhatsApp CTA at the top of her profile.
 
 **Rising Action:** A new lead notification arrives — a buyer named Juan contacted Laura through a listing page. The lead record shows: source (property listing, FR54), property reference, buyer language (Spanish), and the buyer's message. Laura responds via WhatsApp within 30 minutes.
 
 **Climax:** Laura checks her profile page on the site. Her newest listing appeared overnight after the daily sync — photo optimized, description in English and Spanish. She copies the listing URL and shares it to her client WhatsApp group. The standalone URL loads with full gallery, area context, and her contact info as the listing agent.
 
-**Resolution:** Laura's clients tell her the site "looks like the international platforms." She refers a colleague to the "Únete a Nuestro Equipo" page. For the first time, her digital presence matches the RE/MAX brand promise — and it works while she sleeps.
+**Resolution:** Laura's clients tell her the site "looks like the international platforms." She refers a colleague to the "Únete a Nuestro Equipo" page. For the first time, her digital presence matches the REMAX brand promise — and it works while she sleeps.
 
-> **Capabilities:** Agent profile pages with listings, photo, languages, and office affiliation (FR37-39). Shareable profile URLs. WhatsApp CTA on profile. Lead routing with source tracking (FR54). Daily-synced listings on agent pages. Standalone listing URLs for sharing (FR13). Professional presentation matching RE/MAX brand standards.
+> **Capabilities:** Agent profile pages with listings, photo, languages, and office affiliation (FR37-39). Shareable profile URLs. WhatsApp CTA on profile. Lead routing with source tracking (FR54). Daily-synced listings on agent pages. Standalone listing URLs for sharing (FR13). Professional presentation matching REMAX brand standards.
 
 ---
 
@@ -308,13 +308,13 @@ The following are explicitly excluded from MVP and will NOT be built:
 
 **Persona:** Sofia, 29, licensed real estate agent working with a small independent agency in Quepos. Bilingual (EN/ES). Considering switching to a franchise for better tools, leads, and brand recognition.
 
-**Opening Scene:** Sofia hears from a friend that RE/MAX Altitud has a new website generating leads in multiple languages. She searches "RE/MAX Altitud join team" and finds the "Join Our Team" page. It loads in English.
+**Opening Scene:** Sofia hears from a friend that REMAX Altitud has a new website generating leads in multiple languages. She searches "REMAX Altitud join team" and finds the "Join Our Team" page. It loads in English.
 
 **Rising Action:** She sees agent profiles with professional photos, listing counts, and language badges. She browses Laura's profile — 22 listings, professional presentation, WhatsApp integration. She compares this to her current agency's Facebook-only presence.
 
-**Climax:** The "Join Our Team" page lists benefits: RE/MAX brand, lead generation technology, multilingual exposure, training programs. A CTA: "Interested? Contact our office." Simple contact form or direct WhatsApp to the office manager. Sofia fills it out — name, current license info, languages spoken, area of interest.
+**Climax:** The "Join Our Team" page lists benefits: REMAX brand, lead generation technology, multilingual exposure, training programs. A CTA: "Interested? Contact our office." Simple contact form or direct WhatsApp to the office manager. Sofia fills it out — name, current license info, languages spoken, area of interest.
 
-**Resolution:** Nico receives the recruitment inquiry with source tracking. He schedules a call. Sofia joins RE/MAX Altitud two months later — her listings now reach 6 language markets. The website didn't just generate buyer leads — it recruited the talent.
+**Resolution:** Nico receives the recruitment inquiry with source tracking. He schedules a call. Sofia joins REMAX Altitud two months later — her listings now reach 6 language markets. The website didn't just generate buyer leads — it recruited the talent.
 
 > **Capabilities:** "Join Our Team" page with benefits showcase (FR61), agent profile pages as recruitment proof points (FR37-39), professional brand presentation, recruitment inquiry form with source tracking (FR54), WhatsApp CTA for office contact.
 
@@ -569,7 +569,7 @@ See **Non-Functional Requirements** section for measurable performance targets (
 
 ### Data Pipeline & Content Management
 
-- **FR46:** The system syncs property listings from the RE/MAX API daily (two office GUIDs: Altitud + Altitud Cero)
+- **FR46:** The system syncs property listings from the REMAX API daily (two office GUIDs: Altitud + Altitud Cero)
 - **FR47:** The system optimizes API images (WebP, responsive sizes) during sync
 - **FR48:** The system translates new listing content to available languages during sync
 - **FR49:** The system auto-tags listings with lifestyle tags based on configurable attribute rules (e.g., condos in tourist zones → "Rental Potential"), with manual override capability

@@ -101,7 +101,7 @@ export default function CommunicationPanel({ lead, agentId, communications = [],
           </a>
         )}
         {lead.lead_email && (
-          <a href={`mailto:${lead.lead_email}?subject=${encodeURIComponent(es ? 'RE/MAX ALTITUD - Consulta' : 'RE/MAX ALTITUD - Inquiry')}`}
+          <a href={`mailto:${lead.lead_email}?subject=${encodeURIComponent(es ? 'REMAX ALTITUD - Consulta' : 'REMAX ALTITUD - Inquiry')}`}
             className="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1.5 transition-colors shadow-sm">
             📧 Email
           </a>

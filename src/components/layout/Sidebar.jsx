@@ -210,7 +210,7 @@ function SidebarContent() {
            ) : (
              <>
                <div className="dark:bg-white/90 dark:p-1 dark:rounded-lg transition-colors inline-flex items-center p-1 rounded">
-                 <Image src="/assets/logo-altitud.png" alt="RE/MAX Altitud" className="h-5 md:h-6 object-contain" id="brand-logo" width={100} height={100} unoptimized />
+                 <Image src="/assets/logo-altitud.png" alt="REMAX Altitud" className="h-5 md:h-6 object-contain" id="brand-logo" width={100} height={100} unoptimized />
                </div>
                <div className="ml-3">
                  <h1 className="nexus-header text-lg text-nexus-blue dark:text-white leading-none">ALTITUD HUB</h1>

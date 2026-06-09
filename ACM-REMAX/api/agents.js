@@ -1,4 +1,4 @@
-// Vercel serverless function — proxy for RE/MAX CCA agent feeds
+// Vercel serverless function — proxy for REMAX CCA agent feeds
 // Usage: /api/agents?office=altitud|cero|all
 
 const OFFICE_IDS = {
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
             const r = await fetch(`${BASE_URL}/${OFFICE_IDS.altitud}`);
             if (r.ok) {
                 const data = await r.json();
-                allAgents.push(...data.map(a => ({ ...a, _office: 'altitud', _officeName: 'RE/MAX Altitud' })));
+                allAgents.push(...data.map(a => ({ ...a, _office: 'altitud', _officeName: 'REMAX Altitud' })));
             }
         }
 
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
             const r = await fetch(`${BASE_URL}/${OFFICE_IDS.cero}`);
             if (r.ok) {
                 const data = await r.json();
-                allAgents.push(...data.map(a => ({ ...a, _office: 'cero', _officeName: 'RE/MAX Altitud Cero' })));
+                allAgents.push(...data.map(a => ({ ...a, _office: 'cero', _officeName: 'REMAX Altitud Cero' })));
             }
         }
 

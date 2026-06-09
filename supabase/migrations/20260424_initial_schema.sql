@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS acm_reports (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
 
-    -- Agent info (from RE/MAX API)
-    agent_id INTEGER,                    -- RE/MAX agent ID
+    -- Agent info (from REMAX API)
+    agent_id INTEGER,                    -- REMAX agent ID
     agent_name TEXT NOT NULL,
     agent_email TEXT,
     agent_phone TEXT,

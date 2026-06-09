@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     phone TEXT,
     role TEXT DEFAULT 'agent' CHECK (role IN ('agent','team_leader','broker')),
     team_id UUID REFERENCES teams(id),
-    remax_agent_id INTEGER,         -- AssociateID from RE/MAX CCA API
+    remax_agent_id INTEGER,         -- AssociateID from REMAX CCA API
     remax_agent_name TEXT,          -- backup name from API
     office TEXT DEFAULT 'altitud' CHECK (office IN ('altitud','cero')),
     status TEXT DEFAULT 'invited' CHECK (status IN ('invited','active','disabled')),

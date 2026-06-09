@@ -504,7 +504,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex bg-white dark:bg-slate-800 rounded-2xl p-1 shadow-sm border border-slate-200 dark:border-slate-700">
               {[
-                { key: 'altitud', label: 'RE/MAX Altitud' },
+                { key: 'altitud', label: 'REMAX Altitud' },
                 { key: 'cero', label: 'Altitud Cero' },
               ].map(o => (
                 <button
@@ -687,7 +687,7 @@ export default function OficinaClient({ initialProfiles = [], initialTeams = [],
                 <div className="flex-1 text-center md:text-left">
                   <h4 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">Exportar Suscriptores</h4>
                   <p className="text-xs text-slate-400 mt-1">
-                    Genera un archivo CSV con todos los contactos de la oficina que tienen activa la opción de recibir el boletín de noticias de RE/MAX ALTITUD.
+                    Genera un archivo CSV con todos los contactos de la oficina que tienen activa la opción de recibir el boletín de noticias de REMAX ALTITUD.
                   </p>
                 </div>
                 <button

@@ -43,7 +43,7 @@
 
 ## 7. External API Integrations
 - **RECONNECT (REI API CCA v1.0):**
-  - **Production:** `https://remax-cca.com/apiCCA` (confirmed by Roberto Ceron, RE/MAX CCA)
+  - **Production:** `https://remax-cca.com/apiCCA` (confirmed by Roberto Ceron, REMAX CCA)
   - **Test:** `https://remax-cca.com/api` (currently enabled only for ALTITUD)
   - OAuth 2.0 bearer tokens (48h expiry). JSON format.
   - **Per-office credentials** (each office has its own API key, secret, and integrator ID):

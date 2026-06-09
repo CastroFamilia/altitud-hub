@@ -1,7 +1,7 @@
 # Altitud Hub - Product Requirements Document (PRD)
 
 ## 1. Product Overview
-**Altitud Hub** is a premium, high-performance real estate CRM and business intelligence platform designed for the RE/MAX Altitud (Pérez Zeledón) and Altitud Cero (Dominical) offices. It serves as the **single source of truth** for all property listings, deal management, and agent productivity. The Hub empowers brokers to manage teams, approve property listings before publication, track OKRs, and manage office finances, while providing agents with property management, portal syndication, development marketing pages, AI-assisted coaching (Olympia), and premium pre-listing presentations.
+**Altitud Hub** is a premium, high-performance real estate CRM and business intelligence platform designed for the REMAX Altitud (Pérez Zeledón) and Altitud Cero (Dominical) offices. It serves as the **single source of truth** for all property listings, deal management, and agent productivity. The Hub empowers brokers to manage teams, approve property listings before publication, track OKRs, and manage office finances, while providing agents with property management, portal syndication, development marketing pages, AI-assisted coaching (Olympia), and premium pre-listing presentations.
 
 ## 2. Target Audience
 - **Brokers/Admins:** Office leadership requiring oversight, property approval, analytics, HR management, and financial control.
@@ -28,7 +28,7 @@
 
 ### 3.4. Pre-Listing Presentation (`/prelisting`)
 - **Premium Marketing:** Luxury-grade, dynamic presentations tailored to High Net Worth (HNW) listings.
-- **Brand Dualism:** Adaptive UI for either RE/MAX Altitud or Altitud Cero based on listing region.
+- **Brand Dualism:** Adaptive UI for either REMAX Altitud or Altitud Cero based on listing region.
 - **Cinematic Experience:** High-end typography, localized professional imagery, and interactive digital signing areas.
 
 ### 3.5. Support & Error Ticketing (`/soporte`)
@@ -69,7 +69,7 @@
 - **Public Listing Feed:** A public API endpoint serves all published properties for portals to consume.
 - **Inquiry Inbox:** Leads from portal inquiries are received via webhooks, linked to the property and agent, and tracked through `new → contacted → converted → dismissed`.
 - **Syndication Status Panel:** Each property shows which portals it's live on, with clickable links and inquiry counts per portal.
-- **Public API for Website:** Development and property data available via public API for the future RE/MAX website integration.
+- **Public API for Website:** Development and property data available via public API for the future REMAX website integration.
 
 ## 4. Non-Functional Requirements
 - **Internationalization (i18n):** Full bilingual support (English/Spanish) without hardcoded strings, utilizing the central `t()` context dictionary.

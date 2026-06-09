@@ -12,7 +12,7 @@ import { resolveTypeId, canonicalTypeName } from '@/lib/constants/property-const
      RECONNECT_INTEGRATOR_ID
    ═══════════════════════════════════════════════════════════════ */
 
-// Production: /apiCCA — Test: /api (confirmed by Roberto Ceron, RE/MAX CCA)
+// Production: /apiCCA — Test: /api (confirmed by Roberto Ceron, REMAX CCA)
 const RECONNECT_BASE_URL = process.env.RECONNECT_USE_TEST_ENV === 'true'
   ? 'https://remax-cca.com/api'
   : 'https://remax-cca.com/apiCCA';
@@ -75,7 +75,7 @@ async function getOAuthToken(officeKey = 'altitud') {
     // 302 = endpoint is down or path is wrong (RECONNECT redirects to login page)
     if (res.status === 301 || res.status === 302) {
       const location = res.headers.get('location') || 'unknown';
-      return { error: `OAuth endpoint returned ${res.status} redirect to "${location}". The API endpoint may be down or the URL may have changed. Contact Roberto Ceron at RE/MAX CCA.` };
+      return { error: `OAuth endpoint returned ${res.status} redirect to "${location}". The API endpoint may be down or the URL may have changed. Contact Roberto Ceron at REMAX CCA.` };
     }
 
     if (!res.ok) {

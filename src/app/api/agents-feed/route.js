@@ -18,7 +18,7 @@ export async function GET(request) {
       });
       if (r.ok) {
         const data = await r.json();
-        allAgents.push(...data.map(a => ({ ...a, _office: 'altitud', _officeName: 'RE/MAX Altitud' })));
+        allAgents.push(...data.map(a => ({ ...a, _office: 'altitud', _officeName: 'REMAX Altitud' })));
       }
     }
 
@@ -28,7 +28,7 @@ export async function GET(request) {
       });
       if (r.ok) {
         const data = await r.json();
-        allAgents.push(...data.map(a => ({ ...a, _office: 'cero', _officeName: 'RE/MAX Altitud Cero' })));
+        allAgents.push(...data.map(a => ({ ...a, _office: 'cero', _officeName: 'REMAX Altitud Cero' })));
       }
     }
 

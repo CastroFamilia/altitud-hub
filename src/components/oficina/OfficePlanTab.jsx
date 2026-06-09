@@ -784,7 +784,7 @@ export default function OfficePlanTab({ t: tProp, profiles = [], properties = []
     const avgDeskFee = totalAgents > 0 ? (yearlyDeskFees / 12) / totalAgents : 0;
     const deskIncome = monthlyAgents * avgDeskFee;
     
-    // 4. Net GCI kept by office (after agent splits and RE/MAX royalty)
+    // 4. Net GCI kept by office (after agent splits and REMAX royalty)
     const netGCIKeep = monthlyGCI * marginAfterRoyalty;
     
     // 5. Net Income
@@ -802,7 +802,7 @@ export default function OfficePlanTab({ t: tProp, profiles = [], properties = []
   const [coachMessages, setCoachMessages] = useState([
     {
       role: 'assistant',
-      content: '¡Hola! Soy Olympia, tu Asesora Experta de Negocios de RE/MAX Altitud. Puedo analizar tu modelo financiero, gastos fijos, cantidad de agentes y tu plan de ENE-DIC para ayudarte a evaluar la sostenibilidad y rentabilidad de la oficina.'
+      content: '¡Hola! Soy Olympia, tu Asesora Experta de Negocios de REMAX Altitud. Puedo analizar tu modelo financiero, gastos fijos, cantidad de agentes y tu plan de ENE-DIC para ayudarte a evaluar la sostenibilidad y rentabilidad de la oficina.'
     }
   ]);
   const [coachInput, setCoachInput] = useState('');
@@ -1534,7 +1534,7 @@ export default function OfficePlanTab({ t: tProp, profiles = [], properties = []
               <h2 className="text-xl font-black italic text-slate-900 dark:text-white flex flex-wrap items-center gap-2.5">
                 <span>{isEditingLocal ? 'Configurar Plan de Oficina' : t('plan_title')}</span>
                 <span className="px-3 py-1 rounded-full bg-nexus-blue text-white dark:bg-brand-500/20 dark:text-brand-400 text-[10px] font-black uppercase tracking-widest leading-none shadow-sm">
-                  {selectedOffice === 'cero' ? 'Altitud Cero' : 'RE/MAX Altitud'}
+                  {selectedOffice === 'cero' ? 'Altitud Cero' : 'REMAX Altitud'}
                 </span>
                 {!isEditingLocal && editMode && (
                   <button
@@ -2884,7 +2884,7 @@ export default function OfficePlanTab({ t: tProp, profiles = [], properties = []
               <h2 className="text-xl font-black italic text-slate-900 dark:text-white flex flex-wrap items-center gap-2.5">
                 <span>Planificación de Agentes</span>
                 <span className="px-3 py-1 rounded-full bg-nexus-blue text-white dark:bg-brand-500/20 dark:text-brand-400 text-[10px] font-black uppercase tracking-widest leading-none shadow-sm">
-                  {selectedOffice === 'cero' ? 'Altitud Cero' : 'RE/MAX Altitud'}
+                  {selectedOffice === 'cero' ? 'Altitud Cero' : 'REMAX Altitud'}
                 </span>
               </h2>
               <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-bold">
@@ -3019,7 +3019,7 @@ export default function OfficePlanTab({ t: tProp, profiles = [], properties = []
               <h2 className="text-xl font-black italic text-slate-900 dark:text-white uppercase tracking-wider flex flex-wrap items-center gap-2.5">
                 <span>📊 RENDIMIENTO Y ROTACIÓN</span>
                 <span className="px-3 py-1 rounded-full bg-nexus-blue text-white dark:bg-brand-500/20 dark:text-brand-400 text-[10px] font-black uppercase tracking-widest leading-none shadow-sm">
-                  {selectedOffice === 'cero' ? 'Altitud Cero' : 'RE/MAX Altitud'}
+                  {selectedOffice === 'cero' ? 'Altitud Cero' : 'REMAX Altitud'}
                 </span>
               </h2>
               <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-bold">

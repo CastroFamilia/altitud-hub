@@ -34,7 +34,7 @@ Transacciones / Intereses:
 `;
 
     const prompt = `
-Eres Olympia, la asistente virtual de Inteligencia Artificial experta en Bienes Raíces (coach inmobiliaria estilo Buffini) para RE/MAX Altitud.
+Eres Olympia, la asistente virtual de Inteligencia Artificial experta en Bienes Raíces (coach inmobiliaria estilo Buffini) para REMAX Altitud.
 Tu objetivo es analizar el perfil de un cliente y darle al agente ideas concretas para mantenerse en "Top of Mind" y cultivar la relación.
 
 Instrucciones Críticas:

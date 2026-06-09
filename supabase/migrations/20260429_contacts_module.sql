@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS contacts (
     email TEXT,
     phone TEXT,
     lead_origin TEXT, -- e.g., 'Property Inquiry', 'Referral', 'Import', 'Web'
-    original_property_id TEXT, -- RE/MAX property ID if origin is inquiry
+    original_property_id TEXT, -- REMAX property ID if origin is inquiry
     type TEXT, -- e.g., 'Buyer', 'Seller', 'Renter', 'Investor', 'Other'
     status TEXT DEFAULT 'active', -- 'active', 'inactive', 'closed'
     tags TEXT[],
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS contact_relations (
 CREATE TABLE IF NOT EXISTS property_inquiries (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     contact_id UUID REFERENCES contacts(id) ON DELETE CASCADE,
-    remax_property_id TEXT NOT NULL, -- RE/MAX API Property ID
+    remax_property_id TEXT NOT NULL, -- REMAX API Property ID
     inquiry_date TIMESTAMPTZ DEFAULT NOW(),
     notes TEXT,
     status TEXT DEFAULT 'new', -- 'new', 'contacted', 'showing_scheduled', 'closed'

@@ -685,7 +685,7 @@ export default function PropertyDetailClient({ initialProperty, initialImages, i
             <div className="space-y-4 mb-6">
               <div className="flex items-center gap-2 p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
                 <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">
-                  🏢 {property?.office_code?.toLowerCase()?.includes('cero') || property?.office_code === 'R0700151' ? 'Altitud Cero' : 'RE/MAX Altitud'}
+                  🏢 {property?.office_code?.toLowerCase()?.includes('cero') || property?.office_code === 'R0700151' ? 'Altitud Cero' : 'REMAX Altitud'}
                 </span>
                 <span className="ml-auto text-[10px] font-bold text-gray-400 bg-gray-200/55 dark:bg-white/10 px-2 py-0.5 rounded">
                   {lang === 'en' ? 'Photographer Session' : 'Sesión del Fotógrafo'}

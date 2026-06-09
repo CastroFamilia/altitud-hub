@@ -60,7 +60,7 @@ export async function POST(req) {
     const greeting   = contactName ? `el cliente se llama ${contactName}` : 'no conocemos el nombre del cliente todavía';
 
     const prompt = `
-Eres Olympia, la asistente de IA de RE/MAX Altitud, experta en bienes raíces y comunicación inmobiliaria.
+Eres Olympia, la asistente de IA de REMAX Altitud, experta en bienes raíces y comunicación inmobiliaria.
 
 Tu tarea: Redacta UN mensaje de WhatsApp corto, cálido y profesional que el AGENTE pueda enviar a un CLIENTE potencial sobre esta propiedad.
 

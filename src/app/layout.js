@@ -7,7 +7,7 @@ import ErrorBoundary from "@/components/layout/ErrorBoundary";
 
 export const metadata = {
   title: "ALTITUD HUB",
-  description: "Central de Operaciones RE/MAX Altitud",
+  description: "Central de Operaciones REMAX Altitud",
 };
 
 export default function RootLayout({ children }) {

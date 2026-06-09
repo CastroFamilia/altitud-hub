@@ -1,4 +1,4 @@
-// Vercel serverless function — proxy for RE/MAX CCA property feeds
+// Vercel serverless function — proxy for REMAX CCA property feeds
 // Usage: /api/properties?office=altitud|cero|all
 
 const OFFICE_IDS = {

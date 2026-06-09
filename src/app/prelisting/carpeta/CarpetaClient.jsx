@@ -15,7 +15,7 @@ import Image from 'next/image';
 
 const OFFICES = {
   altitud: {
-    name: 'RE/MAX Altitud',
+    name: 'REMAX Altitud',
     zone: 'Pérez Zeledón',
     location: 'San Isidro de El General',
     commission: '6%',
@@ -25,7 +25,7 @@ const OFFICES = {
     accent: '#003DA5',
   },
   cero: {
-    name: 'RE/MAX Altitud Cero',
+    name: 'REMAX Altitud Cero',
     zone: 'Costa Ballena',
     location: 'Dominical · Uvita · Ojochal',
     commission: '8%',
@@ -37,7 +37,7 @@ const OFFICES = {
 };
 
 const CORE_PAGES = [
-  { id: 'page1', title: 'Alcance Global (RE/MAX & Costa Rica)' },
+  { id: 'page1', title: 'Alcance Global (REMAX & Costa Rica)' },
   { id: 'page2', title: 'Inteligencia de Mercado (Compradores vs Vendedores)' },
   { id: 'property_specs', title: 'Ficha Técnica (Registro y Amenidades)' },
   { id: 'page2b', title: 'La Visión del Desarrollo (Amenidades y Entorno)' },
@@ -64,7 +64,7 @@ const T = {
     p1_title1: 'Una marca que',
     p1_title2: 'abre puertas',
     p1_countries: 'Países', p1_offices: 'Oficinas', p1_agents: 'Agentes',
-    p1_worldDesc: 'Cuando un comprador de cualquier parte del mundo ve el nombre RE/MAX, no necesita explicación. Reconoce <b>credibilidad, trayectoria y estándares internacionales</b>. Esa ventaja competitiva empieza antes de la primera visita.',
+    p1_worldDesc: 'Cuando un comprador de cualquier parte del mundo ve el nombre REMAX, no necesita explicación. Reconoce <b>credibilidad, trayectoria y estándares internacionales</b>. Esa ventaja competitiva empieza antes de la primera visita.',
     p1_crTitle: 'Costa Rica',
     p1_crSub: 'El mercado que el mundo está mirando',
     p1_crDesc: 'Costa Rica atrae inversión global como nunca antes. Con <b>20 oficinas y una red interconectada</b>, cada propiedad listada con nosotros alcanza compradores que otras agencias simplemente no tienen.',
@@ -257,7 +257,7 @@ export default function CarpetaClient({ customPages = [], initialPresentation = 
     }
   }, [properties]);
 
-  const agentName = profile?.full_name || 'Agente RE/MAX';
+  const agentName = profile?.full_name || 'Agente REMAX';
   const agentPhone = profile?.phone || '';
   const agentEmail = profile?.email || '';
   const agentPhoto = profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(agentName)}&background=003DA5&color=fff&size=200`;

@@ -191,7 +191,7 @@ export default function ReConnectSyncTab({ properties = [], profiles = [], syncL
               Altitud Office Feed
             </span>
             <h4 className="text-base font-black text-slate-900 dark:text-white mt-3 flex items-center gap-2">
-              RE/MAX Altitud <span className="text-[10px] font-black bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded">R0700130</span>
+              REMAX Altitud <span className="text-[10px] font-black bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded">R0700130</span>
             </h4>
             <p className="text-[10px] text-slate-400 leading-relaxed font-bold tracking-wider uppercase">
               GUID: FEA8746D-CC1D-41B8-89F3-D04AC98274AF
@@ -381,7 +381,7 @@ export default function ReConnectSyncTab({ properties = [], profiles = [], syncL
               className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-nexus-blue"
             >
               <option value="all">{t('ofc_all_offices')}</option>
-              <option value="altitud">RE/MAX Altitud</option>
+              <option value="altitud">REMAX Altitud</option>
               <option value="cero">{t('ofc_portal_cero')}</option>
             </select>
 

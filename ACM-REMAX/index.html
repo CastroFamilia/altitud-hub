@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ACM — Análisis Comparativo de Mercado | RE/MAX Altitud</title>
-    <meta name="description" content="Herramienta profesional de Análisis Comparativo de Mercado para agentes RE/MAX Altitud">
+    <title>ACM — Análisis Comparativo de Mercado | REMAX Altitud</title>
+    <meta name="description" content="Herramienta profesional de Análisis Comparativo de Mercado para agentes REMAX Altitud">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -1060,11 +1060,11 @@
                     <i class="fas fa-arrow-left" style="font-size:11px;"></i> HUB
                 </a>
                 <a href="https://www.remax-altitud.cr" target="_blank" style="display:flex;align-items:center;">
-                    <img src="img/logo-altitud.png" alt="RE/MAX Altitud" id="header-logo-img" style="height:48px;object-fit:contain;">
+                    <img src="img/logo-altitud.png" alt="REMAX Altitud" id="header-logo-img" style="height:48px;object-fit:contain;">
                 </a>
                 <div class="header-title">
                     <h1>Análisis Comparativo de Mercado</h1>
-                    <p id="header-office-label">RE/MAX Altitud — Pérez Zeledón • <a href="https://www.remax-altitud.cr" target="_blank" style="color:var(--accent-light);text-decoration:none;">www.remax-altitud.cr</a></p>
+                    <p id="header-office-label">REMAX Altitud — Pérez Zeledón • <a href="https://www.remax-altitud.cr" target="_blank" style="color:var(--accent-light);text-decoration:none;">www.remax-altitud.cr</a></p>
                 </div>
             </div>
             <div class="header-actions">
@@ -1075,8 +1075,8 @@
                     <i class="fas fa-sun" id="theme-icon"></i>
                 </button>
                 <select class="form-select" id="office-select" onchange="switchOffice(this.value)" style="padding:8px 32px 8px 12px;font-size:12px;border-radius:20px;background-color:var(--bg-card);min-width:160px;">
-                    <option value="altitud">RE/MAX Altitud</option>
-                    <option value="cero">RE/MAX Altitud Cero</option>
+                    <option value="altitud">REMAX Altitud</option>
+                    <option value="cero">REMAX Altitud Cero</option>
                 </select>
                 <div id="auth-btn" style="display:flex;align-items:center;font-size:12px;color:var(--text-secondary);"></div>
                 <button class="btn btn-ghost btn-sm" onclick="resetACM()" id="btn-reset">
@@ -1518,11 +1518,11 @@
                     <p style="font-size:13px;color:var(--text-secondary);">Agrega hasta 5 propiedades de la competencia. Pega un link para auto-llenar los datos.</p>
                 </div>
 
-            <!-- RE/MAX Suggestions Panel -->
+            <!-- REMAX Suggestions Panel -->
             <div class="form-section" id="suggestions-panel" style="margin-bottom:24px;border:1px solid var(--accent);border-radius:12px;overflow:hidden;">
                 <div style="padding:16px 20px;background:linear-gradient(135deg,rgba(0,61,165,0.15),rgba(220,20,49,0.1));cursor:pointer;" onclick="document.getElementById('suggestions-list').style.display = document.getElementById('suggestions-list').style.display === 'none' ? 'block' : 'none';">
                     <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <div><i class="fas fa-magic" style="color:var(--accent);margin-right:8px;"></i><strong data-i18n="suggestions_title">Sugerencias de tu oficina RE/MAX</strong></div>
+                        <div><i class="fas fa-magic" style="color:var(--accent);margin-right:8px;"></i><strong data-i18n="suggestions_title">Sugerencias de tu oficina REMAX</strong></div>
                         <div id="suggestion-count" style="font-size:12px;color:var(--text-secondary);"></div>
                     </div>
                     <p style="font-size:12px;color:var(--text-secondary);margin-top:4px;" data-i18n="suggestions_desc">Propiedades similares listadas en tu oficina. Haz clic para usar como comparable.</p>
@@ -1844,7 +1844,7 @@
                     </div>
                     <div>
                         <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Oficina</div>
-                        <div style="font-size:16px;font-weight:700;color:var(--remax-red);" id="summary-office">RE/MAX Altitud</div>
+                        <div style="font-size:16px;font-weight:700;color:var(--remax-red);" id="summary-office">REMAX Altitud</div>
                     </div>
                     <div>
                         <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Tipo de Propiedad</div>
@@ -2032,7 +2032,7 @@
                             <input type="checkbox" id="pdf-opt-map" checked style="accent-color:var(--accent);margin-top:2px;">
                             <div>
                                 <div style="font-weight:700;font-size:13px;color:var(--text-primary);">🗺️ Mapa de la Zona</div>
-                                <div style="font-size:11px;color:var(--text-muted);">Propiedades de RE/MAX en la zona</div>
+                                <div style="font-size:11px;color:var(--text-muted);">Propiedades de REMAX en la zona</div>
                             </div>
                         </label>
                     </div>
@@ -2567,7 +2567,7 @@
             cat_com_desc: 'Hotel, Bodega, Local, Negocio',
             map_pin_title: 'Ubica la propiedad en el mapa',
             map_pin_sub: 'Haz clic en el mapa para pinear la ubicación exacta',
-            suggestions_title: 'Sugerencias de tu oficina RE/MAX',
+            suggestions_title: 'Sugerencias de tu oficina REMAX',
             suggestions_desc: 'Propiedades similares listadas en tu oficina. Haz clic para usar como comparable.',
             use_as_comp: 'Usar como competencia',
             step_category: 'Categoría', step_type: 'Tipo', step_location: 'Ubicación',
@@ -2654,7 +2654,7 @@
             cat_com_desc: 'Hotel, Warehouse, Retail, Business',
             map_pin_title: 'Locate the property on the map',
             map_pin_sub: 'Click on the map to pin the exact location',
-            suggestions_title: 'Suggestions from your RE/MAX office',
+            suggestions_title: 'Suggestions from your REMAX office',
             suggestions_desc: 'Similar properties listed in your office. Click to use as competitor.',
             use_as_comp: 'Use as competitor',
             step_category: 'Category', step_type: 'Type', step_location: 'Location',
@@ -3426,10 +3426,10 @@
         const label = document.getElementById('header-office-label');
         const logoImg = document.getElementById('header-logo-img');
         if (office === 'cero') {
-            label.innerHTML = 'RE/MAX Altitud Cero — Dominical • <a href="https://www.remax-altitud.cr" target="_blank" style="color:var(--accent-light);text-decoration:none;">www.remax-altitud.cr</a>';
+            label.innerHTML = 'REMAX Altitud Cero — Dominical • <a href="https://www.remax-altitud.cr" target="_blank" style="color:var(--accent-light);text-decoration:none;">www.remax-altitud.cr</a>';
             if (logoImg) logoImg.src = 'img/logo-altitud-cero.png';
         } else {
-            label.innerHTML = 'RE/MAX Altitud — Pérez Zeledón • <a href="https://www.remax-altitud.cr" target="_blank" style="color:var(--accent-light);text-decoration:none;">www.remax-altitud.cr</a>';
+            label.innerHTML = 'REMAX Altitud — Pérez Zeledón • <a href="https://www.remax-altitud.cr" target="_blank" style="color:var(--accent-light);text-decoration:none;">www.remax-altitud.cr</a>';
             if (logoImg) logoImg.src = 'img/logo-altitud.png';
         }
         // Reload agents for the selected office
@@ -3728,7 +3728,7 @@
         // Update office label in summary
         const officeEl = document.getElementById('summary-office');
         if (officeEl) {
-            officeEl.textContent = STATE.office === 'cero' ? 'RE/MAX Altitud Cero' : 'RE/MAX Altitud';
+            officeEl.textContent = STATE.office === 'cero' ? 'REMAX Altitud Cero' : 'REMAX Altitud';
         }
 
         // Build table
@@ -4237,7 +4237,7 @@
                 map_active: 'Listados activos',
                 map_prev: 'ACMs anteriores',
                 map_subject: 'Propiedad evaluada',
-                map_desc: 'El mapa muestra las propiedades activas en las oficinas RE/MAX de la zona.',
+                map_desc: 'El mapa muestra las propiedades activas en las oficinas REMAX de la zona.',
                 map_found: 'Se encontraron',
                 map_listed: 'propiedades listadas.',
                 map_orange: 'Los puntos naranjos representan ACMs realizados anteriormente, lo que indica actividad de mercado.',
@@ -4327,7 +4327,7 @@
                 map_active: 'Active listings',
                 map_prev: 'Previous CMAs',
                 map_subject: 'Subject property',
-                map_desc: 'The map shows active properties in the local RE/MAX offices.',
+                map_desc: 'The map shows active properties in the local REMAX offices.',
                 map_found: 'Found',
                 map_listed: 'listed properties.',
                 map_orange: 'Orange dots represent previous CMAs indicating market activity.',
@@ -4404,7 +4404,7 @@
         const agentEmail = STATE.agent?.email || '';
         const agentPhoto = STATE.agent?.photo || '';
         const agentTitle = STATE.agent?.titleEs || STATE.agent?.title || '';
-        const officeName = STATE.office === 'cero' ? 'RE/MAX Altitud Cero' : 'RE/MAX Altitud';
+        const officeName = STATE.office === 'cero' ? 'REMAX Altitud Cero' : 'REMAX Altitud';
         const officeLocation = STATE.office === 'cero' ? 'Dominical, Costa Rica' : 'Pérez Zeledón, Costa Rica';
         const logoUrl = STATE.office === 'cero' ? 'img/logo-altitud-cero.png' : 'img/logo-altitud.png';
         const dateLocale = lang === 'en' ? 'en-US' : 'es-CR';
@@ -4478,7 +4478,7 @@
             <div style="position:absolute;bottom:0;left:0;width:150px;height:150px;background:linear-gradient(315deg,rgba(220,20,49,0.03),transparent);border-top-right-radius:100%;"></div>
 
             <!-- Watermark -->
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:280px;font-weight:900;color:rgba(0,61,165,0.015);line-height:1;pointer-events:none;letter-spacing:-10px;">RE/MAX</div>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:280px;font-weight:900;color:rgba(0,61,165,0.015);line-height:1;pointer-events:none;letter-spacing:-10px;">REMAX</div>
 
             <!-- Header with logo -->
             <div style="display:flex;justify-content:space-between;align-items:center;padding-top:16px;padding-bottom:18px;border-bottom:2px solid #e5e7eb;position:relative;z-index:1;">
@@ -5367,7 +5367,7 @@
             title: 'Agent',
             titleEs: 'Agente',
             office: STATE.office,
-            officeName: STATE.office === 'cero' ? 'RE/MAX Altitud Cero' : 'RE/MAX Altitud'
+            officeName: STATE.office === 'cero' ? 'REMAX Altitud Cero' : 'REMAX Altitud'
         });
     }
 
@@ -5380,10 +5380,10 @@
             const label = document.getElementById('header-office-label');
             const logoImg = document.getElementById('header-logo-img');
             if (agent.office === 'cero') {
-                label.innerHTML = 'RE/MAX Altitud Cero — Dominical • <a href="https://www.remax-altitud.cr" target="_blank" style="color:var(--accent-light);text-decoration:none;">www.remax-altitud.cr</a>';
+                label.innerHTML = 'REMAX Altitud Cero — Dominical • <a href="https://www.remax-altitud.cr" target="_blank" style="color:var(--accent-light);text-decoration:none;">www.remax-altitud.cr</a>';
                 if (logoImg) logoImg.src = 'img/logo-altitud-cero.png';
             } else {
-                label.innerHTML = 'RE/MAX Altitud — Pérez Zeledón • <a href="https://www.remax-altitud.cr" target="_blank" style="color:var(--accent-light);text-decoration:none;">www.remax-altitud.cr</a>';
+                label.innerHTML = 'REMAX Altitud — Pérez Zeledón • <a href="https://www.remax-altitud.cr" target="_blank" style="color:var(--accent-light);text-decoration:none;">www.remax-altitud.cr</a>';
                 if (logoImg) logoImg.src = 'img/logo-altitud.png';
             }
             document.getElementById('office-select').value = agent.office;
@@ -5851,7 +5851,7 @@
     }
 
     // ==========================================
-    // RE/MAX FEED SUGGESTIONS
+    // REMAX FEED SUGGESTIONS
     // ==========================================
     async function loadSuggestions() {
         const cardsEl = document.getElementById('suggestions-cards');
@@ -5979,7 +5979,7 @@
 
         // Basic comp fields
         setVal(`comp-price-${idx}`, property.price);
-        setVal(`comp-source-${idx}`, `RE/MAX ${property.officeName || STATE.office}`);
+        setVal(`comp-source-${idx}`, `REMAX ${property.officeName || STATE.office}`);
         setVal(`comp-link-${idx}`, property.address || property.location || '');
 
         // Render indicators first so the fields exist

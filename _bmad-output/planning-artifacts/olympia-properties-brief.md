@@ -9,7 +9,7 @@
 
 ## 1. Problem Statement
 
-Los agentes de RE/MAX Altitud actualmente no tienen visibilidad centralizada sobre sus propiedades activas dentro del Hub. La información de listings vive en el portal RE/MAX CCA pero no está integrada con las herramientas internas (OKR, ACM, Pre-listing). Tampoco existe una herramienta inteligente que ayude a los agentes a analizar sus propiedades, mejorar sus descripciones o recibir coaching personalizado.
+Los agentes de REMAX Altitud actualmente no tienen visibilidad centralizada sobre sus propiedades activas dentro del Hub. La información de listings vive en el portal REMAX CCA pero no está integrada con las herramientas internas (OKR, ACM, Pre-listing). Tampoco existe una herramienta inteligente que ayude a los agentes a analizar sus propiedades, mejorar sus descripciones o recibir coaching personalizado.
 
 ---
 
@@ -18,7 +18,7 @@ Los agentes de RE/MAX Altitud actualmente no tienen visibilidad centralizada sob
 Construir dos módulos interconectados dentro de Altitud Hub:
 
 ### 🏠 **Panel de Propiedades ("Mi Portafolio")**
-Un dashboard inteligente que muestra al agente todas sus propiedades activas (obtenidas de la API RE/MAX CCA), con herramientas de análisis, filtrado y gestión visual.
+Un dashboard inteligente que muestra al agente todas sus propiedades activas (obtenidas de la API REMAX CCA), con herramientas de análisis, filtrado y gestión visual.
 
 ### 🏛️ **Olympia — IA Asistente**
 Una IA conversacional integrada al Hub que:
@@ -45,7 +45,7 @@ Una IA conversacional integrada al Hub que:
 ### 4.1 Panel de Propiedades
 
 #### 4.1.1 Mi Portafolio
-- Grid/lista de propiedades del agente (fetch de RE/MAX CCA API filtrado por `agent_id`)
+- Grid/lista de propiedades del agente (fetch de REMAX CCA API filtrado por `agent_id`)
 - Card de propiedad: imagen principal, título, precio, tipo, status, zona
 - Filtros: tipo de propiedad, rango de precio, status
 - Stats header: total propiedades, valor total de inventario, tiempo promedio en mercado
@@ -76,7 +76,7 @@ Olympia construye su contexto con:
 - `business_plans` → para qué, gastos, metas, gestión semanal
 - `okr_daily_logs` → racha, cumplimiento, embudo de actividad
 - `acm_reports` → ACMs realizados
-- RE/MAX CCA API → propiedades activas del agente
+- REMAX CCA API → propiedades activas del agente
 - Google Calendar → eventos del día (Fase 2)
 
 #### 4.2.3 Tracking de Temas (NO conversaciones)
@@ -96,7 +96,7 @@ Olympia construye su contexto con:
 
 | Source | Data | Access |
 |--------|------|--------|
-| RE/MAX CCA API | Propiedades activas, datos de agentes | `api.remax-cca.com/api/PropertiesPerOffice/{officeId}` |
+| REMAX CCA API | Propiedades activas, datos de agentes | `api.remax-cca.com/api/PropertiesPerOffice/{officeId}` |
 | Supabase `profiles` | Perfil del agente, rol, equipo | Row Level Security |
 | Supabase `business_plans` | Plan de negocio del agente | By agent_email |
 | Supabase `okr_daily_logs` | Actividad diaria OKR | By profile_id |
@@ -117,7 +117,7 @@ Olympia construye su contexto con:
 
 ### Key API Routes
 ```
-/api/properties          → Proxy RE/MAX CCA properties feed
+/api/properties          → Proxy REMAX CCA properties feed
 /api/olympia/chat        → Chat with streaming + context injection
 /api/olympia/context     → Build agent context from Supabase
 /api/olympia/reports     → Generate monthly reports (Cron)

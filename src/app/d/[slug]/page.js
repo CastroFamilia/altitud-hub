@@ -26,7 +26,7 @@ export async function generateMetadata({ params }) {
     return { title: 'Development Not Found' };
   }
 
-  const title = `${dev.name} — ${dev.developer_name || 'RE/MAX Altitud'}`;
+  const title = `${dev.name} — ${dev.developer_name || 'REMAX Altitud'}`;
   const description = dev.tagline_en || dev.tagline_es || `Discover ${dev.name}, an exclusive real estate development.`;
 
   return {
